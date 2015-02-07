@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
         true);
     listOpts.addOption("d", "dump",
         "Output data format and order.                        \n\n"
-            "    Arguments: [M][C][F][D][A][W][Q][T][U].                                    \n"
+            "    Arguments: [M][C][F][D][A][W][Q][T][U][*].                                 \n"
             "    [M]: Moment tensor components in Aki's convention: M11,M12,M13,M22,M23,M33.\n"
             "         The moment tensor components are in [Nm]                              \n"
             "    [C]: Moment tensor components in CMT conventions: M33,M11,M22,M13,-M23,-M12\n"
@@ -155,13 +155,16 @@ int main(int argc, char* argv[]) {
             "         displacements.                                                        \n"
             "    [*]: Export new line character                                             \n"
             "                                                                               \n"
-            "    NOTE:                                                                      \n"
+            "    NOTE #1:                                                                   \n"
             "    The order of arguments determine to order of output. For example -d FAD    \n"
             "    exports firstly fault plane solutions, then P, T and B axes directions and \n"
             "    finally the moment tensor decomposition into ISO/CLVD/DBCP. The output file\n"
             "    will have the following structure:                                         \n"
             "    STRIKEA/DIPA/RAKEA/STRIKEB/DIPB/RAKEB/PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND \n"
-            "    /BPLUNGE/ISO/CLVD/DBCP                                                     \n",
+            "    /BPLUNGE/ISO/CLVD/DBCP                                                     \n"
+            "                                                                               \n"
+            "    NOTE #2:                                                                   \n"
+            "    Use lowercase arguments in order to data in eye-friendly format.           \n",
         true);
     listOpts.addOption("l", "length",
         "Input data length.                                   \n\n"
@@ -663,9 +666,14 @@ int main(int argc, char* argv[]) {
           ofstream OutFile(OutName.c_str(),
               std::ofstream::out | std::ofstream::app);
 
+          bool head = false;
+          if (DumpOrder.Pos("h") || DumpOrder.Pos("H"))
+            head = true; // TODO: Export header (not implemented yet)
+
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
-            OutFile << Type << FOCIMT_SEP << Channel << FOCIMT_SEP;
+            sprintf(txtb, "%5d", Channel);
+            OutFile << Type << FOCIMT_SEP << txtb << FOCIMT_SEP;
           }
 
           for (int i = 1; i <= DumpOrder.Length(); i++) {
@@ -682,7 +690,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.M[3][3] << FOCIMT_SEP;
             }
             else if (DumpOrder[i] == 'm') {
-              sprintf(txtb, "%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",
+              sprintf(txtb, "%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s",
                   Solution.M[1][1], FOCIMT_SEP, Solution.M[1][2], FOCIMT_SEP,
                   Solution.M[1][3], FOCIMT_SEP, Solution.M[2][2], FOCIMT_SEP,
                   Solution.M[2][3], FOCIMT_SEP, Solution.M[3][3], FOCIMT_SEP);
@@ -699,7 +707,7 @@ int main(int argc, char* argv[]) {
               OutFile << -Solution.M[1][2] << FOCIMT_SEP;
             }
             else if (DumpOrder[i] == 'c') {
-              sprintf(txtb, "%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",
+              sprintf(txtb, "%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s",
                   Solution.M[3][3], FOCIMT_SEP, Solution.M[1][1], FOCIMT_SEP,
                   Solution.M[2][2], FOCIMT_SEP, Solution.M[1][3], FOCIMT_SEP,
                   -Solution.M[2][3], FOCIMT_SEP, -Solution.M[1][2], FOCIMT_SEP);
@@ -712,10 +720,10 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.CLVD << FOCIMT_SEP;
               OutFile << Solution.DBCP << FOCIMT_SEP;
             }
-            else if (DumpOrder[i] == 'D') {
-              sprintf(txtb, "%+6.1f%s%+6.1f%s%+6.1f%s", Solution.EXPL,
-                  FOCIMT_SEP, Solution.CLVD, FOCIMT_SEP, Solution.DBCP,
-                  FOCIMT_SEP);
+            else if (DumpOrder[i] == 'd') {
+              sprintf(txtb, "%+7.1f%s%+7.1f%s%+7.1f%s", Solution.EXPL,
+              FOCIMT_SEP, Solution.CLVD, FOCIMT_SEP, Solution.DBCP,
+              FOCIMT_SEP);
               OutFile << txtb;
             }
 
@@ -727,10 +735,12 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.TXPL << FOCIMT_SEP;
               OutFile << Solution.BXTR << FOCIMT_SEP;
               OutFile << Solution.BXPL << FOCIMT_SEP;
-            } else if (DumpOrder[i] == 'a') {
-              sprintf(txtb,"%6.1f%s%5.1f%s%6.1f%s%5.1f%s%6.1f%s%5.1f%s",Solution.PXTR,FOCIMT_SEP,
-                  Solution.PXPL,FOCIMT_SEP, Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
-                  Solution.BXTR , FOCIMT_SEP, Solution.BXPL , FOCIMT_SEP);
+            }
+            else if (DumpOrder[i] == 'a') {
+              sprintf(txtb, "%5.1f%s%4.1f%s%5.1f%s%4.1f%s%5.1f%s%4.1f%s",
+                  Solution.PXTR, FOCIMT_SEP, Solution.PXPL, FOCIMT_SEP,
+                  Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
+                  Solution.BXTR, FOCIMT_SEP, Solution.BXPL, FOCIMT_SEP);
               OutFile << txtb;
             }
 
@@ -742,10 +752,12 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.FIB << FOCIMT_SEP;
               OutFile << Solution.DLB << FOCIMT_SEP;
               OutFile << Solution.RAKEB << FOCIMT_SEP;
-            } else if (DumpOrder[i] == 'f') {
-              sprintf(txtb,"%6.1f%s%5.1f%s%6.1f%s%6.1f%s%5.1f%s%6.1f%s",Solution.FIA , FOCIMT_SEP,
-              Solution.DLA , FOCIMT_SEP,Solution.RAKEA , FOCIMT_SEP,Solution.FIB , FOCIMT_SEP,
-              Solution.DLB , FOCIMT_SEP, Solution.RAKEB , FOCIMT_SEP);
+            }
+            else if (DumpOrder[i] == 'f') {
+              sprintf(txtb, "%5.1f%s%4.1f%s%6.1f%s%5.1f%s%4.1f%s%6.1f%s",
+                  Solution.FIA, FOCIMT_SEP, Solution.DLA, FOCIMT_SEP,
+                  Solution.RAKEA, FOCIMT_SEP, Solution.FIB, FOCIMT_SEP,
+                  Solution.DLB, FOCIMT_SEP, Solution.RAKEB, FOCIMT_SEP);
               OutFile << txtb;
             }
 
@@ -755,25 +767,29 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.MT << FOCIMT_SEP;
               OutFile << Solution.ERR << FOCIMT_SEP;
               OutFile << Solution.MAGN << FOCIMT_SEP;
-            } if (DumpOrder[i] == 'w') {
-              sprintf(txtb,"%10.3e%s%10.3e%s%10.3e%s%6.2f%s",Solution.M0 , FOCIMT_SEP,
-                  Solution.MT , FOCIMT_SEP, Solution.ERR , FOCIMT_SEP, Solution.MAGN , FOCIMT_SEP);
+            }
+            if (DumpOrder[i] == 'w') {
+              sprintf(txtb, "%11.3e%s%11.3e%s%11.3e%s%6.2f%s", Solution.M0,
+              FOCIMT_SEP, Solution.MT, FOCIMT_SEP, Solution.ERR, FOCIMT_SEP,
+                  Solution.MAGN, FOCIMT_SEP);
               OutFile << txtb;
             }
 
             // Export quality factor.
             if (DumpOrder[i] == 'Q') {
               OutFile << Solution.QI << FOCIMT_SEP;
-            } if (DumpOrder[i] == 'q') {
-              sprintf(txtb,"%5.1f%s",Solution.QI ,FOCIMT_SEP);
+            }
+            if (DumpOrder[i] == 'q') {
+              sprintf(txtb, "%5.1f%s", Solution.QI, FOCIMT_SEP);
               OutFile << txtb;
             }
 
             // Export solution type.
             if (DumpOrder[i] == 'T') {
               OutFile << Solution.Type.c_str() << FOCIMT_SEP;
-            } if (DumpOrder[i] == 't') {
-              sprintf(txtb,"%s%s",Solution.Type.c_str() , FOCIMT_SEP);
+            }
+            if (DumpOrder[i] == 't') {
+              sprintf(txtb, "%s%s", Solution.Type.c_str(), FOCIMT_SEP);
               OutFile << txtb;
             }
 
@@ -785,7 +801,7 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'u') {
               for (int r = 0; r < Solution.U_n; r++) {
-                sprintf(txtb,"%10.3e%s",Solution.U_th[r] , FOCIMT_SEP);
+                sprintf(txtb, "%13.5e%s", Solution.U_th[r], FOCIMT_SEP);
                 OutFile << txtb;
               }
             }
@@ -795,7 +811,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.UERR << FOCIMT_SEP;
             }
             else if (DumpOrder[i] == 'e') {
-              sprintf(txtb,"%10.3e%s",Solution.UERR , FOCIMT_SEP);
+              sprintf(txtb, "%11.3e%s", Solution.UERR, FOCIMT_SEP);
               OutFile << txtb;
             }
 
