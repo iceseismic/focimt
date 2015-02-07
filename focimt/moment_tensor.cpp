@@ -672,6 +672,10 @@ int main(int argc, char* argv[]) {
 
             // Export moment tensor components.
             if (DumpOrder[i] == 'M') {
+              //sprintf(txtbuf,"%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",Solution.M[1][1],FOCIMT_SEP,
+              //Solution.M[1][2] ,FOCIMT_SEP,Solution.M[1][3] , FOCIMT_SEP,Solution.M[2][2] ,FOCIMT_SEP,
+              //Solution.M[2][3] ,FOCIMT_SEP,Solution.M[3][3] ,FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.M[1][1] << FOCIMT_SEP;
               OutFile << Solution.M[1][2] << FOCIMT_SEP;
               OutFile << Solution.M[1][3] << FOCIMT_SEP;
@@ -682,6 +686,10 @@ int main(int argc, char* argv[]) {
 
             // Export moment tensor components in CMT convention.
             if (DumpOrder[i] == 'C') {
+              //sprintf(txtbuf,"%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",Solution.M[3][3] , FOCIMT_SEP,
+              //Solution.M[1][1] , FOCIMT_SEP,Solution.M[2][2] , FOCIMT_SEP,Solution.M[1][3] , FOCIMT_SEP,
+              //    -Solution.M[2][3] , FOCIMT_SEP ,-Solution.M[1][2] , FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.M[3][3] << FOCIMT_SEP;
               OutFile << Solution.M[1][1] << FOCIMT_SEP;
               OutFile << Solution.M[2][2] << FOCIMT_SEP;
@@ -701,6 +709,10 @@ int main(int argc, char* argv[]) {
 
             // Export axis trends and plunges.
             if (DumpOrder[i] == 'A') {
+              //sprintf(txtbuf,"%6.1f%s%5.1f%s%6.1f%s%5.1f%s%6.1f%s%5.1f%s",Solution.PXTR,FOCIMT_SEP,
+              //    Solution.PXPL,FOCIMT_SEP, Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
+              //    Solution.BXTR , FOCIMT_SEP, Solution.BXPL , FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.PXTR << FOCIMT_SEP;
               OutFile << Solution.PXPL << FOCIMT_SEP;
               OutFile << Solution.TXTR << FOCIMT_SEP;
@@ -711,6 +723,10 @@ int main(int argc, char* argv[]) {
 
             // Export fault plane solutions
             if (DumpOrder[i] == 'F') {
+              //sprintf(txtbuf,"%6.1f%s%5.1f%s%6.1f%s%6.1f%s%5.1f%s%6.1f%s",Solution.FIA , FOCIMT_SEP,
+              //Solution.DLA , FOCIMT_SEP,Solution.RAKEA , FOCIMT_SEP,Solution.FIB , FOCIMT_SEP,
+              //Solution.DLB , FOCIMT_SEP, Solution.RAKEB , FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.FIA << FOCIMT_SEP;
               OutFile << Solution.DLA << FOCIMT_SEP;
               OutFile << Solution.RAKEA << FOCIMT_SEP;
@@ -721,6 +737,9 @@ int main(int argc, char* argv[]) {
 
             // Export seismic moments, moment magnitude and moment error
             if (DumpOrder[i] == 'W') {
+              //sprintf(txtbuf,"%10.3e%s%10.3e%s%10.3e%s%6.2f%s",Solution.M0 , FOCIMT_SEP,
+              //    Solution.MT , FOCIMT_SEP, Solution.ERR , FOCIMT_SEP, Solution.MAGN , FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.M0 << FOCIMT_SEP;
               OutFile << Solution.MT << FOCIMT_SEP;
               OutFile << Solution.ERR << FOCIMT_SEP;
@@ -729,22 +748,31 @@ int main(int argc, char* argv[]) {
 
             // Export quality factor.
             if (DumpOrder[i] == 'Q') {
+              //sprintf(txtbuf,"%5.1f%s",Solution.QI ,FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.QI << FOCIMT_SEP;
             }
 
             // Export solution type.
             if (DumpOrder[i] == 'T') {
+              //sprintf(txtbuf,'%s%s',Solution.Type.c_str() , FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.Type.c_str() << FOCIMT_SEP;
             }
 
             // Export theoretical displacements.
             if (DumpOrder[i] == 'U') {
-              for (int r = 0; r < Solution.U_n; r++)
+              for (int r = 0; r < Solution.U_n; r++) {
+                //sprintf(txtbuf,'%10.3e%s',Solution.U_th[r] , FOCIMT_SEP);
+                //OutFile << txtbuff;
                 OutFile << Solution.U_th[r] << FOCIMT_SEP;
+              }
             }
 
             // Export std error of displacement fit.
             if (DumpOrder[i] == 'E') {
+              //sprintf(txtbuf,'%10.3e%s',Solution.UERR , FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.UERR << FOCIMT_SEP;
             }
 
