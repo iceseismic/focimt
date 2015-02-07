@@ -57,8 +57,9 @@ bool WulffProjection = false;
 bool LowerHemisphere = true;
 
 //-----------------------------------------------------------------------------
-void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12, double M13,
-    double M22,  double M23, double M33, double strike, double dip, double rake);
+void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
+    double M13, double M22, double M23, double M33, double strike, double dip,
+    double rake);
 
 class FaultSolutions {
   public:
@@ -234,7 +235,7 @@ int main(int argc, char* argv[]) {
             break;
           case 7:
             DumpOrder =
-                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().UpperCase();
+                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 8:
             N =
@@ -326,7 +327,7 @@ int main(int argc, char* argv[]) {
 
       fs.Type = 'N';
       fs.Channel = 0;
-      SetFaultSolution(fu, M11,M12,M13,M22,M23,M33,strike,dip,rake);
+      SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
       fs.FullSolution = fu;
       fs.TraceNullSolution = fu;
       fs.DoubleCoupleSolution = fu;
@@ -356,7 +357,7 @@ int main(int argc, char* argv[]) {
 
         fs.Type = 'J';
         fs.Channel = 0;
-        SetFaultSolution(fu, M11,M12,M13,M22,M23,M33,strike,dip,rake);
+        SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
         fs.FullSolution = fu;
         fs.TraceNullSolution = fu;
         fs.DoubleCoupleSolution = fu;
@@ -410,7 +411,7 @@ int main(int argc, char* argv[]) {
 
       fs.Type = 'N';
       fs.Channel = 0;
-      SetFaultSolution(fu, M11,M12,M13,M22,M23,M33,strike,dip,rake);
+      SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
       fs.FullSolution = fu;
       fs.TraceNullSolution = fu;
       fs.DoubleCoupleSolution = fu;
@@ -491,8 +492,7 @@ int main(int argc, char* argv[]) {
     try {
       int ThreadProgress = 0;
       USMTCore(InversionNormType, QualityType, InputData, &ThreadProgress);
-    }
-    catch (...) {
+    } catch (...) {
       std::cout << "Inversion error." << std::endl;
       return 1;
     }
@@ -539,8 +539,7 @@ int main(int argc, char* argv[]) {
         try {
           int ThreadProgress = 0;
           USMTCore(InversionNormType, QualityType, td, &ThreadProgress);
-        }
-        catch (...) {
+        } catch (...) {
           std::cout << "Inversion error." << std::endl;
           return 1;
         }
@@ -578,8 +577,7 @@ int main(int argc, char* argv[]) {
           try {
             int ThreadProgress = 0;
             USMTCore(InversionNormType, QualityType, td, &ThreadProgress);
-          }
-          catch (...) {
+          } catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
@@ -605,11 +603,15 @@ int main(int argc, char* argv[]) {
     // using Cairo library.
 
     // Projection type.
-    if (Projection.Pos("W")) WulffProjection = true;
-    if (Projection.Pos("S")) WulffProjection = false;
+    if (Projection.Pos("W"))
+      WulffProjection = true;
+    if (Projection.Pos("S"))
+      WulffProjection = false;
 
-    if (Projection.Pos("U")) LowerHemisphere = false;
-    if (Projection.Pos("L")) LowerHemisphere = true;
+    if (Projection.Pos("U"))
+      LowerHemisphere = false;
+    if (Projection.Pos("L"))
+      LowerHemisphere = true;
 
     // Content of ball.
     if (BallContent.Pos("S"))
@@ -632,7 +634,7 @@ int main(int argc, char* argv[]) {
     else
       DrawDC = false;
 
-    char txtbuff[256];
+    char txtb[512] = { };
     for (unsigned int j = 0; j < FSList.size(); j++) {
       Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
       char Type = FSList[j].Type;
@@ -672,10 +674,6 @@ int main(int argc, char* argv[]) {
 
             // Export moment tensor components.
             if (DumpOrder[i] == 'M') {
-              //sprintf(txtbuf,"%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",Solution.M[1][1],FOCIMT_SEP,
-              //Solution.M[1][2] ,FOCIMT_SEP,Solution.M[1][3] , FOCIMT_SEP,Solution.M[2][2] ,FOCIMT_SEP,
-              //Solution.M[2][3] ,FOCIMT_SEP,Solution.M[3][3] ,FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.M[1][1] << FOCIMT_SEP;
               OutFile << Solution.M[1][2] << FOCIMT_SEP;
               OutFile << Solution.M[1][3] << FOCIMT_SEP;
@@ -683,13 +681,16 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.M[2][3] << FOCIMT_SEP;
               OutFile << Solution.M[3][3] << FOCIMT_SEP;
             }
+            else if (DumpOrder[i] == 'm') {
+              sprintf(txtb, "%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",
+                  Solution.M[1][1], FOCIMT_SEP, Solution.M[1][2], FOCIMT_SEP,
+                  Solution.M[1][3], FOCIMT_SEP, Solution.M[2][2], FOCIMT_SEP,
+                  Solution.M[2][3], FOCIMT_SEP, Solution.M[3][3], FOCIMT_SEP);
+              OutFile << txtb;
+            }
 
             // Export moment tensor components in CMT convention.
             if (DumpOrder[i] == 'C') {
-              //sprintf(txtbuf,"%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",Solution.M[3][3] , FOCIMT_SEP,
-              //Solution.M[1][1] , FOCIMT_SEP,Solution.M[2][2] , FOCIMT_SEP,Solution.M[1][3] , FOCIMT_SEP,
-              //    -Solution.M[2][3] , FOCIMT_SEP ,-Solution.M[1][2] , FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.M[3][3] << FOCIMT_SEP;
               OutFile << Solution.M[1][1] << FOCIMT_SEP;
               OutFile << Solution.M[2][2] << FOCIMT_SEP;
@@ -697,87 +698,109 @@ int main(int argc, char* argv[]) {
               OutFile << -Solution.M[2][3] << FOCIMT_SEP;
               OutFile << -Solution.M[1][2] << FOCIMT_SEP;
             }
+            else if (DumpOrder[i] == 'c') {
+              sprintf(txtb, "%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s%10.3e%s",
+                  Solution.M[3][3], FOCIMT_SEP, Solution.M[1][1], FOCIMT_SEP,
+                  Solution.M[2][2], FOCIMT_SEP, Solution.M[1][3], FOCIMT_SEP,
+                  -Solution.M[2][3], FOCIMT_SEP, -Solution.M[1][2], FOCIMT_SEP);
+              OutFile << txtb;
+            }
 
             // Export percentage of decomposed moment tensor components.
             if (DumpOrder[i] == 'D') {
-              //sprintf(txtbuff,"%+6.1f%s%+6.1f%s%+6.1f%s",Solution.EXPL,FOCIMT_SEP,Solution.CLVD,FOCIMT_SEP,Solution.DBCP,FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.EXPL << FOCIMT_SEP;
               OutFile << Solution.CLVD << FOCIMT_SEP;
               OutFile << Solution.DBCP << FOCIMT_SEP;
             }
+            else if (DumpOrder[i] == 'D') {
+              sprintf(txtb, "%+6.1f%s%+6.1f%s%+6.1f%s", Solution.EXPL,
+                  FOCIMT_SEP, Solution.CLVD, FOCIMT_SEP, Solution.DBCP,
+                  FOCIMT_SEP);
+              OutFile << txtb;
+            }
 
             // Export axis trends and plunges.
             if (DumpOrder[i] == 'A') {
-              //sprintf(txtbuf,"%6.1f%s%5.1f%s%6.1f%s%5.1f%s%6.1f%s%5.1f%s",Solution.PXTR,FOCIMT_SEP,
-              //    Solution.PXPL,FOCIMT_SEP, Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
-              //    Solution.BXTR , FOCIMT_SEP, Solution.BXPL , FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.PXTR << FOCIMT_SEP;
               OutFile << Solution.PXPL << FOCIMT_SEP;
               OutFile << Solution.TXTR << FOCIMT_SEP;
               OutFile << Solution.TXPL << FOCIMT_SEP;
               OutFile << Solution.BXTR << FOCIMT_SEP;
               OutFile << Solution.BXPL << FOCIMT_SEP;
+            } else if (DumpOrder[i] == 'a') {
+              sprintf(txtb,"%6.1f%s%5.1f%s%6.1f%s%5.1f%s%6.1f%s%5.1f%s",Solution.PXTR,FOCIMT_SEP,
+                  Solution.PXPL,FOCIMT_SEP, Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
+                  Solution.BXTR , FOCIMT_SEP, Solution.BXPL , FOCIMT_SEP);
+              OutFile << txtb;
             }
 
             // Export fault plane solutions
             if (DumpOrder[i] == 'F') {
-              //sprintf(txtbuf,"%6.1f%s%5.1f%s%6.1f%s%6.1f%s%5.1f%s%6.1f%s",Solution.FIA , FOCIMT_SEP,
-              //Solution.DLA , FOCIMT_SEP,Solution.RAKEA , FOCIMT_SEP,Solution.FIB , FOCIMT_SEP,
-              //Solution.DLB , FOCIMT_SEP, Solution.RAKEB , FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.FIA << FOCIMT_SEP;
               OutFile << Solution.DLA << FOCIMT_SEP;
               OutFile << Solution.RAKEA << FOCIMT_SEP;
               OutFile << Solution.FIB << FOCIMT_SEP;
               OutFile << Solution.DLB << FOCIMT_SEP;
               OutFile << Solution.RAKEB << FOCIMT_SEP;
+            } else if (DumpOrder[i] == 'f') {
+              sprintf(txtb,"%6.1f%s%5.1f%s%6.1f%s%6.1f%s%5.1f%s%6.1f%s",Solution.FIA , FOCIMT_SEP,
+              Solution.DLA , FOCIMT_SEP,Solution.RAKEA , FOCIMT_SEP,Solution.FIB , FOCIMT_SEP,
+              Solution.DLB , FOCIMT_SEP, Solution.RAKEB , FOCIMT_SEP);
+              OutFile << txtb;
             }
 
             // Export seismic moments, moment magnitude and moment error
             if (DumpOrder[i] == 'W') {
-              //sprintf(txtbuf,"%10.3e%s%10.3e%s%10.3e%s%6.2f%s",Solution.M0 , FOCIMT_SEP,
-              //    Solution.MT , FOCIMT_SEP, Solution.ERR , FOCIMT_SEP, Solution.MAGN , FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.M0 << FOCIMT_SEP;
               OutFile << Solution.MT << FOCIMT_SEP;
               OutFile << Solution.ERR << FOCIMT_SEP;
               OutFile << Solution.MAGN << FOCIMT_SEP;
+            } if (DumpOrder[i] == 'w') {
+              sprintf(txtb,"%10.3e%s%10.3e%s%10.3e%s%6.2f%s",Solution.M0 , FOCIMT_SEP,
+                  Solution.MT , FOCIMT_SEP, Solution.ERR , FOCIMT_SEP, Solution.MAGN , FOCIMT_SEP);
+              OutFile << txtb;
             }
 
             // Export quality factor.
             if (DumpOrder[i] == 'Q') {
-              //sprintf(txtbuf,"%5.1f%s",Solution.QI ,FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.QI << FOCIMT_SEP;
+            } if (DumpOrder[i] == 'q') {
+              sprintf(txtb,"%5.1f%s",Solution.QI ,FOCIMT_SEP);
+              OutFile << txtb;
             }
 
             // Export solution type.
             if (DumpOrder[i] == 'T') {
-              //sprintf(txtbuf,'%s%s',Solution.Type.c_str() , FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.Type.c_str() << FOCIMT_SEP;
+            } if (DumpOrder[i] == 't') {
+              sprintf(txtb,"%s%s",Solution.Type.c_str() , FOCIMT_SEP);
+              OutFile << txtb;
             }
 
             // Export theoretical displacements.
             if (DumpOrder[i] == 'U') {
               for (int r = 0; r < Solution.U_n; r++) {
-                //sprintf(txtbuf,'%10.3e%s',Solution.U_th[r] , FOCIMT_SEP);
-                //OutFile << txtbuff;
                 OutFile << Solution.U_th[r] << FOCIMT_SEP;
+              }
+            }
+            else if (DumpOrder[i] == 'u') {
+              for (int r = 0; r < Solution.U_n; r++) {
+                sprintf(txtb,"%10.3e%s",Solution.U_th[r] , FOCIMT_SEP);
+                OutFile << txtb;
               }
             }
 
             // Export std error of displacement fit.
             if (DumpOrder[i] == 'E') {
-              //sprintf(txtbuf,'%10.3e%s',Solution.UERR , FOCIMT_SEP);
-              //OutFile << txtbuff;
               OutFile << Solution.UERR << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'e') {
+              sprintf(txtb,"%10.3e%s",Solution.UERR , FOCIMT_SEP);
+              OutFile << txtb;
             }
 
             if (DumpOrder[i] == '*') {
-                OutFile << FOCIMT_NEWLINE;
+              OutFile << FOCIMT_NEWLINE;
             }
           }
 
@@ -788,7 +811,8 @@ int main(int argc, char* argv[]) {
         // Output picture name
 
         // Do not dump anything.
-        if (OutputFileType.Pos("NONE") && j == 0) continue;
+        if (OutputFileType.Pos("NONE") && j == 0)
+          continue;
 
         // Dump to PNG.
         if (OutputFileType.Pos("PNG") && j == 0) {
@@ -797,8 +821,7 @@ int main(int argc, char* argv[]) {
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
             Meca.Save(OutName);
-          }
-          catch (...) {
+          } catch (...) {
             return 2;
           }
         }
@@ -809,8 +832,7 @@ int main(int argc, char* argv[]) {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".svg";
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSVG, OutName);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          }
-          catch (...) {
+          } catch (...) {
             return 2;
           }
         }
@@ -821,8 +843,7 @@ int main(int argc, char* argv[]) {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".ps";
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPS, OutName);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          }
-          catch (...) {
+          } catch (...) {
             return 2;
           }
         }
@@ -833,8 +854,7 @@ int main(int argc, char* argv[]) {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".pdf";
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPDF, OutName);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          }
-          catch (...) {
+          } catch (...) {
             return 2;
           }
         }
@@ -842,17 +862,16 @@ int main(int argc, char* argv[]) {
     } // Loop for all solution types.
 
     return 0;
-  }
-  catch (...) {
+  } catch (...) {
     return 1; // Some undefined error occurred, error code 1.
   }
 
 }
 
 //-----------------------------------------------------------------------------
-void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12, double M13,
-    double M22,  double M23, double M33, double strike, double dip, double rake)
-{
+void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
+    double M13, double M22, double M23, double M33, double strike, double dip,
+    double rake) {
   Taquart::nodal_plane NP;
   fu.M[1][1] = M11;
   fu.M[1][2] = M12;
@@ -873,8 +892,6 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12, double
   fu.DLB = Taquart::computed_dip1(NP);
   fu.RAKEB = Taquart::computed_rake1(NP);
 }
-
-
 
 //-----------------------------------------------------------------------------
 void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
@@ -937,7 +954,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       double GA[5];
 
       double Tko = il.TakeOff;
-      if (Tko == 90.0f) Tko = 89.75f;
+      if (Tko == 90.0f)
+        Tko = 89.75f;
 
       GA[3] = cos(Tko * DEG2RAD);
       double help = sqrt(1.0f - GA[3] * GA[3]);
@@ -958,7 +976,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     Meca.Axis(T, "T");
   }
 
-  if (DrawCross) Meca.CenterCross();
+  if (DrawCross)
+    Meca.CenterCross();
 
   // Draw double-couple lines.
   if (DrawDC) {
