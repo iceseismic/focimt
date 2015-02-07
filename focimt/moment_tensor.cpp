@@ -152,6 +152,7 @@ int main(int argc, char* argv[]) {
             "         using '-l' option.                                                    \n"
             "    [E]: RMS Error calculated from theoretical and measured ground             \n"
             "         displacements.                                                        \n"
+            "    [*]: Export new line character                                             \n"
             "                                                                               \n"
             "    NOTE:                                                                      \n"
             "    The order of arguments determine to order of output. For example -d FAD    \n"
@@ -666,9 +667,9 @@ int main(int argc, char* argv[]) {
 
           for (int i = 1; i <= DumpOrder.Length(); i++) {
             // M - moment, D - decomposition, A - axis, F - fault planes,
-            // C - moment in CMT convention.
+            // C - moment in CMT convention, * - newline
 
-            // Dump moment tensor components.
+            // Export moment tensor components.
             if (DumpOrder[i] == 'M') {
               OutFile << Solution.M[1][1] << FOCIMT_SEP;
               OutFile << Solution.M[1][2] << FOCIMT_SEP;
@@ -678,7 +679,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.M[3][3] << FOCIMT_SEP;
             }
 
-            // Dump moment tensor components in CMT convention.
+            // Export moment tensor components in CMT convention.
             if (DumpOrder[i] == 'C') {
               OutFile << Solution.M[3][3] << FOCIMT_SEP;
               OutFile << Solution.M[1][1] << FOCIMT_SEP;
@@ -688,12 +689,14 @@ int main(int argc, char* argv[]) {
               OutFile << -Solution.M[1][2] << FOCIMT_SEP;
             }
 
+            // Export percentage of decomposed moment tensor components.
             if (DumpOrder[i] == 'D') {
               OutFile << Solution.EXPL << FOCIMT_SEP;
               OutFile << Solution.CLVD << FOCIMT_SEP;
               OutFile << Solution.DBCP << FOCIMT_SEP;
             }
 
+            // Export axis trends and plunges.
             if (DumpOrder[i] == 'A') {
               OutFile << Solution.PXTR << FOCIMT_SEP;
               OutFile << Solution.PXPL << FOCIMT_SEP;
@@ -703,6 +706,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.BXPL << FOCIMT_SEP;
             }
 
+            // Export fault plane solutions
             if (DumpOrder[i] == 'F') {
               OutFile << Solution.FIA << FOCIMT_SEP;
               OutFile << Solution.DLA << FOCIMT_SEP;
@@ -712,6 +716,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.RAKEB << FOCIMT_SEP;
             }
 
+            // Export seismic moments, moment magnitude and moment error
             if (DumpOrder[i] == 'W') {
               OutFile << Solution.M0 << FOCIMT_SEP;
               OutFile << Solution.MT << FOCIMT_SEP;
@@ -719,21 +724,29 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.MAGN << FOCIMT_SEP;
             }
 
+            // Export quality factor.
             if (DumpOrder[i] == 'Q') {
               OutFile << Solution.QI << FOCIMT_SEP;
             }
 
+            // Export solution type.
             if (DumpOrder[i] == 'T') {
               OutFile << Solution.Type.c_str() << FOCIMT_SEP;
             }
 
+            // Export theoretical displacements.
             if (DumpOrder[i] == 'U') {
               for (int r = 0; r < Solution.U_n; r++)
                 OutFile << Solution.U_th[r] << FOCIMT_SEP;
             }
 
+            // Export std error of displacement fit.
             if (DumpOrder[i] == 'E') {
               OutFile << Solution.UERR << FOCIMT_SEP;
+            }
+
+            if (DumpOrder[i] == '*') {
+                OutFile << FOCIMT_NEWLINE;
             }
           }
 
