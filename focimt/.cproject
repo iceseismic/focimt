@@ -94,6 +94,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.923507424" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\eclipse&quot;"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.dialect.std.598179083" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1198331795" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.release.1520216600" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.exe.release">
@@ -104,14 +105,14 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.release.952407798" name="MinGW C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.mingw.exe.release"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.exe.release.397581694" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.exe.release">
 								<option id="gnu.cpp.link.option.libs.422267329" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="tricairo"/>
 									<listOptionValue builtIn="false" value="trilib"/>
+									<listOptionValue builtIn="false" value="tricairo"/>
 									<listOptionValue builtIn="false" value="triexceptions"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.634747476" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tricairo/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/triexceptions/Release}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/trilib/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/triexceptions/Release}&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.userobjs.1743889040" name="Other objects" superClass="gnu.cpp.link.option.userobjs" valueType="userObjs">
 									<listOptionValue builtIn="false" value="&quot;D:\Dropbox\eclipse\dll\libcairo-2.dll&quot;"/>

@@ -45,6 +45,8 @@
 using namespace std;
 
 #define squared(x) (pow(x,2.0))
+#define FOCIMT_SEP " "
+#define FOCIMT_NEWLINE "\n"
 
 // Default values.
 bool DrawStations = true;
@@ -55,8 +57,9 @@ bool WulffProjection = false;
 bool LowerHemisphere = true;
 
 //-----------------------------------------------------------------------------
-void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12, double M13,
-    double M22,  double M23, double M33, double strike, double dip, double rake);
+void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
+    double M13, double M22, double M23, double M33, double strike, double dip,
+    double rake);
 
 class FaultSolutions {
   public:
@@ -128,7 +131,7 @@ int main(int argc, char* argv[]) {
         true);
     listOpts.addOption("d", "dump",
         "Output data format and order.                        \n\n"
-            "    Arguments: [M][C][F][D][A][W][Q][T][U].                                    \n"
+            "    Arguments: [M][C][F][D][A][W][Q][T][U][*].                                 \n"
             "    [M]: Moment tensor components in Aki's convention: M11,M12,M13,M22,M23,M33.\n"
             "         The moment tensor components are in [Nm]                              \n"
             "    [C]: Moment tensor components in CMT conventions: M33,M11,M22,M13,-M23,-M12\n"
@@ -150,14 +153,18 @@ int main(int argc, char* argv[]) {
             "         using '-l' option.                                                    \n"
             "    [E]: RMS Error calculated from theoretical and measured ground             \n"
             "         displacements.                                                        \n"
+            "    [*]: Export new line character                                             \n"
             "                                                                               \n"
-            "    NOTE:                                                                      \n"
+            "    NOTE #1:                                                                   \n"
             "    The order of arguments determine to order of output. For example -d FAD    \n"
             "    exports firstly fault plane solutions, then P, T and B axes directions and \n"
             "    finally the moment tensor decomposition into ISO/CLVD/DBCP. The output file\n"
             "    will have the following structure:                                         \n"
             "    STRIKEA/DIPA/RAKEA/STRIKEB/DIPB/RAKEB/PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND \n"
-            "    /BPLUNGE/ISO/CLVD/DBCP                                                     \n",
+            "    /BPLUNGE/ISO/CLVD/DBCP                                                     \n"
+            "                                                                               \n"
+            "    NOTE #2:                                                                   \n"
+            "    Use lowercase arguments in order to data in eye-friendly format.           \n",
         true);
     listOpts.addOption("l", "length",
         "Input data length.                                   \n\n"
@@ -231,7 +238,7 @@ int main(int argc, char* argv[]) {
             break;
           case 7:
             DumpOrder =
-                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().UpperCase();
+                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 8:
             N =
@@ -264,7 +271,7 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 13:
-            std::cout << "Rev. 3.1.0, 2015.01.29\n"
+            std::cout << "Rev. 3.1.2, 2015.02.07\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
         }
@@ -323,7 +330,7 @@ int main(int argc, char* argv[]) {
 
       fs.Type = 'N';
       fs.Channel = 0;
-      SetFaultSolution(fu, M11,M12,M13,M22,M23,M33,strike,dip,rake);
+      SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
       fs.FullSolution = fu;
       fs.TraceNullSolution = fu;
       fs.DoubleCoupleSolution = fu;
@@ -350,7 +357,7 @@ int main(int argc, char* argv[]) {
 
         fs.Type = 'J';
         fs.Channel = 0;
-        SetFaultSolution(fu, M11,M12,M13,M22,M23,M33,strike,dip,rake);
+        SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
         fs.FullSolution = fu;
         fs.TraceNullSolution = fu;
         fs.DoubleCoupleSolution = fu;
@@ -398,7 +405,7 @@ int main(int argc, char* argv[]) {
 
       fs.Type = 'N';
       fs.Channel = 0;
-      SetFaultSolution(fu, M11,M12,M13,M22,M23,M33,strike,dip,rake);
+      SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
       fs.FullSolution = fu;
       fs.TraceNullSolution = fu;
       fs.DoubleCoupleSolution = fu;
@@ -616,6 +623,7 @@ int main(int argc, char* argv[]) {
     else
       DrawDC = false;
 
+    char txtb[512] = { };
     for (unsigned int j = 0; j < FSList.size(); j++) {
       Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
       char Type = FSList[j].Type;
@@ -644,85 +652,160 @@ int main(int argc, char* argv[]) {
           ofstream OutFile(OutName.c_str(),
               std::ofstream::out | std::ofstream::app);
 
+          bool head = false;
+          if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
+
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
-            OutFile << Type << "\t" << Channel << "\t";
+            sprintf(txtb, "%5d", Channel);
+            OutFile << Type << FOCIMT_SEP << txtb << FOCIMT_SEP;
           }
 
           for (int i = 1; i <= DumpOrder.Length(); i++) {
             // M - moment, D - decomposition, A - axis, F - fault planes,
-            // C - moment in CMT convention.
+            // C - moment in CMT convention, * - newline
 
-            // Dump moment tensor components.
+            // Export moment tensor components.
             if (DumpOrder[i] == 'M') {
-              OutFile << Solution.M[1][1] << "\t";
-              OutFile << Solution.M[1][2] << "\t";
-              OutFile << Solution.M[1][3] << "\t";
-              OutFile << Solution.M[2][2] << "\t";
-              OutFile << Solution.M[2][3] << "\t";
-              OutFile << Solution.M[3][3] << "\t";
+              OutFile << Solution.M[1][1] << FOCIMT_SEP;
+              OutFile << Solution.M[1][2] << FOCIMT_SEP;
+              OutFile << Solution.M[1][3] << FOCIMT_SEP;
+              OutFile << Solution.M[2][2] << FOCIMT_SEP;
+              OutFile << Solution.M[2][3] << FOCIMT_SEP;
+              OutFile << Solution.M[3][3] << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'm') {
+              sprintf(txtb, "%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s",
+                  Solution.M[1][1], FOCIMT_SEP, Solution.M[1][2], FOCIMT_SEP,
+                  Solution.M[1][3], FOCIMT_SEP, Solution.M[2][2], FOCIMT_SEP,
+                  Solution.M[2][3], FOCIMT_SEP, Solution.M[3][3], FOCIMT_SEP);
+              OutFile << txtb;
             }
 
-            // Dump moment tensor components in CMT convention.
+            // Export moment tensor components in CMT convention.
             if (DumpOrder[i] == 'C') {
-              OutFile << Solution.M[3][3] << "\t";
-              OutFile << Solution.M[1][1] << "\t";
-              OutFile << Solution.M[2][2] << "\t";
-              OutFile << Solution.M[1][3] << "\t";
-              OutFile << -Solution.M[2][3] << "\t";
-              OutFile << -Solution.M[1][2] << "\t";
+              OutFile << Solution.M[3][3] << FOCIMT_SEP;
+              OutFile << Solution.M[1][1] << FOCIMT_SEP;
+              OutFile << Solution.M[2][2] << FOCIMT_SEP;
+              OutFile << Solution.M[1][3] << FOCIMT_SEP;
+              OutFile << -Solution.M[2][3] << FOCIMT_SEP;
+              OutFile << -Solution.M[1][2] << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'c') {
+              sprintf(txtb, "%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s",
+                  Solution.M[3][3], FOCIMT_SEP, Solution.M[1][1], FOCIMT_SEP,
+                  Solution.M[2][2], FOCIMT_SEP, Solution.M[1][3], FOCIMT_SEP,
+                  -Solution.M[2][3], FOCIMT_SEP, -Solution.M[1][2], FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export percentage of decomposed moment tensor components.
             if (DumpOrder[i] == 'D') {
-              OutFile << Solution.EXPL << "\t";
-              OutFile << Solution.CLVD << "\t";
-              OutFile << Solution.DBCP << "\t";
+              OutFile << Solution.EXPL << FOCIMT_SEP;
+              OutFile << Solution.CLVD << FOCIMT_SEP;
+              OutFile << Solution.DBCP << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'd') {
+              sprintf(txtb, "%+7.1f%s%+7.1f%s%+7.1f%s", Solution.EXPL,
+              FOCIMT_SEP, Solution.CLVD, FOCIMT_SEP, Solution.DBCP,
+              FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export axis trends and plunges.
             if (DumpOrder[i] == 'A') {
-              OutFile << Solution.PXTR << "\t";
-              OutFile << Solution.PXPL << "\t";
-              OutFile << Solution.TXTR << "\t";
-              OutFile << Solution.TXPL << "\t";
-              OutFile << Solution.BXTR << "\t";
-              OutFile << Solution.BXPL << "\t";
+              OutFile << Solution.PXTR << FOCIMT_SEP;
+              OutFile << Solution.PXPL << FOCIMT_SEP;
+              OutFile << Solution.TXTR << FOCIMT_SEP;
+              OutFile << Solution.TXPL << FOCIMT_SEP;
+              OutFile << Solution.BXTR << FOCIMT_SEP;
+              OutFile << Solution.BXPL << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'a') {
+              sprintf(txtb, "%5.1f%s%4.1f%s%5.1f%s%4.1f%s%5.1f%s%4.1f%s",
+                  Solution.PXTR, FOCIMT_SEP, Solution.PXPL, FOCIMT_SEP,
+                  Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
+                  Solution.BXTR, FOCIMT_SEP, Solution.BXPL, FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export fault plane solutions
             if (DumpOrder[i] == 'F') {
-              OutFile << Solution.FIA << "\t";
-              OutFile << Solution.DLA << "\t";
-              OutFile << Solution.RAKEA << "\t";
-              OutFile << Solution.FIB << "\t";
-              OutFile << Solution.DLB << "\t";
-              OutFile << Solution.RAKEB << "\t";
+              OutFile << Solution.FIA << FOCIMT_SEP;
+              OutFile << Solution.DLA << FOCIMT_SEP;
+              OutFile << Solution.RAKEA << FOCIMT_SEP;
+              OutFile << Solution.FIB << FOCIMT_SEP;
+              OutFile << Solution.DLB << FOCIMT_SEP;
+              OutFile << Solution.RAKEB << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'f') {
+              sprintf(txtb, "%5.1f%s%4.1f%s%6.1f%s%5.1f%s%4.1f%s%6.1f%s",
+                  Solution.FIA, FOCIMT_SEP, Solution.DLA, FOCIMT_SEP,
+                  Solution.RAKEA, FOCIMT_SEP, Solution.FIB, FOCIMT_SEP,
+                  Solution.DLB, FOCIMT_SEP, Solution.RAKEB, FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export seismic moments, moment magnitude and moment error
             if (DumpOrder[i] == 'W') {
-              OutFile << Solution.M0 << "\t";
-              OutFile << Solution.MT << "\t";
-              OutFile << Solution.ERR << "\t";
-              OutFile << Solution.MAGN << "\t";
+              OutFile << Solution.M0 << FOCIMT_SEP;
+              OutFile << Solution.MT << FOCIMT_SEP;
+              OutFile << Solution.ERR << FOCIMT_SEP;
+              OutFile << Solution.MAGN << FOCIMT_SEP;
+            }
+            if (DumpOrder[i] == 'w') {
+              sprintf(txtb, "%11.3e%s%11.3e%s%11.3e%s%6.2f%s", Solution.M0,
+              FOCIMT_SEP, Solution.MT, FOCIMT_SEP, Solution.ERR, FOCIMT_SEP,
+                  Solution.MAGN, FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export quality factor.
             if (DumpOrder[i] == 'Q') {
-              OutFile << Solution.QI << "\t";
+              OutFile << Solution.QI << FOCIMT_SEP;
+            }
+            if (DumpOrder[i] == 'q') {
+              sprintf(txtb, "%5.1f%s", Solution.QI, FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export solution type.
             if (DumpOrder[i] == 'T') {
-              OutFile << Solution.Type.c_str() << "\t";
+              OutFile << Solution.Type.c_str() << FOCIMT_SEP;
+            }
+            if (DumpOrder[i] == 't') {
+              sprintf(txtb, "%s%s", Solution.Type.c_str(), FOCIMT_SEP);
+              OutFile << txtb;
             }
 
+            // Export theoretical displacements.
             if (DumpOrder[i] == 'U') {
-              for (int r = 0; r < Solution.U_n; r++)
-                OutFile << Solution.U_th[r] << "\t";
+              for (int r = 0; r < Solution.U_n; r++) {
+                OutFile << Solution.U_th[r] << FOCIMT_SEP;
+              }
+            }
+            else if (DumpOrder[i] == 'u') {
+              for (int r = 0; r < Solution.U_n; r++) {
+                sprintf(txtb, "%13.5e%s", Solution.U_th[r], FOCIMT_SEP);
+                OutFile << txtb;
+              }
             }
 
+            // Export std error of displacement fit.
             if (DumpOrder[i] == 'E') {
-              OutFile << Solution.UERR << "\t";
+              OutFile << Solution.UERR << FOCIMT_SEP;
+            }
+            else if (DumpOrder[i] == 'e') {
+              sprintf(txtb, "%11.3e%s", Solution.UERR, FOCIMT_SEP);
+              OutFile << txtb;
+            }
+
+            if (DumpOrder[i] == '*') {
+              OutFile << FOCIMT_NEWLINE;
             }
           }
 
-          OutFile << "\n";
+          OutFile << FOCIMT_NEWLINE;
           OutFile.close();
         }
 
@@ -791,9 +874,9 @@ int main(int argc, char* argv[]) {
 }
 
 //-----------------------------------------------------------------------------
-void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12, double M13,
-    double M22,  double M23, double M33, double strike, double dip, double rake)
-{
+void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
+    double M13, double M22, double M23, double M33, double strike, double dip,
+    double rake) {
   Taquart::nodal_plane NP;
   fu.M[1][1] = M11;
   fu.M[1][2] = M12;
@@ -814,8 +897,6 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12, double
   fu.DLB = Taquart::computed_dip1(NP);
   fu.RAKEB = Taquart::computed_rake1(NP);
 }
-
-
 
 //-----------------------------------------------------------------------------
 void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
@@ -925,11 +1006,11 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
         s = &FSList[i].FullSolution;
       }
 
-      // "Normal fault","Strike fault","Reverse fault"
-      if (s->Type == "Normal fault") {
+      // Set color in response to the type of the fault.
+      if (s->Type == "NF") {
         Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.7);
       }
-      else if (s->Type == "Reverse fault") {
+      else if (s->Type == "TF") {
         Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.7);
       }
       else {
