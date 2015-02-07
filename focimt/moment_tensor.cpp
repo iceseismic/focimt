@@ -495,7 +495,8 @@ int main(int argc, char* argv[]) {
     try {
       int ThreadProgress = 0;
       USMTCore(InversionNormType, QualityType, InputData, &ThreadProgress);
-    } catch (...) {
+    }
+    catch (...) {
       std::cout << "Inversion error." << std::endl;
       return 1;
     }
@@ -542,7 +543,8 @@ int main(int argc, char* argv[]) {
         try {
           int ThreadProgress = 0;
           USMTCore(InversionNormType, QualityType, td, &ThreadProgress);
-        } catch (...) {
+        }
+        catch (...) {
           std::cout << "Inversion error." << std::endl;
           return 1;
         }
@@ -580,7 +582,8 @@ int main(int argc, char* argv[]) {
           try {
             int ThreadProgress = 0;
             USMTCore(InversionNormType, QualityType, td, &ThreadProgress);
-          } catch (...) {
+          }
+          catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
@@ -837,7 +840,8 @@ int main(int argc, char* argv[]) {
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
             Meca.Save(OutName);
-          } catch (...) {
+          }
+          catch (...) {
             return 2;
           }
         }
@@ -848,7 +852,8 @@ int main(int argc, char* argv[]) {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".svg";
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSVG, OutName);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          } catch (...) {
+          }
+          catch (...) {
             return 2;
           }
         }
@@ -859,7 +864,8 @@ int main(int argc, char* argv[]) {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".ps";
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPS, OutName);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          } catch (...) {
+          }
+          catch (...) {
             return 2;
           }
         }
@@ -870,7 +876,8 @@ int main(int argc, char* argv[]) {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".pdf";
             Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPDF, OutName);
             GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          } catch (...) {
+          }
+          catch (...) {
             return 2;
           }
         }
@@ -878,7 +885,8 @@ int main(int argc, char* argv[]) {
     } // Loop for all solution types.
 
     return 0;
-  } catch (...) {
+  }
+  catch (...) {
     return 1; // Some undefined error occurred, error code 1.
   }
 
