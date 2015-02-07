@@ -609,15 +609,11 @@ int main(int argc, char* argv[]) {
     // using Cairo library.
 
     // Projection type.
-    if (Projection.Pos("W"))
-      WulffProjection = true;
-    if (Projection.Pos("S"))
-      WulffProjection = false;
+    if (Projection.Pos("W")) WulffProjection = true;
+    if (Projection.Pos("S")) WulffProjection = false;
 
-    if (Projection.Pos("U"))
-      LowerHemisphere = false;
-    if (Projection.Pos("L"))
-      LowerHemisphere = true;
+    if (Projection.Pos("U")) LowerHemisphere = false;
+    if (Projection.Pos("L")) LowerHemisphere = true;
 
     // Content of ball.
     if (BallContent.Pos("S"))
@@ -670,8 +666,7 @@ int main(int argc, char* argv[]) {
               std::ofstream::out | std::ofstream::app);
 
           bool head = false;
-          if (DumpOrder.Pos("h") || DumpOrder.Pos("H"))
-            head = true; // TODO: Export header (not implemented yet)
+          if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
 
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
@@ -830,8 +825,7 @@ int main(int argc, char* argv[]) {
         // Output picture name
 
         // Do not dump anything.
-        if (OutputFileType.Pos("NONE") && j == 0)
-          continue;
+        if (OutputFileType.Pos("NONE") && j == 0) continue;
 
         // Dump to PNG.
         if (OutputFileType.Pos("PNG") && j == 0) {
@@ -978,8 +972,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       double GA[5];
 
       double Tko = il.TakeOff;
-      if (Tko == 90.0f)
-        Tko = 89.75f;
+      if (Tko == 90.0f) Tko = 89.75f;
 
       GA[3] = cos(Tko * DEG2RAD);
       double help = sqrt(1.0f - GA[3] * GA[3]);
@@ -1000,8 +993,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     Meca.Axis(T, "T");
   }
 
-  if (DrawCross)
-    Meca.CenterCross();
+  if (DrawCross) Meca.CenterCross();
 
   // Draw double-couple lines.
   if (DrawDC) {
