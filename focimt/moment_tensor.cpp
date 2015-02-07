@@ -984,11 +984,11 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
         s = &FSList[i].FullSolution;
       }
 
-      // "Normal fault","Strike fault","Reverse fault"
-      if (s->Type == "Normal fault") {
+      // Set color in response to the type of the fault.
+      if (s->Type == "NF") {
         Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.7);
       }
-      else if (s->Type == "Reverse fault") {
+      else if (s->Type == "TF") {
         Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.7);
       }
       else {
