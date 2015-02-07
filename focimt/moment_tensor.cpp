@@ -344,12 +344,9 @@ int main(int argc, char* argv[]) {
           FaultString = "";
         }
         //
-        double S = strike * DEG2RAD;
-        double D = dip * DEG2RAD;
-        double R = rake * DEG2RAD;
 
         double M11, M22, M33, M12, M13, M23;
-        Taquart::StrikeDipRake2MT(S, D, R, M11, M22, M33, M12, M13, M23);
+        Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD, M11, M22, M33, M12, M13, M23);
 
         fs.Type = 'J';
         fs.Channel = 0;
@@ -389,15 +386,9 @@ int main(int argc, char* argv[]) {
         FaultString = "";
       }
 
-      //std::cout << strike << " " << dip << " " << rake;
-
-      double S = strike * DEG2RAD;
-      double D = dip * DEG2RAD;
-      double R = rake * DEG2RAD;
-
       // Transfer strike/dip/rake to tensor.
       double M11, M22, M33, M12, M13, M23;
-      Taquart::StrikeDipRake2MT(S, D, R, M11, M22, M33, M12, M13, M23);
+      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD, M11, M22, M33, M12, M13, M23);
 
       std::vector<FaultSolutions> FSList;
       Taquart::SMTInputData InputData;
@@ -436,7 +427,6 @@ int main(int argc, char* argv[]) {
     // Load input data
     std::ifstream InputFile;
     InputFile.open(FilenameIn.c_str());
-    //char TempBuffer[100];
     for (unsigned int i = 0; i < N; i++) {
       InputFile >> id;
       InputFile >> duration;
@@ -447,9 +437,8 @@ int main(int argc, char* argv[]) {
       InputFile >> distance;
       InputFile >> density;
 
-      // Dump to input file.
+      // Prepare input structure.
       Taquart::SMTInputLine il;
-      //sprintf(TempBuffer, "%02d", id);
       il.Name = Taquart::FormatFloat("%02.0f", id); /*!< Station name.*/
       il.Id = id; /*!< Station id number.*/
       il.Component = "ZZ"; //"ZZ";       /*!< Component.*/
@@ -472,7 +461,7 @@ int main(int argc, char* argv[]) {
     }
     InputFile.close();
     bool Result = false;
-    InputData.CountRuptureTime(Result);
+    InputData.CountRuptureTime(Result); // TODO: This is not used in current context.
 
     // Depending on the method, calculate moment tensor once or N times (Jackknife test)
 
@@ -516,7 +505,6 @@ int main(int argc, char* argv[]) {
         Taquart::SMTInputData td = fd;
         Taquart::SMTInputLine InputLine;
 
-        //std::cout << i << std::endl;
         int sample;
         double u1, u2, z;
         for (unsigned int j = 0; j < td.Count(); j++) {
@@ -526,7 +514,6 @@ int main(int argc, char* argv[]) {
           sample = rand();
           u2 = (sample + 1) / (double(RAND_MAX) + 1);
           z = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
-          //std::cout << RAND_MAX << " " << sample << " " << u1 << " " << u2<< " " << z << std::endl;
           InputLine.Displacement = InputLine.Displacement
               + z / 3.0 * InputLine.Displacement * AmpFactor;
           td.Set(j, InputLine);
@@ -598,8 +585,8 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    // Produce output file and graphical representation of the moment tensor
-    // using Cairo library.
+
+    //---- Produce output file and graphical representation of the moment tensor using Cairo library.
 
     // Projection type.
     if (Projection.Pos("W")) WulffProjection = true;
@@ -739,12 +726,12 @@ int main(int argc, char* argv[]) {
           OutFile.close();
         }
 
-        // Output picture name
+        //---- Generate and save graphical representation of MT.
 
         // Do not dump anything.
         if (OutputFileType.Pos("NONE") && j == 0) continue;
 
-        // Dump to PNG.
+        // Export to PNG.
         if (OutputFileType.Pos("PNG") && j == 0) {
           try {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".png";
@@ -757,7 +744,7 @@ int main(int argc, char* argv[]) {
           }
         }
 
-        // Dump to SVG.
+        // Export to SVG.
         if (OutputFileType.Pos("SVG") && j == 0) {
           try {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".svg";
@@ -769,7 +756,7 @@ int main(int argc, char* argv[]) {
           }
         }
 
-        // Dump to PS.
+        // Export to PS.
         if (OutputFileType.Pos("PS") && j == 0) {
           try {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".ps";
@@ -781,7 +768,7 @@ int main(int argc, char* argv[]) {
           }
         }
 
-        // Dump to PDF.
+        // Export to PDF.
         if (OutputFileType.Pos("PDF") && j == 0) {
           try {
             Taquart::String OutName = FilenameOut + "-" + FSuffix + ".pdf";
