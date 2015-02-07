@@ -632,6 +632,7 @@ int main(int argc, char* argv[]) {
     else
       DrawDC = false;
 
+    char txtbuff[256];
     for (unsigned int j = 0; j < FSList.size(); j++) {
       Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
       char Type = FSList[j].Type;
@@ -691,6 +692,8 @@ int main(int argc, char* argv[]) {
 
             // Export percentage of decomposed moment tensor components.
             if (DumpOrder[i] == 'D') {
+              //sprintf(txtbuff,"%+6.1f%s%+6.1f%s%+6.1f%s",Solution.EXPL,FOCIMT_SEP,Solution.CLVD,FOCIMT_SEP,Solution.DBCP,FOCIMT_SEP);
+              //OutFile << txtbuff;
               OutFile << Solution.EXPL << FOCIMT_SEP;
               OutFile << Solution.CLVD << FOCIMT_SEP;
               OutFile << Solution.DBCP << FOCIMT_SEP;
