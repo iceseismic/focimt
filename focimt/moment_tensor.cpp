@@ -45,6 +45,8 @@
 using namespace std;
 
 #define squared(x) (pow(x,2.0))
+#define FOCIMT_SEP " "
+#define FOCIMT_NEWLINE "\n"
 
 // Default values.
 bool DrawStations = true;
@@ -659,7 +661,7 @@ int main(int argc, char* argv[]) {
 
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
-            OutFile << Type << "\t" << Channel << "\t";
+            OutFile << Type << FOCIMT_SEP << Channel << FOCIMT_SEP;
           }
 
           for (int i = 1; i <= DumpOrder.Length(); i++) {
@@ -668,74 +670,74 @@ int main(int argc, char* argv[]) {
 
             // Dump moment tensor components.
             if (DumpOrder[i] == 'M') {
-              OutFile << Solution.M[1][1] << "\t";
-              OutFile << Solution.M[1][2] << "\t";
-              OutFile << Solution.M[1][3] << "\t";
-              OutFile << Solution.M[2][2] << "\t";
-              OutFile << Solution.M[2][3] << "\t";
-              OutFile << Solution.M[3][3] << "\t";
+              OutFile << Solution.M[1][1] << FOCIMT_SEP;
+              OutFile << Solution.M[1][2] << FOCIMT_SEP;
+              OutFile << Solution.M[1][3] << FOCIMT_SEP;
+              OutFile << Solution.M[2][2] << FOCIMT_SEP;
+              OutFile << Solution.M[2][3] << FOCIMT_SEP;
+              OutFile << Solution.M[3][3] << FOCIMT_SEP;
             }
 
             // Dump moment tensor components in CMT convention.
             if (DumpOrder[i] == 'C') {
-              OutFile << Solution.M[3][3] << "\t";
-              OutFile << Solution.M[1][1] << "\t";
-              OutFile << Solution.M[2][2] << "\t";
-              OutFile << Solution.M[1][3] << "\t";
-              OutFile << -Solution.M[2][3] << "\t";
-              OutFile << -Solution.M[1][2] << "\t";
+              OutFile << Solution.M[3][3] << FOCIMT_SEP;
+              OutFile << Solution.M[1][1] << FOCIMT_SEP;
+              OutFile << Solution.M[2][2] << FOCIMT_SEP;
+              OutFile << Solution.M[1][3] << FOCIMT_SEP;
+              OutFile << -Solution.M[2][3] << FOCIMT_SEP;
+              OutFile << -Solution.M[1][2] << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'D') {
-              OutFile << Solution.EXPL << "\t";
-              OutFile << Solution.CLVD << "\t";
-              OutFile << Solution.DBCP << "\t";
+              OutFile << Solution.EXPL << FOCIMT_SEP;
+              OutFile << Solution.CLVD << FOCIMT_SEP;
+              OutFile << Solution.DBCP << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'A') {
-              OutFile << Solution.PXTR << "\t";
-              OutFile << Solution.PXPL << "\t";
-              OutFile << Solution.TXTR << "\t";
-              OutFile << Solution.TXPL << "\t";
-              OutFile << Solution.BXTR << "\t";
-              OutFile << Solution.BXPL << "\t";
+              OutFile << Solution.PXTR << FOCIMT_SEP;
+              OutFile << Solution.PXPL << FOCIMT_SEP;
+              OutFile << Solution.TXTR << FOCIMT_SEP;
+              OutFile << Solution.TXPL << FOCIMT_SEP;
+              OutFile << Solution.BXTR << FOCIMT_SEP;
+              OutFile << Solution.BXPL << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'F') {
-              OutFile << Solution.FIA << "\t";
-              OutFile << Solution.DLA << "\t";
-              OutFile << Solution.RAKEA << "\t";
-              OutFile << Solution.FIB << "\t";
-              OutFile << Solution.DLB << "\t";
-              OutFile << Solution.RAKEB << "\t";
+              OutFile << Solution.FIA << FOCIMT_SEP;
+              OutFile << Solution.DLA << FOCIMT_SEP;
+              OutFile << Solution.RAKEA << FOCIMT_SEP;
+              OutFile << Solution.FIB << FOCIMT_SEP;
+              OutFile << Solution.DLB << FOCIMT_SEP;
+              OutFile << Solution.RAKEB << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'W') {
-              OutFile << Solution.M0 << "\t";
-              OutFile << Solution.MT << "\t";
-              OutFile << Solution.ERR << "\t";
-              OutFile << Solution.MAGN << "\t";
+              OutFile << Solution.M0 << FOCIMT_SEP;
+              OutFile << Solution.MT << FOCIMT_SEP;
+              OutFile << Solution.ERR << FOCIMT_SEP;
+              OutFile << Solution.MAGN << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'Q') {
-              OutFile << Solution.QI << "\t";
+              OutFile << Solution.QI << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'T') {
-              OutFile << Solution.Type.c_str() << "\t";
+              OutFile << Solution.Type.c_str() << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'U') {
               for (int r = 0; r < Solution.U_n; r++)
-                OutFile << Solution.U_th[r] << "\t";
+                OutFile << Solution.U_th[r] << FOCIMT_SEP;
             }
 
             if (DumpOrder[i] == 'E') {
-              OutFile << Solution.UERR << "\t";
+              OutFile << Solution.UERR << FOCIMT_SEP;
             }
           }
 
-          OutFile << "\n";
+          OutFile << FOCIMT_NEWLINE;
           OutFile.close();
         }
 
