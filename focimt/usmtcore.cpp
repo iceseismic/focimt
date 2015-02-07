@@ -1138,7 +1138,7 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
   double AMP[4][4];
   Zero(&AMP[0][0], 16);
 
-  String INFO[4] = { "", "Normal fault", "Strike fault", "Reverse fault" };
+  String INFO[4] = { "", "NF", "SS", "TF" };
   String INFFTD[4];
 
   double ETA[4];
