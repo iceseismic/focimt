@@ -61,6 +61,7 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
     double M13, double M22, double M23, double M33, double strike, double dip,
     double rake);
 
+//-----------------------------------------------------------------------------
 class FaultSolutions {
   public:
     char Type;
@@ -304,27 +305,20 @@ int main(int argc, char* argv[]) {
       dip = temp.ToDouble();
       if (FaultString.Pos(":")) {
         rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-
-        // Dispatch station data...
         Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-
       }
       else {
         rake = FaultString.Trim().ToDouble();
         FaultString = "";
       }
 
-      const double S = strike * DEG2RAD;
-      const double D = dip * DEG2RAD;
-      const double R = rake * DEG2RAD;
-
       // Transfer strike/dip/rake to tensor.
       double M11, M22, M33, M12, M13, M23;
-      Taquart::StrikeDipRake2MT(S, D, R, M11, M22, M33, M12, M13, M23);
+      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
+          M11, M22, M33, M12, M13, M23);
 
       std::vector<FaultSolutions> FSList;
       Taquart::SMTInputData InputData;
-
       FaultSolutions fs;
       Taquart::FaultSolution fu;
 
@@ -350,10 +344,10 @@ int main(int argc, char* argv[]) {
           rake = FaultString.Trim().ToDouble();
           FaultString = "";
         }
-        //
 
         double M11, M22, M33, M12, M13, M23;
-        Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD, M11, M22, M33, M12, M13, M23);
+        Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD,
+            rake * DEG2RAD, M11, M22, M33, M12, M13, M23);
 
         fs.Type = 'J';
         fs.Channel = 0;
@@ -383,10 +377,7 @@ int main(int argc, char* argv[]) {
       dip = temp.ToDouble();
       if (FaultString.Pos(":")) {
         rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-
-        // Dispatch station data...
         Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-
       }
       else {
         rake = FaultString.Trim().ToDouble();
@@ -395,11 +386,11 @@ int main(int argc, char* argv[]) {
 
       // Transfer strike/dip/rake to tensor.
       double M11, M22, M33, M12, M13, M23;
-      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD, M11, M22, M33, M12, M13, M23);
+      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
+          M11, M22, M33, M12, M13, M23);
 
       std::vector<FaultSolutions> FSList;
       Taquart::SMTInputData InputData;
-
       FaultSolutions fs;
       Taquart::FaultSolution fu;
 
@@ -462,25 +453,18 @@ int main(int argc, char* argv[]) {
       il.Velocity = velocity; /*!< Average velocity [m/s]. */
       il.PickActive = true;
       il.ChannelActive = true;
-
       InputData.Add(il);
-
     }
+
     InputFile.close();
     bool Result = false;
     InputData.CountRuptureTime(Result); // TODO: This is not used in current context.
 
-    // Depending on the method, calculate moment tensor once or N times (Jackknife test)
-
-    // Output structures.
-
+    //---- Data processing.
     std::vector<FaultSolutions> FSList;
+    Taquart::FaultSolution fu, tr, dc;
 
     // Perform regular SMT inversion with all stations.
-    Taquart::FaultSolution fu;
-    Taquart::FaultSolution tr;
-    Taquart::FaultSolution dc;
-
     try {
       int ThreadProgress = 0;
       USMTCore(InversionNormType, QualityType, InputData, &ThreadProgress);
@@ -592,13 +576,11 @@ int main(int argc, char* argv[]) {
       }
     }
 
-
     //---- Produce output file and graphical representation of the moment tensor using Cairo library.
 
     // Projection type.
     if (Projection.Pos("W")) WulffProjection = true;
     if (Projection.Pos("S")) WulffProjection = false;
-
     if (Projection.Pos("U")) LowerHemisphere = false;
     if (Projection.Pos("L")) LowerHemisphere = true;
 
@@ -870,7 +852,6 @@ int main(int argc, char* argv[]) {
   catch (...) {
     return 1; // Some undefined error occurred, error code 1.
   }
-
 }
 
 //-----------------------------------------------------------------------------
