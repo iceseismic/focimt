@@ -33,6 +33,7 @@
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 #include <trilib/string.h>
+
 #include "moment_tensor.h"
 
 namespace Taquart {

@@ -34,8 +34,8 @@
 //-----------------------------------------------------------------------------
 
 #include <vector>
-#include <trilib/string.h>
 #include <triexceptions/exceptions.h>
+#include <trilib/string.h>
 //#include "fcore.h"
 //#include "xmlexporter.h"
 //---------------------------------------------------------------------------

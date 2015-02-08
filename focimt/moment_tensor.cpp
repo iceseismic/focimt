@@ -32,9 +32,10 @@
 #include <math.h>
 #include <iostream>
 #include <fstream>
-#include <trilib/string.h>
 #include <trilib/georoutines.h>
 #include <tricairo/tricairo_meca.h>
+#include <trilib/string.h>
+
 //-----------------------------------------------------------------------------
 #include "getopts.h"
 #include "faultsolution.h"
