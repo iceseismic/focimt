@@ -43,6 +43,7 @@
 #include "usmtcore.h"
 #include "moment_tensor.h"
 #include "focimtaux.h"
+#include "traveltime.h"
 //-----------------------------------------------------------------------------
 
 using namespace std;
@@ -231,7 +232,7 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 13:
-            std::cout << "Rev. 3.1.2, 2015.02.07\n"
+            std::cout << "Rev. 3.1.3, 2015.02.11\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
         }
@@ -251,6 +252,26 @@ int main(int argc, char* argv[]) {
     else if (FilenameOut.Length() == 0
         && (DrawFaultOnly == true || DrawFaultsOnly == true)) {
       FilenameOut = "default";
+    }
+
+    std::vector<double> Top;
+    std::vector<double> Velocity;
+    if (VelocityModel) {
+      // Check if velocity model exists and read it.
+      std::ifstream VelocityFile;
+      int n;
+      double v;
+      VelocityFile.open(FilenameVelocity.c_str());
+      VelocityFile >> n;
+      for (int i = 0; i < n; i++) {
+        VelocityFile >> v;
+        Top.push_back(v);
+      }
+      for (int i = 0; i < n; i++) {
+        VelocityFile >> v;
+        Velocity.push_back(v);
+      }
+      VelocityFile.close();
     }
 
     // Draw fault only and return to dos...
@@ -376,45 +397,106 @@ int main(int argc, char* argv[]) {
     Taquart::SMTInputData InputData;
 
     const unsigned int Size = 500;
-    int id = 0.0;
+    char id[50];
     double duration = 0.0, displacement = 0.0;
     double azimuth = 0.0, takeoff = 0.0, velocity = 0.0, distance = 0.0,
-        density = 0.0;
+        density = 0.0, aoi = 0.0;
 
-    // Load input data
     std::ifstream InputFile;
     InputFile.open(FilenameIn.c_str());
-    for (unsigned int i = 0; i < N; i++) {
-      InputFile >> id;
-      InputFile >> duration;
-      InputFile >> displacement;
-      InputFile >> azimuth;
-      InputFile >> takeoff;
-      InputFile >> velocity;
-      InputFile >> distance;
+    if (VelocityModel) {
+      // Reading formatted input file (velocity model format).
+      double e_northing = 0.0f, e_easting = 0.0f, e_z = 0.0f;
+      double s_northing = 0.0f, s_easting = 0.0f, s_z = 0.0f;
+      InputFile >> e_northing;
+      InputFile >> e_easting;
+      InputFile >> e_z;
       InputFile >> density;
+      for (unsigned int i = 0; i < N; i++) {
+        InputFile >> id;
+        InputFile >> s_northing;
+        InputFile >> s_easting;
+        InputFile >> s_z;
+        InputFile >> duration;
+        InputFile >> displacement;
 
-      // Prepare input structure.
-      Taquart::SMTInputLine il;
-      il.Name = Taquart::FormatFloat("%02.0f", id); /*!< Station name.*/
-      il.Id = id; /*!< Station id number.*/
-      il.Component = "ZZ"; //"ZZ";       /*!< Component.*/
-      il.MarkerType = ""; //"p*ons/p*max";      /*!< Type of the marker used.*/
-      il.Start = 0.0; //tstart;;           /*!< Start time [s].*/
-      il.End = duration; //tend;;             /*!< End time [s].*/
-      il.Duration = duration; /*!< Duration of signal [s].*/
-      il.Displacement = displacement; /*!< Displacement [m]. */
-      il.Incidence = 0; //incidence;       /*!< Angle of incidence [deg]. */
-      il.Azimuth = azimuth; /*!< Azimuth between station and source [deg]. */
-      il.TakeOff = takeoff; /*!< Takeoff angle [deg]. */
-      il.Distance = distance; /*!< Distance between station and source [m]. */
-      il.Density = density; /*!< Density [km/m**3]. */
-      il.Velocity = velocity; /*!< Average velocity [m/s]. */
-      il.PickActive = true;
-      il.ChannelActive = true;
-      InputData.Add(il);
+        // Calculation of azimuth, takeoff, velocity and distance.
+        double depth = fabs(e_z * 0.001);
+        double elevation = s_z * 0.001;
+        double epicentral_distance = 0.001
+            * sqrt(
+                pow(s_northing - e_northing, 2.0)
+                    + pow(s_easting - e_easting, 2.0));
+        azimuth = atan2(s_easting - e_easting, s_northing - e_northing)
+            * 180/ M_PI;
+        double null;
+        bool null2;
+        int null3;
+
+        for (unsigned int j = Velocity.size() - 1; j >= 0; j--) {
+          if (depth >= Top[j]) {
+            velocity = Velocity[j];
+            break;
+          }
+        }
+        CalcTravelTime1D(elevation, depth, epicentral_distance, Top, Velocity,
+            null, takeoff, null2, aoi, null3, distance);
+        // Prepare input line structure.
+        Taquart::SMTInputLine il;
+        il.Name = Taquart::String(id); /*!< Station name.*/
+        il.Id = i + 1; /*!< Station id number.*/
+        il.Component = "ZZ";
+        il.MarkerType = "";
+        il.Start = 0.0;
+        il.End = duration;
+        il.Duration = duration;
+        il.Displacement = displacement / cos(aoi * M_PI / 180.0); // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
+        il.Incidence = aoi;
+        il.Azimuth = azimuth;
+        il.TakeOff = takeoff;
+        il.Distance = distance;
+        il.Density = density;
+        il.Velocity = velocity;
+        il.PickActive = true;
+        il.ChannelActive = true;
+        InputData.Add(il);
+      }
     }
+    else {
+      // Read formatted input file (standard foci-mt format)
+      for (unsigned int i = 0; i < N; i++) {
+        InputFile >> id;
+        InputFile >> duration; // this is NOT used in current context (incorporated into displacement)!!!
+        InputFile >> displacement; // this should hold in fact area below the first P-wave velocity pulse
+        InputFile >> azimuth;
+        //InputFile >> aoi;
+        aoi = 0.0;
+        InputFile >> takeoff;
+        InputFile >> velocity;
+        InputFile >> distance;
+        InputFile >> density;
 
+
+        // Prepare input line structure.
+        Taquart::SMTInputLine il;
+        il.Name = Taquart::String(id); /*!< Station name.*/
+        il.Id = i + 1; /*!< Station id number.*/
+        il.Component = "ZZ"; //"ZZ";       /*!< Component.*/
+        il.MarkerType = ""; //"p*ons/p*max";      /*!< Type of the marker used.*/
+        il.Start = 0.0; //tstart;;           /*!< Start time [s].*/
+        il.End = duration; //tend;;             /*!< End time [s].*/
+        il.Duration = duration; /*!< Duration of first P-wave velocity pulse [s].*/
+        il.Displacement = displacement / cos(aoi * M_PI / 180.0); /*!< Amplitude of first P-wave displacement pulse [m]. */
+        il.Incidence = aoi; //incidence;       /*!< Angle of incidence [deg] (not used here) */
+        il.Azimuth = azimuth; /*!< Azimuth between station and source [deg]. */
+        il.TakeOff = takeoff; /*!< Takeoff angle measured from bottom [deg]. */
+        il.Distance = distance; /*!< Distance between station and source [m]. */
+        il.Density = density; /*!< Density in the source [km/m**3]. */
+        il.Velocity = velocity; /*!< Velocity in the source [m/s]. */
+        il.PickActive = true;
+        il.ChannelActive = true;
+        InputData.Add(il);
+      }}
     InputFile.close();
     bool Result = false;
     InputData.CountRuptureTime(Result); // TODO: This is not used in current context.
