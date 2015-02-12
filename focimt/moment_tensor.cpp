@@ -606,10 +606,11 @@ int main(int argc, char* argv[]) {
 
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
-            if(Formatted)
-              sprintf(txtb, "%c%s%5d%s", Type,FOCIMT_SEP2, Channel, FOCIMT_SEP2);
+            if (Formatted)
+              sprintf(txtb, "%c%s%5d%s", Type, FOCIMT_SEP2, Channel,
+                  FOCIMT_SEP2);
             else
-              sprintf(txtb, "%c%s%d%s", Type,FOCIMT_SEP, Channel, FOCIMT_SEP);
+              sprintf(txtb, "%c%s%d%s", Type, FOCIMT_SEP, Channel, FOCIMT_SEP);
             OutFile << txtb;
           }
 
