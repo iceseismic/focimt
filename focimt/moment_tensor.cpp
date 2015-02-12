@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
             "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
             "                                                                               \n",
         true);
-            listOpts.addOption("m", "model",
+    listOpts.addOption("m", "model",
         "Velocity model file (with extension)                 \n\n"
             "    Velocity model in hypo71 format. Forces different input file format.       \n",
         true);
@@ -242,7 +242,7 @@ int main(int argc, char* argv[]) {
             VelocityModel = true;
             FilenameVelocity = Taquart::String(
                 listOpts.getArgs(switchInt).c_str()).Trim();
-            break;            
+            break;
           case 14:
             std::cout << "Rev. 3.1.3, 2015.02.11\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
@@ -286,119 +286,15 @@ int main(int argc, char* argv[]) {
       VelocityFile.close();
     }
 
-    // Draw fault only and return to dos...
+    // Draw fault with multiple nodal planes and exit.
     if (DrawFaultsOnly) {
-      // Read strike, dip and rake.
-      Taquart::String temp;
-      double strike = 0, dip = 0, rake = 0;
-      Dispatch(FaultString, temp, "/");
-      strike = temp.ToDouble();
-      Dispatch(FaultString, temp, "/");
-      dip = temp.ToDouble();
-      if (FaultString.Pos(":")) {
-        rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-        Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-      }
-      else {
-        rake = FaultString.Trim().ToDouble();
-        FaultString = "";
-      }
-
-      // Transfer strike/dip/rake to tensor.
-      double M11, M22, M33, M12, M13, M23;
-      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
-          M11, M22, M33, M12, M13, M23);
-
-      std::vector<Taquart::FaultSolutions> FSList;
-      Taquart::SMTInputData InputData;
-      Taquart::FaultSolutions fs;
-      Taquart::FaultSolution fu;
-
-      fs.Type = 'N';
-      fs.Channel = 0;
-      SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
-      fs.FullSolution = fu;
-      fs.TraceNullSolution = fu;
-      fs.DoubleCoupleSolution = fu;
-      FSList.push_back(fs);
-
-      while (FaultString.Length()) {
-        Dispatch(FaultString, temp, "/");
-        strike = temp.ToDouble();
-        Dispatch(FaultString, temp, "/");
-        dip = temp.ToDouble();
-        if (FaultString.Pos(":")) {
-          rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-          // Dispatch station data...
-          Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-        }
-        else {
-          rake = FaultString.Trim().ToDouble();
-          FaultString = "";
-        }
-
-        double M11, M22, M33, M12, M13, M23;
-        Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD,
-            rake * DEG2RAD, M11, M22, M33, M12, M13, M23);
-
-        fs.Type = 'J';
-        fs.Channel = 0;
-        SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
-        fs.FullSolution = fu;
-        fs.TraceNullSolution = fu;
-        fs.DoubleCoupleSolution = fu;
-        FSList.push_back(fs);
-      }
-
-      Taquart::String OutName = FilenameOut + ".png";
-      Taquart::TriCairo_Meca Meca(500, 500, Taquart::ctSurface);
-      GenerateBallCairo(Meca, FSList, InputData, "dbcp");
-      Meca.Save(OutName);
-
+      DrawFaults(FaultString, FilenameOut);
       return 0;
     }
 
-    // Draw fault only and return to the system...
+    // Draw fault with single nodal plane and exit.
     if (DrawFaultOnly) {
-      // Read strike, dip and rake.
-      Taquart::String temp;
-      double strike = 0, dip = 0, rake = 0;
-      Dispatch(FaultString, temp, "/");
-      strike = temp.ToDouble();
-      Dispatch(FaultString, temp, "/");
-      dip = temp.ToDouble();
-      if (FaultString.Pos(":")) {
-        rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-        Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-      }
-      else {
-        rake = FaultString.Trim().ToDouble();
-        FaultString = "";
-      }
-
-      // Transfer strike/dip/rake to tensor.
-      double M11, M22, M33, M12, M13, M23;
-      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
-          M11, M22, M33, M12, M13, M23);
-
-      std::vector<Taquart::FaultSolutions> FSList;
-      Taquart::SMTInputData InputData;
-      Taquart::FaultSolutions fs;
-      Taquart::FaultSolution fu;
-
-      fs.Type = 'N';
-      fs.Channel = 0;
-      SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
-      fs.FullSolution = fu;
-      fs.TraceNullSolution = fu;
-      fs.DoubleCoupleSolution = fu;
-      FSList.push_back(fs);
-
-      Taquart::String OutName = FilenameOut + ".png";
-      Taquart::TriCairo_Meca Meca(500, 500, Taquart::ctSurface);
-      GenerateBallCairo(Meca, FSList, InputData, "dbcp");
-      Meca.Save(OutName);
-
+      DrawFault(FaultString, FilenameOut);
       return 0;
     }
 
@@ -488,7 +384,6 @@ int main(int argc, char* argv[]) {
         InputFile >> distance;
         InputFile >> density;
 
-
         // Prepare input line structure.
         Taquart::SMTInputLine il;
         il.Name = Taquart::String(id); /*!< Station name.*/
@@ -508,7 +403,8 @@ int main(int argc, char* argv[]) {
         il.PickActive = true;
         il.ChannelActive = true;
         InputData.Add(il);
-      }}
+      }
+    }
     InputFile.close();
     bool Result = false;
     InputData.CountRuptureTime(Result); // TODO: This is not used in current context.
@@ -702,7 +598,7 @@ int main(int argc, char* argv[]) {
             // Dump additional information when Jacknife test performed.
             if (Formatted)
               sprintf(txtb, "%c%s%5d%s", Type, FOCIMT_SEP2, Channel,
-                  FOCIMT_SEP2);
+              FOCIMT_SEP2);
             else
               sprintf(txtb, "%c%s%d%s", Type, FOCIMT_SEP, Channel, FOCIMT_SEP);
             OutFile << txtb;

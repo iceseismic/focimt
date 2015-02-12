@@ -56,5 +56,9 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
     Taquart::String delimiter);
 
+void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut);
+
+void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut);
+
 //-----------------------------------------------------------------------------
 #endif /* FOCIMTAUX_H_ */
