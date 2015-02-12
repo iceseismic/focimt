@@ -99,7 +99,7 @@ double Taquart::SMTInputData::CountRuptureTime(bool &Result) {
   Result = false;
 
   // Calculate average rupture time on the basis of 3 stations.
-  if (InputData.size() >= MIN_ALLOWED_CHANNELS) {
+  if (InputData.size() >= FOCIMT_MIN_ALLOWED_CHANNELS) {
     std::vector<Taquart::TimeDist> Lista;
     for (unsigned int i = 0; i < InputData.size(); i++) {
       /* TODO 5 -c3.1.12 : This constraint will be  possibly too weak in the future. */

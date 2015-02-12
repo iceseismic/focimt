@@ -92,8 +92,8 @@ namespace Taquart {
       double Covariance[7][7]; /*!< Covariance matrix.*/
       //std::vector<double> U_th;
       //std::vector<double> U_measured;
-      double U_th[MAXCHANNEL];
-      double U_measured[MAXCHANNEL];
+      double U_th[FOCIMT_MAXCHANNEL];
+      double U_measured[FOCIMT_MAXCHANNEL];
       int U_n;
       double UERR;
 
@@ -152,6 +152,15 @@ namespace Taquart {
       Taquart::String SubString(Taquart::String Line, int Start, int End);
 
     protected:
+  };
+
+  class FaultSolutions {
+    public:
+      char Type;
+      int Channel;
+      Taquart::FaultSolution FullSolution;
+      Taquart::FaultSolution TraceNullSolution;
+      Taquart::FaultSolution DoubleCoupleSolution;
   };
 }
 

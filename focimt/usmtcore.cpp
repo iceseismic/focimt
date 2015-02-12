@@ -41,18 +41,18 @@ using namespace Taquart;
 namespace Taquart {
   namespace UsmtCore {
     int NDAE[10] = { 0, 36, 36, 32, 32, 24, 24, 16, 8, 4 };
-    double U[MAXCHANNEL + 1];
-    double AZM[MAXCHANNEL + 1];
-    double TKF[MAXCHANNEL + 1];
-    double GA[MAXCHANNEL + 1][3 + 1];
-    double A[MAXCHANNEL + 1][6 + 1];
-    double FIJ[3 + 1][3 + 1][MAXCHANNEL + 1];
+    double U[FOCIMT_MAXCHANNEL + 1];
+    double AZM[FOCIMT_MAXCHANNEL + 1];
+    double TKF[FOCIMT_MAXCHANNEL + 1];
+    double GA[FOCIMT_MAXCHANNEL + 1][3 + 1];
+    double A[FOCIMT_MAXCHANNEL + 1][6 + 1];
+    double FIJ[3 + 1][3 + 1][FOCIMT_MAXCHANNEL + 1];
     double RM[6 + 1][3 + 1];
     double COV[6 + 1][6 + 1][3 + 1];
-    int RO[MAXCHANNEL + 1];
-    int VEL[MAXCHANNEL + 1];
-    int R[MAXCHANNEL + 1];
-    double UTH[MAXCHANNEL + 1];
+    int RO[FOCIMT_MAXCHANNEL + 1];
+    int VEL[FOCIMT_MAXCHANNEL + 1];
+    int R[FOCIMT_MAXCHANNEL + 1];
+    double UTH[FOCIMT_MAXCHANNEL + 1];
     int N = 0;
     double TROZ = 0.0;
     double QSD = 0.0;
@@ -123,8 +123,8 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   //      COMMON/PDATA/ A(80,6)
   //      DIMENSION EQM(3),AA(80,6),B(6),H(5),IW(80),PA(3),BB(6)
   //      REAL RM0(3),RMT(3),PCLVD(2),PDBCP(2)
-  double AA[MAXCHANNEL + 1][6 + 1];
-  unsigned int IW[MAXCHANNEL + 1];
+  double AA[FOCIMT_MAXCHANNEL + 1][6 + 1];
+  unsigned int IW[FOCIMT_MAXCHANNEL + 1];
   double PA[3 + 1];
   Zero(PA, 4);
   double EQM[3 + 1];
@@ -1623,7 +1623,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 
   //      PI=4.*ATAN(1.)
   double PI = 4.0 * atan(1.0);
-  int IW[MAXCHANNEL + 1];
+  int IW[FOCIMT_MAXCHANNEL + 1];
   double PA[3 + 1];
   Zero(&PA[0], 4);
   double ATA[6 + 1][6 + 1];
@@ -1652,11 +1652,11 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   double EPS = 0.0;
   double SAI22 = 0.0;
   double SIG = 0.0;
-  double AA[MAXCHANNEL + 1][6 + 1];
-  Zero(&AA[0][0], (MAXCHANNEL + 1) * 7);
+  double AA[FOCIMT_MAXCHANNEL + 1][6 + 1];
+  Zero(&AA[0][0], (FOCIMT_MAXCHANNEL + 1) * 7);
   double DUM = 0.0;
-  double H[MAXCHANNEL + 1][5 + 1];
-  Zero(&H[0][0], (MAXCHANNEL + 1) * 6);
+  double H[FOCIMT_MAXCHANNEL + 1][5 + 1];
+  Zero(&H[0][0], (FOCIMT_MAXCHANNEL + 1) * 6);
   double RMX = 0.0, RMY = 0.0, RMZ = 0.0;
   double RMAG = 0.0;
   double PEXPL[4], PCLVD[3 + 1], PDBCP[3 + 1];
@@ -2780,15 +2780,15 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   Zero(VN, 4);
   double VE[3 + 1];
   Zero(VE, 4);
-  double AM0[MAXCHANNEL + 1];
-  Zero(AM0, MAXCHANNEL + 1);
+  double AM0[FOCIMT_MAXCHANNEL + 1];
+  Zero(AM0, FOCIMT_MAXCHANNEL + 1);
   double DD[6 + 1];
   Zero(DD, 7);
   double EQM[3 + 1];
   Zero(EQM, 4);
   double EC = 0.0;
-  double C[6 + 1][MAXCHANNEL + 1];
-  Zero(&C[0][0], 7 * (MAXCHANNEL + 1));
+  double C[6 + 1][FOCIMT_MAXCHANNEL + 1];
+  Zero(&C[0][0], 7 * (FOCIMT_MAXCHANNEL + 1));
   double BB[8 + 1][8 + 1];
   Zero(&BB[0][0], 81);
   double BBINV[8 + 1][8 + 1];
@@ -2799,8 +2799,8 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   Zero(&Z2[0][0], 100);
   double DE[3 + 1];
   Zero(DE, 4);
-  double DU[MAXCHANNEL + 1];
-  Zero(DU, MAXCHANNEL + 1);
+  double DU[FOCIMT_MAXCHANNEL + 1];
+  Zero(DU, FOCIMT_MAXCHANNEL + 1);
   double DN[3 + 1];
   Zero(DN, 4);
   double CTDU[8 + 1];
@@ -3570,7 +3570,7 @@ bool Taquart::UsmtCore::ANGGA(void) {
   //      IOK=.TRUE.
   //      IF(N.LT.8) GO TO 2
   const double DETOPI = 4.0 * atan(1.0) / 180.0;
-  if (N >= MIN_ALLOWED_CHANNELS) {
+  if (N >= FOCIMT_MIN_ALLOWED_CHANNELS) {
     //      DO 1 I=1,N
     for (int i = 1; i <= N; i++) {
       //      HELP=TKF(I)

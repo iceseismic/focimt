@@ -71,20 +71,20 @@ void TransferSolution(Taquart::SolutionType AType,
 namespace Taquart {
   namespace UsmtCore {
     extern int NDAE[10];
-    //extern char PS[MAXCHANNEL+1];
-    extern double U[MAXCHANNEL + 1];
-    //extern double ARR[MAXCHANNEL+1];
-    extern double AZM[MAXCHANNEL + 1];
-    extern double TKF[MAXCHANNEL + 1];
-    extern double GA[MAXCHANNEL + 1][3 + 1];
-    extern double A[MAXCHANNEL + 1][6 + 1];
-    extern double FIJ[3 + 1][3 + 1][MAXCHANNEL + 1];
+    //extern char PS[FOCIMT_MAXCHANNEL+1];
+    extern double U[FOCIMT_MAXCHANNEL + 1];
+    //extern double ARR[FOCIMT_MAXCHANNEL+1];
+    extern double AZM[FOCIMT_MAXCHANNEL + 1];
+    extern double TKF[FOCIMT_MAXCHANNEL + 1];
+    extern double GA[FOCIMT_MAXCHANNEL + 1][3 + 1];
+    extern double A[FOCIMT_MAXCHANNEL + 1][6 + 1];
+    extern double FIJ[3 + 1][3 + 1][FOCIMT_MAXCHANNEL + 1];
     extern double RM[6 + 1][3 + 1];
     extern double COV[6 + 1][6 + 1][3 + 1];
-    extern int RO[MAXCHANNEL + 1];
-    extern int VEL[MAXCHANNEL + 1];
-    extern int R[MAXCHANNEL + 1];
-    extern double UTH[MAXCHANNEL + 1];
+    extern int RO[FOCIMT_MAXCHANNEL + 1];
+    extern int VEL[FOCIMT_MAXCHANNEL + 1];
+    extern int R[FOCIMT_MAXCHANNEL + 1];
+    extern double UTH[FOCIMT_MAXCHANNEL + 1];
     extern int N;
     extern double TROZ;
     extern double QSD;
@@ -92,10 +92,10 @@ namespace Taquart {
     extern bool FSTCLL;
     extern int ICOND;
     extern Taquart::FaultSolution Solution[4];
-    //extern int RPSTID[MAXCHANNEL+1];
-    //extern int KNID[MAXCHANNEL+1];
-    //extern int ACTIV[MAXCHANNEL+1];
-    //extern char RPSTCP[MAXCHANNEL+1];
+    //extern int RPSTID[FOCIMT_MAXCHANNEL+1];
+    //extern int KNID[FOCIMT_MAXCHANNEL+1];
+    //extern int ACTIV[FOCIMT_MAXCHANNEL+1];
+    //extern char RPSTCP[FOCIMT_MAXCHANNEL+1];
     extern int ISTA;
     extern int * ThreadProgress;
 

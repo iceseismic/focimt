@@ -41,53 +41,11 @@
 #include "faultsolution.h"
 #include "inputdata.h"
 #include "usmtcore.h"
+#include "moment_tensor.h"
+#include "focimtaux.h"
 //-----------------------------------------------------------------------------
 
 using namespace std;
-
-#define squared(x) (pow(x,2.0))
-#define FOCIMT_SEP " "
-#define FOCIMT_NEWLINE "\n"
-
-// Default values.
-bool DrawStations = true;
-bool DrawAxes = true;
-bool DrawCross = true;
-bool DrawDC = true;
-bool WulffProjection = false;
-bool LowerHemisphere = true;
-
-//-----------------------------------------------------------------------------
-void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
-    double M13, double M22, double M23, double M33, double strike, double dip,
-    double rake);
-
-//-----------------------------------------------------------------------------
-class FaultSolutions {
-  public:
-    char Type;
-    int Channel;
-    Taquart::FaultSolution FullSolution;
-    Taquart::FaultSolution TraceNullSolution;
-    Taquart::FaultSolution DoubleCoupleSolution;
-};
-
-//-----------------------------------------------------------------------------
-void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
-    std::vector<FaultSolutions> &FSList, Taquart::SMTInputData &InputData,
-    Taquart::String Type);
-
-//-----------------------------------------------------------------------------
-bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
-    Taquart::String delimiter) {
-  if (Input.Pos(delimiter) == 0)
-    return false;
-  else {
-    Chunk = Input.SubString(1, Input.Pos(delimiter) - 1);
-    Input = Input.SubString(Input.Pos(delimiter) + 1, 10000);
-    return true;
-  }
-}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -318,9 +276,9 @@ int main(int argc, char* argv[]) {
       Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
           M11, M22, M33, M12, M13, M23);
 
-      std::vector<FaultSolutions> FSList;
+      std::vector<Taquart::FaultSolutions> FSList;
       Taquart::SMTInputData InputData;
-      FaultSolutions fs;
+      Taquart::FaultSolutions fs;
       Taquart::FaultSolution fu;
 
       fs.Type = 'N';
@@ -390,9 +348,9 @@ int main(int argc, char* argv[]) {
       Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
           M11, M22, M33, M12, M13, M23);
 
-      std::vector<FaultSolutions> FSList;
+      std::vector<Taquart::FaultSolutions> FSList;
       Taquart::SMTInputData InputData;
-      FaultSolutions fs;
+      Taquart::FaultSolutions fs;
       Taquart::FaultSolution fu;
 
       fs.Type = 'N';
@@ -462,7 +420,7 @@ int main(int argc, char* argv[]) {
     InputData.CountRuptureTime(Result); // TODO: This is not used in current context.
 
     //---- Data processing.
-    std::vector<FaultSolutions> FSList;
+    std::vector<Taquart::FaultSolutions> FSList;
     Taquart::FaultSolution fu, tr, dc;
 
     // Perform regular SMT inversion with all stations.
@@ -480,7 +438,7 @@ int main(int argc, char* argv[]) {
     TransferSolution(Taquart::stTraceNullSolution, tr);
     TransferSolution(Taquart::stDoubleCoupleSolution, dc);
 
-    FaultSolutions fs;
+    Taquart::FaultSolutions fs;
     fs.Type = 'N';
     fs.Channel = 0;
     fs.FullSolution = fu;
@@ -526,7 +484,7 @@ int main(int argc, char* argv[]) {
         TransferSolution(Taquart::stTraceNullSolution, tr);
         TransferSolution(Taquart::stDoubleCoupleSolution, dc);
 
-        FaultSolutions fs;
+        Taquart::FaultSolutions fs;
         fs.Type = 'A';
         fs.Channel = 0;
         fs.FullSolution = fu;
@@ -565,7 +523,7 @@ int main(int argc, char* argv[]) {
           TransferSolution(Taquart::stTraceNullSolution, tr);
           TransferSolution(Taquart::stDoubleCoupleSolution, dc);
 
-          FaultSolutions fs;
+          Taquart::FaultSolutions fs;
           fs.Type = 'J';
           fs.Channel = channel;
           fs.FullSolution = fu;
@@ -606,6 +564,14 @@ int main(int argc, char* argv[]) {
     else
       DrawDC = false;
 
+    bool Formatted = false;
+    for (int i = 1; i <= DumpOrder.Length(); i++) {
+      if (DumpOrder[i] >= 'a' && DumpOrder[i] <= 'z') {
+        Formatted = true;
+        break;
+      }
+    }
+
     char txtb[512] = { };
     for (unsigned int j = 0; j < FSList.size(); j++) {
       Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
@@ -640,8 +606,11 @@ int main(int argc, char* argv[]) {
 
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
-            sprintf(txtb, "%5d", Channel);
-            OutFile << Type << FOCIMT_SEP << txtb << FOCIMT_SEP;
+            if(Formatted)
+              sprintf(txtb, "%c%s%5d%s", Type,FOCIMT_SEP2, Channel, FOCIMT_SEP2);
+            else
+              sprintf(txtb, "%c%s%d%s", Type,FOCIMT_SEP, Channel, FOCIMT_SEP);
+            OutFile << txtb;
           }
 
           for (int i = 1; i <= DumpOrder.Length(); i++) {
@@ -659,9 +628,9 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'm') {
               sprintf(txtb, "%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s",
-                  Solution.M[1][1], FOCIMT_SEP, Solution.M[1][2], FOCIMT_SEP,
-                  Solution.M[1][3], FOCIMT_SEP, Solution.M[2][2], FOCIMT_SEP,
-                  Solution.M[2][3], FOCIMT_SEP, Solution.M[3][3], FOCIMT_SEP);
+                  Solution.M[1][1], FOCIMT_SEP2, Solution.M[1][2], FOCIMT_SEP2,
+                  Solution.M[1][3], FOCIMT_SEP2, Solution.M[2][2], FOCIMT_SEP2,
+                  Solution.M[2][3], FOCIMT_SEP2, Solution.M[3][3], FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -676,9 +645,10 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'c') {
               sprintf(txtb, "%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s",
-                  Solution.M[3][3], FOCIMT_SEP, Solution.M[1][1], FOCIMT_SEP,
-                  Solution.M[2][2], FOCIMT_SEP, Solution.M[1][3], FOCIMT_SEP,
-                  -Solution.M[2][3], FOCIMT_SEP, -Solution.M[1][2], FOCIMT_SEP);
+                  Solution.M[3][3], FOCIMT_SEP2, Solution.M[1][1], FOCIMT_SEP2,
+                  Solution.M[2][2], FOCIMT_SEP2, Solution.M[1][3], FOCIMT_SEP2,
+                  -Solution.M[2][3], FOCIMT_SEP2, -Solution.M[1][2],
+                  FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -690,8 +660,8 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'd') {
               sprintf(txtb, "%+7.1f%s%+7.1f%s%+7.1f%s", Solution.EXPL,
-              FOCIMT_SEP, Solution.CLVD, FOCIMT_SEP, Solution.DBCP,
-              FOCIMT_SEP);
+              FOCIMT_SEP2, Solution.CLVD, FOCIMT_SEP2, Solution.DBCP,
+              FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -706,9 +676,9 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'a') {
               sprintf(txtb, "%5.1f%s%4.1f%s%5.1f%s%4.1f%s%5.1f%s%4.1f%s",
-                  Solution.PXTR, FOCIMT_SEP, Solution.PXPL, FOCIMT_SEP,
-                  Solution.TXTR, FOCIMT_SEP, Solution.TXPL, FOCIMT_SEP,
-                  Solution.BXTR, FOCIMT_SEP, Solution.BXPL, FOCIMT_SEP);
+                  Solution.PXTR, FOCIMT_SEP2, Solution.PXPL, FOCIMT_SEP2,
+                  Solution.TXTR, FOCIMT_SEP2, Solution.TXPL, FOCIMT_SEP2,
+                  Solution.BXTR, FOCIMT_SEP2, Solution.BXPL, FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -723,9 +693,9 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'f') {
               sprintf(txtb, "%5.1f%s%4.1f%s%6.1f%s%5.1f%s%4.1f%s%6.1f%s",
-                  Solution.FIA, FOCIMT_SEP, Solution.DLA, FOCIMT_SEP,
-                  Solution.RAKEA, FOCIMT_SEP, Solution.FIB, FOCIMT_SEP,
-                  Solution.DLB, FOCIMT_SEP, Solution.RAKEB, FOCIMT_SEP);
+                  Solution.FIA, FOCIMT_SEP2, Solution.DLA, FOCIMT_SEP2,
+                  Solution.RAKEA, FOCIMT_SEP2, Solution.FIB, FOCIMT_SEP2,
+                  Solution.DLB, FOCIMT_SEP2, Solution.RAKEB, FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -738,8 +708,8 @@ int main(int argc, char* argv[]) {
             }
             if (DumpOrder[i] == 'w') {
               sprintf(txtb, "%11.3e%s%11.3e%s%11.3e%s%6.2f%s", Solution.M0,
-              FOCIMT_SEP, Solution.MT, FOCIMT_SEP, Solution.ERR, FOCIMT_SEP,
-                  Solution.MAGN, FOCIMT_SEP);
+              FOCIMT_SEP2, Solution.MT, FOCIMT_SEP2, Solution.ERR, FOCIMT_SEP2,
+                  Solution.MAGN, FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -748,7 +718,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.QI << FOCIMT_SEP;
             }
             if (DumpOrder[i] == 'q') {
-              sprintf(txtb, "%5.1f%s", Solution.QI, FOCIMT_SEP);
+              sprintf(txtb, "%5.1f%s", Solution.QI, FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -757,7 +727,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.Type.c_str() << FOCIMT_SEP;
             }
             if (DumpOrder[i] == 't') {
-              sprintf(txtb, "%s%s", Solution.Type.c_str(), FOCIMT_SEP);
+              sprintf(txtb, "%s%s", Solution.Type.c_str(), FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -769,7 +739,7 @@ int main(int argc, char* argv[]) {
             }
             else if (DumpOrder[i] == 'u') {
               for (int r = 0; r < Solution.U_n; r++) {
-                sprintf(txtb, "%13.5e%s", Solution.U_th[r], FOCIMT_SEP);
+                sprintf(txtb, "%13.5e%s", Solution.U_th[r], FOCIMT_SEP2);
                 OutFile << txtb;
               }
             }
@@ -779,7 +749,7 @@ int main(int argc, char* argv[]) {
               OutFile << Solution.UERR << FOCIMT_SEP;
             }
             else if (DumpOrder[i] == 'e') {
-              sprintf(txtb, "%11.3e%s", Solution.UERR, FOCIMT_SEP);
+              sprintf(txtb, "%11.3e%s", Solution.UERR, FOCIMT_SEP2);
               OutFile << txtb;
             }
 
@@ -853,156 +823,5 @@ int main(int argc, char* argv[]) {
   catch (...) {
     return 1; // Some undefined error occurred, error code 1.
   }
-}
-
-//-----------------------------------------------------------------------------
-void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
-    double M13, double M22, double M23, double M33, double strike, double dip,
-    double rake) {
-  Taquart::nodal_plane NP;
-  fu.M[1][1] = M11;
-  fu.M[1][2] = M12;
-  fu.M[1][3] = M13;
-  fu.M[2][1] = M12;
-  fu.M[2][2] = M22;
-  fu.M[2][3] = M23;
-  fu.M[3][1] = M13;
-  fu.M[3][2] = M23;
-  fu.M[3][3] = M33;
-  fu.FIA = strike;
-  fu.DLA = dip;
-  fu.RAKEA = rake;
-  NP.str = strike;
-  NP.dip = dip;
-  NP.rake = rake;
-  fu.FIB = Taquart::computed_strike1(NP);
-  fu.DLB = Taquart::computed_dip1(NP);
-  fu.RAKEB = Taquart::computed_rake1(NP);
-}
-
-//-----------------------------------------------------------------------------
-void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
-    std::vector<FaultSolutions> &FSList, Taquart::SMTInputData &id,
-    Taquart::String Type) {
-
-  Taquart::FaultSolution s;
-
-  if (Type == Taquart::String("dbcp")) {
-    s = FSList[0].DoubleCoupleSolution;
-  }
-  else if (Type == "clvd") {
-    s = FSList[0].TraceNullSolution;
-  }
-  else if (Type == "full") {
-    s = FSList[0].FullSolution;
-  }
-
-  // Setup solution properties.
-  Meca.DrawAxis = DrawAxes;
-  Meca.DrawStations = DrawStations;
-  Meca.DrawCross = DrawCross;
-  Meca.DrawDC = DrawDC;
-
-  // Draw seismic moment tensor solution.
-  Meca.Projection = WulffProjection ? Taquart::prWulff : Taquart::prSchmidt;
-  Meca.Hemisphere = LowerHemisphere ? Taquart::heLower : Taquart::heUpper;
-
-  double cmt[6];
-  cmt[0] = s.M[3][3];
-  cmt[1] = s.M[1][1];
-  cmt[2] = s.M[2][2];
-  cmt[3] = s.M[1][3];
-  cmt[4] = s.M[2][3] * -1.0;
-  cmt[5] = s.M[1][2] * -1.0;
-
-  Taquart::TriCairo_MomentTensor mt;
-  for (int i = 0; i < 6; i++)
-    mt.f[i] = cmt[i];
-
-  const double scal =
-      sqrt(
-          squared(mt.f[0]) + squared(mt.f[1]) + squared(mt.f[2])
-              + 2.
-                  * (squared(mt.f[3]) + squared(mt.f[4]) + squared(mt.f[5]))) / M_SQRT2;
-  for (int i = 0; i < 6; i++)
-    mt.f[i] = mt.f[i] / scal;
-
-  Taquart::TriCairo_Axis P, T, N;
-  Meca.GMT_momten2axe(mt, &T, &N, &P);
-  Meca.Tensor(T, N, P);
-
-  // Draw stations.
-  if (DrawStations) {
-    for (unsigned int i = 0; i < id.Count(); i++) {
-      Taquart::SMTInputLine il;
-      id.Get(i, il);
-
-      // Calculate Gamma and Displacement.
-      double GA[5];
-
-      double Tko = il.TakeOff;
-      if (Tko == 90.0f) Tko = 89.75f;
-
-      GA[3] = cos(Tko * DEG2RAD);
-      double help = sqrt(1.0f - GA[3] * GA[3]);
-      GA[1] = cos(il.Azimuth * DEG2RAD) * help;
-      GA[2] = sin(il.Azimuth * DEG2RAD) * help;
-      double U = il.Displacement;
-      Taquart::String Name = il.Name;
-
-      double mx, my;
-      Meca.Station(GA, U, Name, mx, my);
-    }
-
-  }
-
-  // Draw P and T axes' directions.
-  if (DrawAxes) {
-    Meca.Axis(P, "P");
-    Meca.Axis(T, "T");
-  }
-
-  if (DrawCross) Meca.CenterCross();
-
-  // Draw double-couple lines.
-  if (DrawDC) {
-    Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
-    Meca.DoubleCouple(s.FIA, s.DLA);
-    Meca.DoubleCouple(s.FIB, s.DLB);
-  }
-
-  // If MORE than one solution on the list, plot additional DC lines.
-  if (FSList.size() > 1) {
-    for (unsigned int i = 1; i < FSList.size(); i++) {
-      Meca.BDCColor = Taquart::TCColor(0.5, 0.5, 0.5, 0.7);
-
-      Taquart::FaultSolution * s;
-
-      if (Type == "dbcp") {
-        s = &FSList[i].DoubleCoupleSolution;
-      }
-      if (Type == "clvd") {
-        s = &FSList[i].TraceNullSolution;
-      }
-      if (Type == "full") {
-        s = &FSList[i].FullSolution;
-      }
-
-      // Set color in response to the type of the fault.
-      if (s->Type == "NF") {
-        Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.7);
-      }
-      else if (s->Type == "TF") {
-        Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.7);
-      }
-      else {
-        Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.7);
-      }
-
-      Meca.DoubleCouple(s->FIA, s->DLA);
-      Meca.DoubleCouple(s->FIB, s->DLB);
-    }
-  }
-
 }
 
