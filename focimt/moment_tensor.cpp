@@ -54,6 +54,7 @@ int main(int argc, char* argv[]) {
   try {
     Taquart::String FilenameIn;
     Taquart::String FilenameOut;
+    Taquart::String FilenameVelocity;
     unsigned int N = 14;
 
     Options listOpts;
@@ -150,6 +151,10 @@ int main(int argc, char* argv[]) {
             "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
             "                                                                               \n",
         true);
+            listOpts.addOption("m", "model",
+        "Velocity model file (with extension)                 \n\n"
+            "    Velocity model in hypo71 format. Forces different input file format.       \n",
+        true);
     listOpts.addOption("v", "version", "Display version number");
 
     Taquart::String SolutionTypes = "D";
@@ -162,6 +167,7 @@ int main(int argc, char* argv[]) {
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
     bool DrawFaultsOnly = false;
+    bool VelocityModel = false;
     double AmpFactor = 1.0f;
     unsigned int AmplitudeN = 100;
     Taquart::String Temp;
@@ -232,6 +238,12 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 13:
+            // Use 1D velocity model from a file (forces different formatting of input file)
+            VelocityModel = true;
+            FilenameVelocity = Taquart::String(
+                listOpts.getArgs(switchInt).c_str()).Trim();
+            break;            
+          case 14:
             std::cout << "Rev. 3.1.3, 2015.02.11\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
