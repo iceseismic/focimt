@@ -374,8 +374,7 @@ int main(int argc, char* argv[]) {
         InputFile >> duration; // this is NOT used in current context (incorporated into displacement)!!!
         InputFile >> displacement; // this should hold in fact area below the first P-wave velocity pulse
         InputFile >> azimuth;
-        //InputFile >> aoi;
-        aoi = 0.0;
+        InputFile >> aoi;
         InputFile >> takeoff;
         InputFile >> velocity;
         InputFile >> distance;
