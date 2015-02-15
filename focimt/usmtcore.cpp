@@ -77,6 +77,10 @@ void TransferSolution(Taquart::SolutionType AType,
   ASolution = Taquart::UsmtCore::Solution[int(AType)];
 }
 
+Taquart::FaultSolution TransferSolution(Taquart::SolutionType AType) {
+  return Taquart::UsmtCore::Solution[int(AType)];
+}
+
 //---------------------------------------------------------------------------
 double Taquart::UsmtCore::mw(double m0) {
   double RMAG = 2.0 * alog10(m0) / 3.0 - 6.03;
@@ -1342,7 +1346,6 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       PLUNGE[j][i] = asin(amax1(HELP, -1.0));
       //TREND[j][i] = atan2(V[2][j][i],V[1][j][i]);
 
-
       TREND[j][i] = datan2(V[2][j][i], V[1][j][i]) * M_PI / 180.0; // Correction of ATAN2 error.
 
       AMP[j][i] = sqrt(
@@ -1420,12 +1423,11 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     //      IF(DIP(I,2).GT..01) STRIKE(I,2)=ATAN2(Y(1),-Y(2))
     //      IF(DIP(I,1).GE.DIP(I,2)) GO TO 22
 
-
     /*
      if(DIP[i][1] > 0.01) STRIKE[i][1] = atan2(X[1],-X[2]);
      if(DIP[i][2] > 0.01) STRIKE[i][2] = atan2(Y[1],-Y[2]);
      */
-    if (DIP[i][1] > 0.01) STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0;  // Correction of ATAN2 error.
+    if (DIP[i][1] > 0.01) STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0; // Correction of ATAN2 error.
     if (DIP[i][2] > 0.01) STRIKE[i][2] = datan2(Y[1], -Y[2]) * M_PI / 180.0; // Correction of ATAN2 error.
 
     if (DIP[i][1] >= DIP[i][2]) continue;
@@ -2730,7 +2732,7 @@ void Taquart::UsmtCore::FIJGEN(void) {
     double THE = acos(GA[i][3]);
 
     //double PHI = atan2(GA[i][1],GA[i][2);
-    double PHI = datan2(GA[i][1], GA[i][2]) * M_PI / 180.0;// Correction in v3.1.19 of FOCI due to ATAN2 error.
+    double PHI = datan2(GA[i][1], GA[i][2]) * M_PI / 180.0; // Correction in v3.1.19 of FOCI due to ATAN2 error.
 
     //      FIJ(1,1,I)=(SIN(THE)*SIN(PHI))**2
     //      FIJ(1,2,I)=.5*SIN(THE)**2*SIN(2.*PHI)

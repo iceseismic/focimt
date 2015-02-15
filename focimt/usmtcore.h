@@ -65,6 +65,8 @@ void TransferSolution(Taquart::SolutionType AType,
 void TransferSolution(Taquart::SolutionType AType,
     Taquart::FaultSolution &ASolution);
 
+Taquart::FaultSolution TransferSolution(Taquart::SolutionType AType);
+
 namespace Taquart {
   namespace UsmtCore {
     extern int NDAE[10];

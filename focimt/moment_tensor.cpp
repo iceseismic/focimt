@@ -324,17 +324,12 @@ int main(int argc, char* argv[]) {
     }
 
     // Transfer solution.
-    TransferSolution(Taquart::stFullSolution, fu);
-    TransferSolution(Taquart::stTraceNullSolution, tr);
-    TransferSolution(Taquart::stDoubleCoupleSolution, dc);
-
     Taquart::FaultSolutions fs;
     fs.Type = 'N';
     fs.Channel = 0;
-    fs.FullSolution = fu;
-    fs.TraceNullSolution = tr;
-    fs.DoubleCoupleSolution = dc;
-
+    fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+    fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+    fs.DoubleCoupleSolution = TransferSolution(Taquart::stDoubleCoupleSolution);
     FSList.push_back(fs);
 
     //---- Perform either noise or jacknife solutions.
@@ -371,17 +366,13 @@ int main(int argc, char* argv[]) {
         }
 
         // Transfer solution.
-        TransferSolution(Taquart::stFullSolution, fu);
-        TransferSolution(Taquart::stTraceNullSolution, tr);
-        TransferSolution(Taquart::stDoubleCoupleSolution, dc);
-
         Taquart::FaultSolutions fs;
         fs.Type = 'A';
         fs.Channel = 0;
-        fs.FullSolution = fu;
-        fs.TraceNullSolution = tr;
-        fs.DoubleCoupleSolution = dc;
-
+        fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+        fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+        fs.DoubleCoupleSolution = TransferSolution(
+            Taquart::stDoubleCoupleSolution);
         FSList.push_back(fs);
       }
     }
@@ -409,18 +400,13 @@ int main(int argc, char* argv[]) {
             return 1;
           }
 
-          // Transfer solution.
-          TransferSolution(Taquart::stFullSolution, fu);
-          TransferSolution(Taquart::stTraceNullSolution, tr);
-          TransferSolution(Taquart::stDoubleCoupleSolution, dc);
-
           Taquart::FaultSolutions fs;
           fs.Type = 'J';
           fs.Channel = channel;
-          fs.FullSolution = fu;
-          fs.TraceNullSolution = tr;
-          fs.DoubleCoupleSolution = dc;
-
+          fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+          fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+          fs.DoubleCoupleSolution = TransferSolution(
+              Taquart::stDoubleCoupleSolution);
           FSList.push_back(fs);
         }
       }
