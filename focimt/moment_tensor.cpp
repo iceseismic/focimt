@@ -414,33 +414,17 @@ int main(int argc, char* argv[]) {
 
     //---- Produce output file and graphical representation of the moment tensor using Cairo library.
 
-    // Projection type.
-    if (Projection.Pos("W")) WulffProjection = true;
-    if (Projection.Pos("S")) WulffProjection = false;
-    if (Projection.Pos("U")) LowerHemisphere = false;
-    if (Projection.Pos("L")) LowerHemisphere = true;
+    // Beach ball properties.
+    if (Projection.Pos("W") > 0) WulffProjection = true;
+    if (Projection.Pos("S") > 0) WulffProjection = false;
+    if (Projection.Pos("U") > 0) LowerHemisphere = false;
+    if (Projection.Pos("L") > 0) LowerHemisphere = true;
+    DrawStations = BallContent.Pos("S") > 0 ? true : false;
+    DrawAxes = BallContent.Pos("A") > 0 ? true : false;
+    DrawCross = BallContent.Pos("C") > 0 ? true : false;
+    DrawDC = BallContent.Pos("D") > 0 ? true : false;
 
-    // Content of ball.
-    if (BallContent.Pos("S"))
-      DrawStations = true;
-    else
-      DrawStations = false;
-
-    if (BallContent.Pos("A"))
-      DrawAxes = true;
-    else
-      DrawAxes = false;
-
-    if (BallContent.Pos("C"))
-      DrawCross = true;
-    else
-      DrawCross = false;
-
-    if (BallContent.Pos("D"))
-      DrawDC = true;
-    else
-      DrawDC = false;
-
+    // Text output formatted or not?
     bool Formatted = false;
     for (int i = 1; i <= DumpOrder.Length(); i++) {
       if (DumpOrder[i] >= 'a' && DumpOrder[i] <= 'z') {
@@ -479,8 +463,8 @@ int main(int argc, char* argv[]) {
           ofstream OutFile(OutName.c_str(),
               std::ofstream::out | std::ofstream::app);
 
-          bool head = false;
-          if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
+          //bool head = false;
+          //if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
 
           if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
