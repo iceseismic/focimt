@@ -32,23 +32,20 @@
 #include <math.h>
 #include <iostream>
 #include <fstream>
-#include <trilib/georoutines.h>
 #include <tricairo/tricairo_meca.h>
+#include <trilib/georoutines.h>
 #include <trilib/string.h>
-
-//-----------------------------------------------------------------------------
+#include "moment_tensor.h"
 #include "getopts.h"
 #include "faultsolution.h"
 #include "inputdata.h"
 #include "usmtcore.h"
-#include "moment_tensor.h"
 #include "focimtaux.h"
 #include "traveltime.h"
 //-----------------------------------------------------------------------------
 
 using namespace std;
 
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
   try {

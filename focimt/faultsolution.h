@@ -1,8 +1,3 @@
-//---------------------------------------------------------------------------
-#ifndef faultsolutionH
-#define faultsolutionH
-//---------------------------------------------------------------------------
-
 //-----------------------------------------------------------------------------
 // Source: faulsolution.h
 // Module: focimt
@@ -32,8 +27,10 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
+#ifndef faultsolutionH
+#define faultsolutionH
+//---------------------------------------------------------------------------
 #include <trilib/string.h>
-
 #include "moment_tensor.h"
 
 namespace Taquart {

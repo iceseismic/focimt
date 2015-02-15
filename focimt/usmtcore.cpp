@@ -30,11 +30,11 @@
 #include <trilib/fortranmath.h>
 #include <trilib/georoutines.h>
 #include "usmtcore.h"
+//-----------------------------------------------------------------------------
 
 #define USMT_UPSCALE (1.0e+12)
 #define USMT_DOWNSCALE (1.0e-12)
 
-//---------------------------------------------------------------------------
 using namespace Taquart::UsmtCore;
 using namespace Taquart;
 
@@ -167,7 +167,7 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
     //if(PS[i] == 'S' || PS[i] == 's') IW[i] = 1;
     //if(PS[i] == 'H' || PS[i] == 'h') IW[i] = 2;
     ALF = VEL[i];
-    /* DONE  5 -c2.4.14 : Problem z kalibracj� (USMTCORE) */
+    /* DONE  5 -c2.4.14 : Problem z kalibracją (USMTCORE) */
     HELP = 4.0 * PI * double(RO[i]) * ALF * ALF * ALF * double(R[i]);
 
     //      IF(IW(I).NE.0) GO TO 5
@@ -188,7 +188,7 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
       A[i][6] = GA[i][3] * GA[i][3] / HELP;
     }
 
-    /* TODO -o3.1.19 : Code for SV and SH is switched off by default. */
+    /* Code for SV and SH is switched off by default. */
     /*
      else
      {
@@ -1342,8 +1342,8 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       PLUNGE[j][i] = asin(amax1(HELP, -1.0));
       //TREND[j][i] = atan2(V[2][j][i],V[1][j][i]);
 
-      /* TODO 5 -c3.1.19 : Correction of ATAN2 error. */
-      TREND[j][i] = datan2(V[2][j][i], V[1][j][i]) * M_PI / 180.0;
+
+      TREND[j][i] = datan2(V[2][j][i], V[1][j][i]) * M_PI / 180.0; // Correction of ATAN2 error.
 
       AMP[j][i] = sqrt(
           V[1][j][i] * V[1][j][i] + V[2][j][i] * V[2][j][i]
@@ -1420,13 +1420,13 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     //      IF(DIP(I,2).GT..01) STRIKE(I,2)=ATAN2(Y(1),-Y(2))
     //      IF(DIP(I,1).GE.DIP(I,2)) GO TO 22
 
-    /* TODO 5 -c3.1.19 : Correction of ATAN2 error */
+
     /*
      if(DIP[i][1] > 0.01) STRIKE[i][1] = atan2(X[1],-X[2]);
      if(DIP[i][2] > 0.01) STRIKE[i][2] = atan2(Y[1],-Y[2]);
      */
-    if (DIP[i][1] > 0.01) STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0;
-    if (DIP[i][2] > 0.01) STRIKE[i][2] = datan2(Y[1], -Y[2]) * M_PI / 180.0;
+    if (DIP[i][1] > 0.01) STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0;  // Correction of ATAN2 error.
+    if (DIP[i][2] > 0.01) STRIKE[i][2] = datan2(Y[1], -Y[2]) * M_PI / 180.0; // Correction of ATAN2 error.
 
     if (DIP[i][1] >= DIP[i][2]) continue;
 
@@ -1487,9 +1487,9 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     }
 
     /* DONE 5 -c2.4.13 :
-     Oblicz warto�ci RAKE przy pomocy metody z programu PSMECA. Korekta
-     krytycznego b��du a� do wersji 2.4.13 dotycz�ca b��dnej warto�ci rake
-     (nie mia�a wp�ywu na rozwi�zanie graficzne tensora, tylko na warto��
+     Oblicz wartoï¿½ci RAKE przy pomocy metody z programu PSMECA. Korekta
+     krytycznego bï¿½ï¿½du aï¿½ do wersji 2.4.13 dotyczï¿½ca bï¿½ï¿½dnej wartoï¿½ci rake
+     (nie miaï¿½a wpï¿½ywu na rozwiï¿½zanie graficzne tensora, tylko na wartoï¿½ï¿½
      rake w plikach wynikowych).*/
 
     /*
@@ -1684,8 +1684,9 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     //      HELP=4.*PI*FLOAT(RO(I))*ALF*ALF*ALF*FLOAT(R(I))*TROZ*1.E-12
     ALF = VEL[i];
 
-    /* DONE  5 -c2.4.14 : Problem z kalibracj� (USMTCORE) */
-    HELP = 4.0 * PI * double(RO[i]) * ALF * ALF * ALF * double(R[i]) * USMT_DOWNSCALE;
+    /* DONE  5 -c2.4.14 : Problem z kalibracjï¿½ (USMTCORE) */
+    HELP = 4.0 * PI
+        * double(RO[i]) * ALF * ALF * ALF * double(R[i]) * USMT_DOWNSCALE;
 
     //      IF(IW(I).NE.0) GO TO 5
     if (IW[i] == 0) {
@@ -1704,7 +1705,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       A[i][5] = 2. * GA[i][2] * GA[i][3] / HELP;
       A[i][6] = GA[i][3] * GA[i][3] / HELP;
     }
-    /* TODO -o3.1.19 : Code for SV and SH is switched off by default. */
+    /* Code for SV and SH is switched off by default. */
     /*
      else
      {
@@ -2727,9 +2728,9 @@ void Taquart::UsmtCore::FIJGEN(void) {
     //      THE=ACOS(GA(I,3))
     //      PHI=ATAN2(GA(I,1),GA(I,2))
     double THE = acos(GA[i][3]);
-    /* TODO 5 -c3.1.19 : Correction of ATAN2 error */
+
     //double PHI = atan2(GA[i][1],GA[i][2);
-    double PHI = datan2(GA[i][1], GA[i][2]) * M_PI / 180.0;
+    double PHI = datan2(GA[i][1], GA[i][2]) * M_PI / 180.0;// Correction in v3.1.19 of FOCI due to ATAN2 error.
 
     //      FIJ(1,1,I)=(SIN(THE)*SIN(PHI))**2
     //      FIJ(1,2,I)=.5*SIN(THE)**2*SIN(2.*PHI)
@@ -2930,7 +2931,7 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   for (int i = 1; i <= N; i++) {
     //      do 3103 j=1,3
     // 3103 c(j,i)=dble(0.)
-    for (int j = 1; j <= 6; j++) //???? Poprawka b��du!
+    for (int j = 1; j <= 6; j++) //???? Poprawka bï¿½ï¿½du!
       C[j][i] = 0.0;
 
     //      do 3001 j=1,3
@@ -3913,8 +3914,7 @@ void Taquart::UsmtCore::GSOL5(double x[], int &IEXP) {
   //      dimension x(5),ix(5)
   //      double precision xlo(5),xhi(5),xstep(5),six,size,xtry(5),VAL,TRY
   //      DATA SIX,METH/6.D+0,2/
-  double xlo[8], xhi[8], xstep[8], six = 6.0, xtry[8], VAL = 0.0,
-      TRY = 0.0;
+  double xlo[8], xhi[8], xstep[8], six = 6.0, xtry[8], VAL = 0.0, TRY = 0.0;
   //int METH = 2;
   int ix[7];
 
@@ -4612,7 +4612,7 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
             //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             //      DO 312 i=1,5
             //  312 x(i)=SNGL(XTRY(I))
-            if (tryy <= val) /* ONE : poprawiony b��d 2006.10.05 */
+            if (tryy <= val) /* ONE : poprawiony bï¿½ï¿½d 2006.10.05 */
             {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
@@ -4718,7 +4718,7 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
     //      CALL POSTEP(METH,JTER,J7)
     //SIZE = xhi[1] - xlo[1];
     iter++;
-    xtry[1] = 0.0; /* ONE : poprawiony b��d 2006.10.05 */
+    xtry[1] = 0.0; /* ONE : poprawiony bï¿½ï¿½d 2006.10.05 */
     //POSTEP(METH,jter,j7);
 
     //      do 403 j1=1,7
@@ -5040,7 +5040,7 @@ void Taquart::UsmtCore::RDINP(Taquart::SMTInputData &InputData) {
     //PS[i] = ' ';
     InputData.Get(i - 1, InputLine);
     U[i] = InputLine.Displacement;
-    //ARR[i] = InputLine.Incidence; /* TODO -o3.1.19 : Code for SV and SH is switched off by default. */
+    //ARR[i] = InputLine.Incidence; /* Code for SV and SH is switched off by default. */
     AZM[i] = InputLine.Azimuth;
     TKF[i] = InputLine.TakeOff;
     RO[i] = InputLine.Density;

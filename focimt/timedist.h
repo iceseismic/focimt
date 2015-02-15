@@ -1,8 +1,3 @@
-//---------------------------------------------------------------------------
-#ifndef timedistH
-#define timedistH
-//---------------------------------------------------------------------------
-
 //-----------------------------------------------------------------------------
 // Source: timedist.h
 // Module: focimt
@@ -32,8 +27,10 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
-
+#ifndef timedistH
+#define timedistH
 //---------------------------------------------------------------------------
+
 namespace Taquart {
   //! Time-distance variable pair structure.
   /*! This structure contains time and distance data pair.
@@ -60,7 +57,6 @@ namespace Taquart {
   };
 }
 
-//---------------------------------------------------------------------------
 bool operator<(const Taquart::TimeDist& X, const Taquart::TimeDist& Y);
 bool operator==(const Taquart::TimeDist& X, const Taquart::TimeDist& Y);
 

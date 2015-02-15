@@ -1,15 +1,3 @@
-//---------------------------------------------------------------------------
-#ifndef MOMENT_TENSOR_H_
-#define MOMENT_TENSOR_H_
-//---------------------------------------------------------------------------
-
-#define FOCIMT_MAXCHANNEL 128
-#define FOCIMT_MIN_ALLOWED_CHANNELS 8
-#define FOCIMT_SQ(x) (pow(x,2.0))
-#define FOCIMT_SEP "\t"
-#define FOCIMT_SEP2 " "
-#define FOCIMT_NEWLINE "\n"
-
 //-----------------------------------------------------------------------------
 // Source: moment_tensor.h
 // Module: focimt
@@ -39,6 +27,15 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
+#ifndef MOMENT_TENSOR_H_
+#define MOMENT_TENSOR_H_
+//---------------------------------------------------------------------------
+#define FOCIMT_MAXCHANNEL 128
+#define FOCIMT_MIN_ALLOWED_CHANNELS 8
+#define FOCIMT_SQ(x) (pow(x,2.0))
+#define FOCIMT_SEP "\t"
+#define FOCIMT_SEP2 " "
+#define FOCIMT_NEWLINE "\n"
 
 //---------------------------------------------------------------------------
 namespace Taquart {

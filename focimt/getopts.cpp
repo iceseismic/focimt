@@ -64,8 +64,8 @@ Options::Options() {
  *
  * Returns: Nothing
  */
-void Options::addOption(std::string shortName, std::string longName, std::string description,
-    bool takeArg) {
+void Options::addOption(std::string shortName, std::string longName,
+    std::string description, bool takeArg) {
   struct option toBeAdded;
 
   toBeAdded.shortName = shortName;
@@ -95,7 +95,8 @@ bool Options::parse(int argc, char **argv) {
 
   /* First we must scan for the '-h' and '--help' options */
   for (int count = 1; count < argc; count++) {
-    if (!strcmp(argv[count], "-h") || !strcmp(argv[count], "--help")) showHelp(argv[0]); // We found out that the user wants help.  Go show and exit.
+    if (!strcmp(argv[count], "-h") || !strcmp(argv[count], "--help"))
+      showHelp(argv[0]); // We found out that the user wants help.  Go show and exit.
   }
 
   /*
@@ -109,8 +110,10 @@ bool Options::parse(int argc, char **argv) {
     realOption = false;
     for (int listCount = 0; listCount <= lastNumberUsed; listCount++) {
       struct option tester = optionList[listCount];
-      if ((!tester.shortName.empty() && !strcmp(tester.shortName.c_str(), argv[argCount] + 1))
-          || (!tester.longName.empty() && !strcmp(tester.longName.c_str(), argv[argCount] + 2))) {
+      if ((!tester.shortName.empty()
+          && !strcmp(tester.shortName.c_str(), argv[argCount] + 1))
+          || (!tester.longName.empty()
+              && !strcmp(tester.longName.c_str(), argv[argCount] + 2))) {
         realOption = true;
         parsedData = true;
         tester.isUsed = true;
@@ -196,13 +199,14 @@ void Options::showHelp(char *progName) {
   std::cout << "  --help,\t-h\t  Displays this information" << std::endl;
 
   for (int counter = 0; counter <= lastNumberUsed; counter++) {
-    if (!optionList[counter].shortName.empty() && !optionList[counter].longName.empty()) {
+    if (!optionList[counter].shortName.empty()
+        && !optionList[counter].longName.empty()) {
       if (optionList[counter].takesArg)
-        usageLine = "--" + optionList[counter].longName + ",\t-" + optionList[counter].shortName
-            + " <args> ";
+        usageLine = "--" + optionList[counter].longName + ",\t-"
+            + optionList[counter].shortName + " <args> ";
       else
-        usageLine = "--" + optionList[counter].longName + ",\t-" + optionList[counter].shortName
-            + "        ";
+        usageLine = "--" + optionList[counter].longName + ",\t-"
+            + optionList[counter].shortName + "        ";
     }
     else if (!optionList[counter].longName.empty()) {
       if (optionList[counter].takesArg)
@@ -216,7 +220,8 @@ void Options::showHelp(char *progName) {
       else
         usageLine = "\t\t-" + optionList[counter].shortName + " ";
     }
-    std::cout << "  " << usageLine << optionList[counter].description << std::endl;
+    std::cout << "  " << usageLine << optionList[counter].description
+        << std::endl;
   }
   exit(0);
 }

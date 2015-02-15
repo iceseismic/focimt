@@ -1,8 +1,3 @@
-//---------------------------------------------------------------------------
-#ifndef inputdataH
-#define inputdataH
-//---------------------------------------------------------------------------
-
 //-----------------------------------------------------------------------------
 // Source: inputdata.h
 // Module: focimt
@@ -32,13 +27,12 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
-
+#ifndef inputdataH
+#define inputdataH
+//---------------------------------------------------------------------------
 #include <vector>
 #include <triexceptions/exceptions.h>
 #include <trilib/string.h>
-//#include "fcore.h"
-//#include "xmlexporter.h"
-//---------------------------------------------------------------------------
 
 namespace Taquart {
   //! Input data vector for the seismic moment tensor calculation.

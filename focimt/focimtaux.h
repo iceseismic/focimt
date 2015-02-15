@@ -46,18 +46,12 @@ extern bool LowerHemisphere;
 void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
     double M13, double M22, double M23, double M33, double strike, double dip,
     double rake);
-
-//-----------------------------------------------------------------------------
 void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     std::vector<Taquart::FaultSolutions> &FSList,
     Taquart::SMTInputData &InputData, Taquart::String Type);
-
-//-----------------------------------------------------------------------------
 bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
     Taquart::String delimiter);
-
 void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut);
-
 void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut);
 
 //-----------------------------------------------------------------------------

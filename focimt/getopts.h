@@ -58,8 +58,8 @@ class Options {
 
     Options();
 
-    void addOption(std::string shortName, std::string longName, std::string description,
-        bool takeArg = false);
+    void addOption(std::string shortName, std::string longName,
+        std::string description, bool takeArg = false);
 
     bool parse(int argc, char **argv);
 

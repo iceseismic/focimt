@@ -1,8 +1,3 @@
-//---------------------------------------------------------------------------
-#ifndef usmtcoreH
-#define usmtcoreH
-//---------------------------------------------------------------------------
-
 //-----------------------------------------------------------------------------
 // Source: usmtcore.h
 // Module: focimt
@@ -32,7 +27,9 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
-
+#ifndef usmtcoreH
+#define usmtcoreH
+//---------------------------------------------------------------------------
 #include <list>
 #include <math.h>
 #include "inputdata.h"

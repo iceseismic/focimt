@@ -28,6 +28,7 @@
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 #include "focimtaux.h"
+//-----------------------------------------------------------------------------
 
 // Default values.
 bool DrawStations = true;
@@ -201,6 +202,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 
 }
 
+//-----------------------------------------------------------------------------
 void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut) {
   // Read strike, dip and rake.
   Taquart::String temp;
@@ -271,6 +273,7 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut) {
 
 }
 
+//-----------------------------------------------------------------------------
 void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut) {
   // Read strike, dip and rake.
   Taquart::String temp;

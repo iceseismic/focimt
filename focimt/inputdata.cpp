@@ -27,11 +27,12 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //---------------------------------------------------------------------------
-#include <trilib/tristat.h>
 #include <algorithm>
+#include <trilib/tristat.h>
+#include "moment_tensor.h"
 #include "inputdata.h"
 #include "timedist.h"
-#include "moment_tensor.h"
+//-----------------------------------------------------------------------------
 
 //============================================================================
 /*
