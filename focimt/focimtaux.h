@@ -34,6 +34,7 @@
 #include <tricairo/tricairo_meca.h>
 #include "faultsolution.h"
 #include "inputdata.h"
+#include "getopts.h"
 
 extern bool DrawStations;
 extern bool DrawAxes;
@@ -53,6 +54,7 @@ bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
     Taquart::String delimiter);
 void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut);
 void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut);
+void PrepareHelp(Options &listOpts);
 
 //-----------------------------------------------------------------------------
 #endif /* FOCIMTAUX_H_ */

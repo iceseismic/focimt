@@ -36,7 +36,6 @@
 #include <trilib/georoutines.h>
 #include <trilib/string.h>
 #include "moment_tensor.h"
-#include "getopts.h"
 #include "faultsolution.h"
 #include "inputdata.h"
 #include "usmtcore.h"
@@ -56,103 +55,7 @@ int main(int argc, char* argv[]) {
 
     Options listOpts;
     int switchInt;
-    listOpts.addOption("i", "input", "Full path to the input file", true);
-    listOpts.addOption("o", "output", "Output file name (without extension)",
-        true);
-    listOpts.addOption("s", "solution",
-        "Output solution type.                                \n\n"
-            "    Arguments: [F][T][D] for the full, trace-null and double-couple solution.  \n"
-            "    Default option is '-s D'. Combine options to get multiple solutions, e.g.  \n"
-            "    '-s DFT' produces all three solutions at once.                             \n",
-        true);
-    listOpts.addOption("t", "type",
-        "Output file type.                                    \n\n"
-            "    Arguments: [NONE|PNG|SVG|PS|PDF] for different file types (only one can) be\n"
-            "    specified as an output. The default value is '-t PNG'                      \n",
-        true);
-    listOpts.addOption("n", "norm",
-        "Norm type.               \n\n"
-            "    Arguments: [L1|L2] for L1 and L2 norm, respectively. The default option is \n"
-            "    is '-n L2' (faster). When Jacknife method is used the option is ignored and\n"
-            "    L2 norm is used.                                                           \n",
-        true);
-    listOpts.addOption("p", "projection",
-        "Projection type.                                     \n\n"
-            "    Arguments: [W|S][U|L]: Choose either (W)ulff projection or (S)chmidt       \n"
-            "    projection. Then select (U)pper hemisphere or (L)ower hemispere projection \n"
-            "    The default option is '-p SL'.                                             \n",
-        true);
-    listOpts.addOption("b", "ball",
-        "The details of the beach ball picture                \n\n"
-            "    Arguments: [S][A][C][D]: Plot (S)tations, (A)xes, (C)enter cross, best     \n"
-            "    (D)ouble-couple lines. The default option is '-b SACD' (all features are   \n"
-            "    displayed                                                                  \n",
-        true);
-    listOpts.addOption("d", "dump",
-        "Output data format and order.                        \n\n"
-            "    Arguments: [M][C][F][D][A][W][Q][T][U][*].                                 \n"
-            "    [M]: Moment tensor components in Aki's convention: M11,M12,M13,M22,M23,M33.\n"
-            "         The moment tensor components are in [Nm]                              \n"
-            "    [C]: Moment tensor components in CMT conventions: M33,M11,M22,M13,-M23,-M12\n"
-            "         The moment tensor components are in [Nm]                              \n"
-            "    [F]: Fault plane solutions in format: STRIKEA/DIPA/RAKEA/STRIKEB/DIPB/RAKEB\n"
-            "         (all values in degrees)                                               \n"
-            "    [D]: Decomposition of the moment tensor into Isotropic, Compensated linear \n"
-            "         vector dipole and double couple in format: ISO/CLVD/DBCP. The numbers \n"
-            "         are provided in %.                                                    \n"
-            "    [A]: P/T/B Axes orientations in format:                                    \n"
-            "         PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND/BPLUNGE                          \n"
-            "    [W]: Seismic moment, total seismic moment, maximum error of the seismic    \n"
-            "         moment tensor estiamte and the moment magnitude calculated using      \n"
-            "         using Hanks&Kanamori formula. The first three values are in [Nm]      \n"
-            "    [Q]: Quality index                                                         \n"
-            "    [T]: Fault Type (strike slip/normal/inverse)                               \n"
-            "    [U]: Vector of synthetic moments calculated (the number of exported numbers\n"
-            "         correspond to the number of amplitudes in the input file (specified   \n"
-            "         using '-l' option.                                                    \n"
-            "    [E]: RMS Error calculated from theoretical and measured ground             \n"
-            "         displacements.                                                        \n"
-            "    [*]: Export new line character                                             \n"
-            "                                                                               \n"
-            "    NOTE #1:                                                                   \n"
-            "    The order of arguments determine to order of output. For example -d FAD    \n"
-            "    exports firstly fault plane solutions, then P, T and B axes directions and \n"
-            "    finally the moment tensor decomposition into ISO/CLVD/DBCP. The output file\n"
-            "    will have the following structure:                                         \n"
-            "    STRIKEA/DIPA/RAKEA/STRIKEB/DIPB/RAKEB/PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND \n"
-            "    /BPLUNGE/ISO/CLVD/DBCP                                                     \n"
-            "                                                                               \n"
-            "    NOTE #2:                                                                   \n"
-            "    Use lowercase arguments in order to data in eye-friendly format.           \n",
-        true);
-    listOpts.addOption("l", "length",
-        "Input data length.                                   \n\n"
-            "    Argument: number of input lines, e.g. -l 12                                \n",
-        true);
-    listOpts.addOption("j", "jacknife", "Switches on/off Jacknife test.\n");
-    listOpts.addOption("a", "amplitude",
-        "Perform amplitude test.                              \n\n"
-            "    Arguments: x[/y] where x is a floating-point positive number that describes\n"
-            "    the level of noise applied to each amplitude: A+x*A*N(0,1)/3 where N is a  \n"
-            "    normal distribution with mean 0 and std 1. The default value of x is 1     \n"
-            "    (i.e.amplitude vary by a max. factor of ~2). Optional parameter /y is      \n"
-            "    a number of samples (default value is 100).                                \n",
-        true);
-    listOpts.addOption("f", "fault",
-        "Draw fault plane solution directly (and stations).   \n\n"
-            "    Arguments: strike/dip/rake[:azimuth1/takeoff1][:azimuth2/takeoff2]...      \n"
-            "                                                                               \n",
-        true);
-    listOpts.addOption("g", "faults",
-        "Draw fault plane solution and bootstrap solutions.   \n\n"
-            "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
-            "                                                                               \n",
-        true);
-    listOpts.addOption("m", "model",
-        "Velocity model file (with extension)                 \n\n"
-            "    Velocity model in hypo71 format. Forces different input file format.       \n",
-        true);
-    listOpts.addOption("v", "version", "Display version number");
+    PrepareHelp(listOpts);
 
     Taquart::String SolutionTypes = "D";
     Taquart::String NormType = "L2";
@@ -263,10 +166,10 @@ int main(int argc, char* argv[]) {
       FilenameOut = "default";
     }
 
+    //---- Read velocity model if necessary.
     std::vector<double> Top;
     std::vector<double> Velocity;
     if (VelocityModel) {
-      // Check if velocity model exists and read it.
       std::ifstream VelocityFile;
       int n;
       double v;
@@ -283,13 +186,13 @@ int main(int argc, char* argv[]) {
       VelocityFile.close();
     }
 
-    // Draw fault with multiple nodal planes and exit.
+    //---- Draw fault with multiple nodal planes and exit program.
     if (DrawFaultsOnly) {
       DrawFaults(FaultString, FilenameOut);
       return 0;
     }
 
-    // Draw fault with single nodal plane and exit.
+    //---- Draw fault with single nodal plane and exit program.
     if (DrawFaultOnly) {
       DrawFault(FaultString, FilenameOut);
       return 0;
@@ -300,8 +203,9 @@ int main(int argc, char* argv[]) {
         (NormType == "L2") ? Taquart::ntL2 : Taquart::ntL1;
     int QualityType = 1;
     Taquart::SMTInputData InputData;
-
     const unsigned int Size = 500;
+
+    //---- Read input file and fill input data structures.
     char id[50];
     double duration = 0.0, displacement = 0.0;
     double azimuth = 0.0, takeoff = 0.0, velocity = 0.0, distance = 0.0,
@@ -402,14 +306,14 @@ int main(int argc, char* argv[]) {
       }
     }
     InputFile.close();
-    bool Result = false;
-    InputData.CountRuptureTime(Result); // TODO: This is not used in current context.
+    //bool Result = false;
+    //InputData.CountRuptureTime(Result); // This is not used in current context.
 
-    //---- Data processing.
+    //---- Perform moment tensor inversion.
     std::vector<Taquart::FaultSolutions> FSList;
     Taquart::FaultSolution fu, tr, dc;
 
-    // Perform regular SMT inversion with all stations.
+    // Regular moment tensor inversion using all stations.
     try {
       int ThreadProgress = 0;
       USMTCore(InversionNormType, QualityType, InputData, &ThreadProgress);
@@ -433,6 +337,7 @@ int main(int argc, char* argv[]) {
 
     FSList.push_back(fs);
 
+    //---- Perform either noise or jacknife solutions.
     if (NoiseTest) {
       srand((unsigned) time(0));
 
@@ -558,6 +463,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
+    //---- Export text output files if requested by the user.
     char txtb[512] = { };
     for (unsigned int j = 0; j < FSList.size(); j++) {
       Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
@@ -748,8 +654,6 @@ int main(int argc, char* argv[]) {
           OutFile << FOCIMT_NEWLINE;
           OutFile.close();
         }
-
-        //---- Generate and save graphical representation of MT.
 
         // Do not dump anything.
         if (OutputFileType.Pos("NONE") && j == 0) continue;
