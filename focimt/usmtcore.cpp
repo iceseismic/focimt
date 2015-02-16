@@ -1013,13 +1013,13 @@ void Taquart::UsmtCore::EIGGEN_NEW(double e1, double e2, double e3, double &iso,
     v3 = e3 - trace;
   }
 
+
+  // The percentage of moment tensor components is calculated with the method of Jost and Herrmann:
   const double ff = -v3 / v1;
   iso = trace;
-  // The factor here is likely wrong and it should be replaced with 1.0
-  clvd = 2.0 * v1 * ff;
+  clvd = v1 * ff;
   dbcp = fabs(v1 * (1.0 - 2.0 * ff));
   const double s = fabs(iso) + fabs(clvd) + fabs(dbcp);
-
   iso = iso / s * 100.0;
   clvd = clvd / s * 100.0;
   dbcp = dbcp / s * 100.0;
