@@ -346,7 +346,7 @@ void PrepareHelp(Options &listOpts) {
       "The details of the beach ball picture                \n\n"
           "    Arguments: [S][A][C][D]: Plot (S)tations, (A)xes, (C)enter cross, best     \n"
           "    (D)ouble-couple lines. The default option is '-b SACD' (all features are   \n"
-          "    displayed                                                                  \n",
+          "    displayed.                                                                 \n",
       true);
   listOpts.addOption("d", "dump",
       "Output data format and order.                        \n\n"
@@ -411,6 +411,10 @@ void PrepareHelp(Options &listOpts) {
   listOpts.addOption("m", "model",
       "Velocity model file (with extension)                 \n\n"
           "    Velocity model in HYPO71 format. Forces different input file format.       \n",
+      true);
+  listOpts.addOption("z", "size",
+      "Beach ball file size                                 \n\n"
+          "    Size of the beach ball figure in pixels.                                   \n",
       true);
   listOpts.addOption("v", "version", "Display version number");
 }

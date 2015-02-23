@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
     Taquart::String BallContent = "SACD";
     Taquart::String DumpOrder = "";
     Taquart::String OutputFileType = "PNG";
+    unsigned int Size = 500;
     bool JacknifeTest = false;
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
@@ -144,6 +145,11 @@ int main(int argc, char* argv[]) {
                 listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 14:
+            // Override default beach ball size
+            Size =
+                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
+            break;
+          case 15:
             std::cout << "Rev. 3.1.3, 2015.02.11\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
@@ -203,7 +209,6 @@ int main(int argc, char* argv[]) {
         (NormType == "L2") ? Taquart::ntL2 : Taquart::ntL1;
     int QualityType = 1;
     Taquart::SMTInputData InputData;
-    const unsigned int Size = 500;
 
     //---- Read input file and fill input data structures.
     char id[50];
