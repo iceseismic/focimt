@@ -410,7 +410,7 @@ void PrepareHelp(Options &listOpts) {
       true);
   listOpts.addOption("m", "model",
       "Velocity model file (with extension)                 \n\n"
-          "    Velocity model in hypo71 format. Forces different input file format.       \n",
+          "    Velocity model in HYPO71 format. Forces different input file format.       \n",
       true);
   listOpts.addOption("v", "version", "Display version number");
 }
