@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
 // Source: traveltime.cpp
 // Module: focimt
-// 1D velocity model ray-tracing routines taken from HypoDD. Original code
-// by Felix Waldhauser.
+// 1D velocity model ray-tracing routines translated to C++ from HypoDD.
+// Original code by Felix Waldhauser.
 //
 // Permission is hereby granted, free of charge, to any person or organization
 // obtaining a copy of the software and accompanying documentation covered by

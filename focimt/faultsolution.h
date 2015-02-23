@@ -3,7 +3,7 @@
 // Module: focimt
 // Class for storing fault plane solution data.
 //
-// Copyright (c) 2003-2015, Grzegorz Kwiatek.
+// Copyright (c) 2013-2015, Grzegorz Kwiatek.
 //
 // Permission is hereby granted, free of charge, to any person or organization
 // obtaining a copy of the software and accompanying documentation covered by
