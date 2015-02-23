@@ -206,8 +206,8 @@ int main(int argc, char* argv[]) {
     const unsigned int Size = 500;
 
     //---- Read input file and fill input data structures.
-    char id[50];
-    double duration = 0.0, displacement = 0.0;
+    char id[50], phase[10], component[10];
+    double moment = 0.0;
     double azimuth = 0.0, takeoff = 0.0, velocity = 0.0, distance = 0.0,
         density = 0.0, aoi = 0.0;
 
@@ -226,8 +226,9 @@ int main(int argc, char* argv[]) {
         InputFile >> s_northing;
         InputFile >> s_easting;
         InputFile >> s_z;
-        InputFile >> duration;
-        InputFile >> displacement;
+        InputFile >> phase;
+        InputFile >> component;
+        InputFile >> moment; // Should hold the area below the first P-wave velocity pulse (=moment)
 
         // Calculation of azimuth, takeoff, velocity and distance.
         double depth = fabs(e_z * 0.001);
@@ -254,12 +255,12 @@ int main(int argc, char* argv[]) {
         Taquart::SMTInputLine il;
         il.Name = Taquart::String(id); /*!< Station name.*/
         il.Id = i + 1; /*!< Station id number.*/
-        il.Component = "ZZ";
-        il.MarkerType = "";
+        il.Component = Taquart::String(component);
+        il.MarkerType = Taquart::String(phase);
         il.Start = 0.0;
-        il.End = duration;
-        il.Duration = duration;
-        il.Displacement = displacement / cos(aoi * M_PI / 180.0); // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
+        il.End = 0.0;
+        il.Duration = 0.0;
+        il.Displacement = moment / cos(aoi * M_PI / 180.0); // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
         il.Incidence = aoi;
         il.Azimuth = azimuth;
         il.TakeOff = takeoff;
@@ -275,8 +276,9 @@ int main(int argc, char* argv[]) {
       // Read formatted input file (standard foci-mt format)
       for (unsigned int i = 0; i < N; i++) {
         InputFile >> id;
-        InputFile >> duration; // this is NOT used in current context (incorporated into displacement)!!!
-        InputFile >> displacement; // this should hold in fact area below the first P-wave velocity pulse
+        InputFile >> phase;
+        InputFile >> component;
+        InputFile >> moment; // Should hold area below the first P-wave velocity pulse
         InputFile >> azimuth;
         InputFile >> aoi;
         InputFile >> takeoff;
@@ -288,12 +290,12 @@ int main(int argc, char* argv[]) {
         Taquart::SMTInputLine il;
         il.Name = Taquart::String(id); /*!< Station name.*/
         il.Id = i + 1; /*!< Station id number.*/
-        il.Component = "ZZ"; //"ZZ";       /*!< Component.*/
-        il.MarkerType = ""; //"p*ons/p*max";      /*!< Type of the marker used.*/
+        il.Component = Taquart::String(component); //"ZZ";       /*!< Component.*/
+        il.MarkerType = Taquart::String(phase); //"p*ons/p*max";      /*!< Type of the marker used.*/
         il.Start = 0.0; //tstart;;           /*!< Start time [s].*/
-        il.End = duration; //tend;;             /*!< End time [s].*/
-        il.Duration = duration; /*!< Duration of first P-wave velocity pulse [s].*/
-        il.Displacement = displacement / cos(aoi * M_PI / 180.0); /*!< Amplitude of first P-wave displacement pulse [m]. */
+        il.End = 0.0; //tend;;             /*!< End time [s].*/
+        il.Duration = 0.0; /*!< Duration of first P-wave velocity pulse [s].*/
+        il.Displacement = moment / cos(aoi * M_PI / 180.0); /*!< Seismic moment of the first P-wave displacement pulse (only P wave, Z component) [m]. */
         il.Incidence = aoi; //incidence;       /*!< Angle of incidence [deg] (not used here) */
         il.Azimuth = azimuth; /*!< Azimuth between station and source [deg]. */
         il.TakeOff = takeoff; /*!< Takeoff angle measured from bottom [deg]. */
