@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     Taquart::String FilenameIn;
     Taquart::String FilenameOut;
     Taquart::String FilenameVelocity;
-    unsigned int N = 14;
+    unsigned int N = 0;
 
     Options listOpts;
     int switchInt;
@@ -107,9 +107,15 @@ int main(int argc, char* argv[]) {
             DumpOrder =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
+          //case 8:
+          //  N =
+          //      Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
+          //  break;
           case 8:
-            N =
-                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
+            // Use 1D velocity model from a file (forces different formatting of input file)
+            VelocityModel = true;
+            FilenameVelocity = Taquart::String(
+                listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 9:
             JacknifeTest = true;
@@ -138,12 +144,6 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 13:
-            // Use 1D velocity model from a file (forces different formatting of input file)
-            VelocityModel = true;
-            FilenameVelocity = Taquart::String(
-                listOpts.getArgs(switchInt).c_str()).Trim();
-            break;
-          case 14:
             std::cout << "Rev. 3.1.3, 2015.02.11\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
@@ -218,6 +218,7 @@ int main(int argc, char* argv[]) {
       double e_northing = 0.0f, e_easting = 0.0f, e_z = 0.0f;
       double s_northing = 0.0f, s_easting = 0.0f, s_z = 0.0f;
       InputFile >> fileid;
+      InputFile >> N;
       InputFile >> e_northing;
       InputFile >> e_easting;
       InputFile >> e_z;
@@ -276,6 +277,7 @@ int main(int argc, char* argv[]) {
     else {
       // Read formatted input file (standard foci-mt format)
       InputFile >> fileid;
+      InputFile >> N;
       for (unsigned int i = 0; i < N; i++) {
         InputFile >> id;
         InputFile >> component;
