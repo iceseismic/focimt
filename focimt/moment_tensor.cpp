@@ -206,7 +206,7 @@ int main(int argc, char* argv[]) {
     const unsigned int Size = 500;
 
     //---- Read input file and fill input data structures.
-    char id[50], phase[10], component[10];
+    char id[50], phase[10], component[10], fileid[50];
     double moment = 0.0;
     double azimuth = 0.0, takeoff = 0.0, velocity = 0.0, distance = 0.0,
         density = 0.0, aoi = 0.0;
@@ -217,6 +217,7 @@ int main(int argc, char* argv[]) {
       // Reading formatted input file (velocity model format).
       double e_northing = 0.0f, e_easting = 0.0f, e_z = 0.0f;
       double s_northing = 0.0f, s_easting = 0.0f, s_z = 0.0f;
+      InputFile >> fileid;
       InputFile >> e_northing;
       InputFile >> e_easting;
       InputFile >> e_z;
@@ -226,8 +227,8 @@ int main(int argc, char* argv[]) {
         InputFile >> s_northing;
         InputFile >> s_easting;
         InputFile >> s_z;
-        InputFile >> phase;
         InputFile >> component;
+        InputFile >> phase;
         InputFile >> moment; // Should hold the area below the first P-wave velocity pulse (=moment)
 
         // Calculation of azimuth, takeoff, velocity and distance.
@@ -274,10 +275,11 @@ int main(int argc, char* argv[]) {
     }
     else {
       // Read formatted input file (standard foci-mt format)
+      InputFile >> fileid;
       for (unsigned int i = 0; i < N; i++) {
         InputFile >> id;
-        InputFile >> phase;
         InputFile >> component;
+        InputFile >> phase;
         InputFile >> moment; // Should hold area below the first P-wave velocity pulse
         InputFile >> azimuth;
         InputFile >> aoi;
