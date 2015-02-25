@@ -907,12 +907,6 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
 
   //C     Now we have EIGENVECTORS V(K,J,I), J pertaining to P,B,T,
   //C     I pertaining to F,T,D, K pertaining to 1,2,3
-  //      DO 19 I=1,3
-  //      DO 19 J=1,3
-  //      HELP=AMIN1(V(3,J,I),1.)
-  //      PLUNGE(J,I)=ASIN(AMAX1(HELP,-1.))
-  //      TREND(J,I)=ATAN2(V(2,J,I),V(1,J,I))
-  //   19 CONTINUE
   for (int i = 1; i <= 3; i++) {
     for (int j = 1; j <= 3; j++) {
       HELP = amin1(V[3][j][i], 1.0);
@@ -1016,27 +1010,12 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       if (STRIKE[i][k] < 0.0) STRIKE[i][k] = 360.0 + STRIKE[i][k];
       DIP[i][k] = DIP[i][k] * 180.0 / PI;
       //RAKE[i][k] = RAKE[i][k]*180.0/PI; // Latter calculations >>>>>
-
-      /* DONE  5 -c2.4.13 : Usuniete w 2.4.13 */
+      // Removed in version 2.4.13 of FOCI
       //if(RAKE[i][k] < -180.0) RAKE[i][k] = RAKE[i][k] + 360.0;
       //if(RAKE[i][k] > 180.0) RAKE[i][k] = RAKE[i][k] - 360.0;
-      //----
     }
 
-    /* DONE 5 -c2.4.13 :
-     Oblicz wartoï¿½ci RAKE przy pomocy metody z programu PSMECA. Korekta
-     krytycznego bï¿½ï¿½du aï¿½ do wersji 2.4.13 dotyczï¿½ca bï¿½ï¿½dnej wartoï¿½ci rake
-     (nie miaï¿½a wpï¿½ywu na rozwiï¿½zanie graficzne tensora, tylko na wartoï¿½ï¿½
-     rake w plikach wynikowych).*/
-
-    /*
-     double Strike1 = 78.9; //STRIKE[i][1];
-     double Strike2 = 255.6; //STRIKE[i][2];
-     double Dip1 = 48.8; //DIP[i][1];
-     double Dip2 = 41.2; //DIP[i][2];
-     FaultType[i] = 1.0;
-     */
-
+    // Do the rake calculations with routines from GMT.
     double Strike1 = STRIKE[i][1];
     double Strike2 = STRIKE[i][2];
     double Dip1 = DIP[i][1];
@@ -1047,13 +1026,8 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
         FaultType[i]);
     RAKE[i][1] = Rake1;
     RAKE[i][2] = Rake2;
-    //------
 
-    //      DO 28 K=1,3
     for (int k = 1; k <= 3; k++) {
-      //      TREND(I,K)=TREND(I,K)*180./PI
-      //      IF(TREND(I,K).LT.0.) TREND(I,K)=360.+TREND(I,K)
-      //   28 PLUNGE(I,K)=PLUNGE(I,K)*180./PI
       TREND[i][k] = TREND[i][k] * 180.0 / PI;
       if (TREND[i][k] < 0.0) TREND[i][k] = 360.0 + TREND[i][k];
       PLUNGE[i][k] = PLUNGE[i][k] * 180.0 / PI;
@@ -1171,11 +1145,8 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   double RMAG = 0.0;
   double PEXPL[4], PCLVD[3 + 1], PDBCP[3 + 1];
   double ALF = 0.0;
-  ;
   double MAGN[4];
   double HELP = 0.0;
-  //double SVANG = 0.0;
-  //double SKAL = 0.0;
   double LLA[4];
   Zero(LLA, 4);
   double HA[4];
@@ -1285,15 +1256,8 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   }
   //    3 CONTINUE
 
-  //      IF(.NOT.REALLY) GO TO 1011
+  // Full moment tensor.
   if (REALLY) {
-    //C     #################### FULL TENSOR PART:
-    //C     Solve equation AM=U for M:
-    //      DO 101 I=1,6
-    //      DO 101 J=1,6
-    //      ATA(I,J)=0.
-    //      DO 101 K=1,N
-    //  101 ATA(I,J)=ATA(I,J)+A(K,J)*A(K,I)
     for (int i = 1; i <= 6; i++) {
       for (int j = 1; j <= 6; j++) {
         ATA[i][j] = 0.0;
@@ -1302,31 +1266,20 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       }
     }
 
-    //      DO 1002 I=1,6
-    //      DO 1002 J=1,6
-    // 1002 Z1(I,J)=ATA(I,J)
     for (int i = 1; i <= 6; i++) {
       for (int j = 1; j <= 6; j++) {
         Z1[i][j] = ATA[i][j];
       }
     }
 
-    //      CALL INVMAT(Z1,Z2,6)
     INVMAT(Z1, Z2, 6);
 
-    //      DO 1001 I=1,6
-    //      DO 1001 J=1,6
-    // 1001 ATAINV(I,J)=Z2(I,J)
     for (int i = 1; i <= 6; i++) {
       for (int j = 1; j <= 6; j++) {
         ATAINV[i][j] = Z2[i][j];
       }
     }
 
-    //      DO 102 I=1,6
-    //      B(I)=0.
-    //      DO 102 J=1,N
-    //  102 B(I)=B(I)+A(J,I)*U(J)*1.E+12
     for (int i = 1; i <= 6; i++) {
       B[i] = 0.0;
       for (int j = 1; j <= N; j++) {
@@ -1334,10 +1287,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       }
     }
 
-    //      DO 103 I=1,6
-    //      RM(I,1)=0.
-    //      DO 103 J=1,6
-    //  103 RM(I,1)=RM(I,1)+ATAINV(I,J)*B(J)
     for (int i = 1; i <= 6; i++) {
       RM[i][1] = 0.0;
       for (int j = 1; j <= 6; j++) {
@@ -1345,24 +1294,12 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       }
     }
 
-    //C     Finds scalar seismic moment:
-    //      DO 9 I=1,6
-    //    9 BB(I)=RM(I,1)
+    // Find scalar seismic moment.
     for (int i = 1; i <= 6; i++)
       BB[i] = RM[i][1];
 
-    //      CALL EIG3(BB,0,EQM)
     EIG3(BB, 0, EQM);
 
-    //      EQQ1=EQM(1)
-    //      EQQ2=EQM(2)
-    //      EQQ3=EQM(3)
-    //      EQM(1)=ABS(EQM(1))*1.E-12
-    //      EQM(2)=ABS(EQM(2))*1.E-12
-    //      EQM(3)=ABS(EQM(3))*1.E-12
-    //      HELP1=ABS(EQM(1)-EQM(2))
-    //      HELP2=ABS(EQM(1)-EQM(3))
-    //      HELP3=ABS(EQM(2)-EQM(3))
     EQQ1 = EQM[1];
     EQQ2 = EQM[2];
     EQQ3 = EQM[3];
@@ -1372,24 +1309,14 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     HELP1 = fabs(EQM[1] - EQM[2]);
     HELP2 = fabs(EQM[1] - EQM[3]);
     HELP3 = fabs(EQM[2] - EQM[3]);
-
-    //      EU=SQRT(.5*(EQM(1)*EQM(1)+EQM(2)*EQM(2)+EQM(3)*EQM(3)))
-    //      EC=AMAX1(HELP1,HELP2)
-    //      EC=AMAX1(EC,HELP3)
-    //      RMT(1)=AMAX1(EC,EU)*1.E+12
-    //      RM0(1)=AMIN1(EC,EU)*1.E+12
     EU = sqrt(0.5 * (EQM[1] * EQM[1] + EQM[2] * EQM[2] + EQM[3] * EQM[3]));
     EC = amax1(HELP1, HELP2);
     EC = amax1(EC, HELP3);
     RMT[1] = amax1(EC, EU) * USMT_UPSCALE;
     RM0[1] = amin1(EC, EU) * USMT_UPSCALE;
 
-    //C     Covariance calculation:
-    //      DO 401 I=1,N
+    // Covariance calculation.
     for (int i = 1; i <= N; i++) {
-      //      EPS=U(I)
-      //      DO 406 J=1,6
-      //  406 EPS=EPS-A(I,J)*RM(J,1)*1.E-12
       EPS = U[i];
 
       // Calculate theoretical displacement.
@@ -1400,34 +1327,19 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       for (int j = 1; j <= 6; j++)
         EPS = EPS - A[i][j] * RM[j][1] * USMT_DOWNSCALE;
 
-      //      SAI22=DBLE(0.)
-      //      DO 403 J=1,6
-      //  403 SAI22=SAI22+A(I,J)*A(I,J)
       SAI22 = 0.0;
       for (int j = 1; j <= 6; j++)
         SAI22 = SAI22 + A[i][j] * A[i][j];
 
-      //      SAI2=SNGL(SAI22)
       double SAI2 = double(SAI22);
 
-      //      DO 404 J=1,6
-      //  404 AA(I,J)=EPS*(A(I,J)/SAI2)*1.E+12
       for (int j = 1; j <= 6; j++)
         AA[i][j] = EPS * (A[i][j] / SAI2) * USMT_UPSCALE;
 
-      //      DO 401 J=1,6
-      //      AA(I,J)=AA(I,J)+RM(J,1)
       for (int j = 1; j <= 6; j++)
         AA[i][j] = AA[i][j] + RM[j][1];
     }
-    //  401 CONTINUE
 
-    //      DO 402 I=1,6
-    //      DO 402 J=1,6
-    //      COV(I,J,1)=DBLE(0.)
-    //      DO 405 K=1,N
-    //  405 COV(I,J,1)=COV(I,J,1)+(AA(K,I)-RM(I,1))*(AA(K,J)-RM(J,1))
-    //  402 COV(I,J,1)=COV(I,J,1)/DBLE(FLOAT(N-6)**2)
 #ifdef USMTCORE_DEBUG
     std::cout << std::endl;
 #endif
@@ -1450,11 +1362,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     std::cout << std::endl;
 #endif
 
-    //      SIG=0.
-    //      DO 201 I=1,6
-    //      SIGH=SNGL(DSQRT(COV(I,I,1)))
-    //      IF(SIG.LT.SIGH) SIG=SIGH
-    //  201 CONTINUE
     SIG = 0.0;
     for (int i = 1; i <= 6; i++) {
       double SIGH = sqrt(COV[i][i][1]);
@@ -1462,26 +1369,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     }
     RMERR[1] = SIG;
 
-    //C     Output:
-    //      WRITE(75,4999)
-    // 4999 FORMAT(72(1H=))
-    //      WRITE(RESULT(1),5001) TITLE
-    // 5001 FORMAT('L2 tensor for : ',A40)
-    //      WRITE(75,5000) RESULT(1)
-    // 5000 FORMAT(1X,A56)
-    //      WRITE(RESULT(2),5002)
-    // 5002 FORMAT('  Full solution :',39X)
-    //      WRITE(75,5000) RESULT(2)
-    //      WRITE(RESULT(3),5003) RM(1,1),RM(2,1),RM(3,1)
-    //      WRITE(75,5000) RESULT(3)
-    //      WRITE(RESULT(4),5003) RM(2,1),RM(4,1),RM(5,1)
-    //      WRITE(75,5000) RESULT(4)
-    //      WRITE(RESULT(5),5003) RM(3,1),RM(5,1),RM(6,1)
-    //      WRITE(75,5000) RESULT(5)
-    // 5003 FORMAT(11X,E10.3,2X,E10.3,2X,E10.3,11X)
-    //      WRITE(RESULT(6),5004) TROZ,RM0(1),RMT(1),SIG
-    // 5004 FORMAT(2X,'T0=',F8.4,2X,'M0=',E9.3,2X,'MT=',E9.3,2X,'ERR=',E9.3)
-    //      WRITE(75,5000) RESULT(6)
 #ifdef USMTCORE_DEBUG
     std::cout << "L2 Tensor:" << std::endl << std::endl;
     std::cout << "Full solution:" << std::endl;
@@ -1492,16 +1379,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     std::cout << std::endl;
 #endif
 
-    //      CALL EIGGEN(EQQ1,EQQ2,EQQ3,PEXPL,PCLVD(1),PDBCP(1))
-    //      RMAG=.6667*ALOG10(RM0(1))-6.0
-    //      IF(RMAG.GE.100.) RMAG=99.9
-    //      IF(RMAG.LE.-10.) RMAG=-9.9
-    //      WRITE(RESULT(7),5005) PEXPL,PCLVD(1),PDBCP(1),RMAG
-    // 5005 FORMAT(2X,'Expl.=',F6.1,'%   CLVD.=',F6.1,'%   DBCP.=',F6.1,
-    //     $'%   M=',F4.1)
-    //      WRITE(75,5000) RESULT(7)
     EIGGEN(EQQ1, EQQ2, EQQ3, PEXPL[1], PCLVD[1], PDBCP[1]);
-    //   EIGGEN_NEW(EQQ1,EQQ2,EQQ3,PEXPL[1],PCLVD[1],PDBCP[1]);
     RMAG = mw(RM0[1]);
     MAGN[1] = RMAG;
 
@@ -1512,12 +1390,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 #endif
   } // if REALLY
 
-  // 1011 DO 55 I=1,N
-  //      H(I,1)=A(I,1)-A(I,6)
-  //      H(I,2)=A(I,2)
-  //      H(I,3)=A(I,3)
-  //      H(I,4)=A(I,4)-A(I,6)
-  //   55 H(I,5)=A(I,5)
   for (int i = 1; i <= N; i++) {
     H[i][1] = A[i][1] - A[i][6];
     H[i][2] = A[i][2];
@@ -1526,12 +1398,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     H[i][5] = A[i][5];
   }
 
-  //C     Solve equation HM=U for M:
-  //      DO 2101 I=1,5
-  //      DO 2101 J=1,5
-  //      ATA(I,J)=0.
-  //      DO 2101 K=1,N
-  // 2101 ATA(I,J)=ATA(I,J)+H(K,J)*H(K,I)
+  // Solve equation HM=U for M:
   for (int i = 1; i <= 5; i++) {
     for (int j = 1; j <= 5; j++) {
       ATA[i][j] = 0.0;
@@ -1540,31 +1407,20 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     }
   }
 
-  //      DO 1005 I=1,5
-  //      DO 1005 J=1,5
-  // 1005 Z1(I,J)=ATA(I,J)
   for (int i = 1; i <= 5; i++) {
     for (int j = 1; j <= 5; j++) {
       Z1[i][j] = ATA[i][j];
     }
   }
 
-  //      CALL INVMAT(Z1,Z2,5)
   INVMAT(Z1, Z2, 5);
 
-  //      DO 1004 I=1,5
-  //      DO 1004 J=1,5
-  // 1004 ATAINV(I,J)=Z2(I,J)
   for (int i = 1; i <= 5; i++) {
     for (int j = 1; j <= 5; j++) {
       ATAINV[i][j] = Z2[i][j];
     }
   }
 
-  //      DO 2102 I=1,5
-  //      B(I)=0.
-  //      DO 2102 J=1,N
-  // 2102 B(I)=B(I)+H(J,I)*U(J)*1.E+12
   for (int i = 1; i <= 5; i++) {
     B[i] = 0.0;
     for (int j = 1; j <= N; j++) {
@@ -1572,10 +1428,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     }
   }
 
-  //      DO 2103 I=1,5
-  //      RM(I,2)=0.
-  //      DO 2103 J=1,5
-  // 2103 RM(I,2)=RM(I,2)+ATAINV(I,J)*B(J)
   for (int i = 1; i <= 5; i++) {
     RM[i][2] = 0.0;
     for (int j = 1; j <= 5; j++) {
@@ -1583,27 +1435,13 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     }
   }
 
-  //      RM(6,2)=-RM(1,2)-RM(4,2)
   RM[6][2] = -RM[1][2] - RM[4][2];
 
-  //C     Finds scalar seismic moment:
-  //      DO 2009 I=1,6
-  // 2009 BB(I)=RM(I,2)
   for (int i = 1; i <= 6; i++)
     BB[i] = RM[i][2];
 
-  //      CALL EIG3(BB,0,EQM)
   EIG3(BB, 0, EQM);
 
-  //      EQQ1=EQM(1)
-  //      EQQ2=EQM(2)
-  //      EQQ3=EQM(3)
-  //      EQM(1)=ABS(EQM(1))*1.E-12
-  //      EQM(2)=ABS(EQM(2))*1.E-12
-  //      EQM(3)=ABS(EQM(3))*1.E-12
-  //      HELP1=ABS(EQM(1)-EQM(2))
-  //      HELP2=ABS(EQM(1)-EQM(3))
-  //      HELP3=ABS(EQM(2)-EQM(3))
   EQQ1 = EQM[1];
   EQQ2 = EQM[2];
   EQQ3 = EQM[3];
@@ -1613,56 +1451,26 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   HELP1 = fabs(EQM[1] - EQM[2]);
   HELP2 = fabs(EQM[1] - EQM[3]);
   HELP3 = fabs(EQM[2] - EQM[3]);
-
-  //      EU=SQRT(.5*(EQM(1)*EQM(1)+EQM(2)*EQM(2)+EQM(3)*EQM(3)))
-  //      EC=AMAX1(HELP1,HELP2)
-  //      EC=AMAX1(EC,HELP3)
-  //      RMT(2)=AMAX1(EC,EU)*1.E+12
-  //      RM0(2)=AMIN1(EC,EU)*1.E+12
   EU = sqrt(0.5 * (EQM[1] * EQM[1] + EQM[2] * EQM[2] + EQM[3] * EQM[3]));
   EC = amax1(HELP1, HELP2);
   EC = amax1(EC, HELP3);
   RMT[2] = amax1(EC, EU) * USMT_UPSCALE;
   RM0[2] = amin1(EC, EU) * USMT_UPSCALE;
 
-  //C     Error calculation:
-  //      DO 2401 I=1,N
   for (int i = 1; i <= N; i++) {
-    //      EPS=U(I)
-    //      DO 2406 J=1,6
-    // 2406 EPS=EPS-A(I,J)*RM(J,2)*1.E-12
     EPS = U[i];
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][2] * USMT_DOWNSCALE;
-
-    //      SAI22=DBLE(0.)
-    //      DO 2403 J=1,6
-    // 2403 SAI22=SAI22+a(I,J)*A(I,J)
     SAI22 = 0.0;
     for (int j = 1; j <= 6; j++)
       SAI22 = SAI22 + A[i][j] * A[i][j];
-
-    //      SAI2=SNGL(SAI22)
     double SAI2 = double(SAI22);
-
-    //      DO 2404 J=1,6
-    // 2404 AA(I,J)=EPS*(A(I,J)/SAI2)*1.E+12
     for (int j = 1; j <= 6; j++)
       AA[i][j] = EPS * (A[i][j] / SAI2) * USMT_UPSCALE;
-
-    //      DO 2401 J=1,6
-    //      AA(I,J)=AA(I,J)+RM(J,2)
     for (int j = 1; j <= 6; j++)
       AA[i][j] = AA[i][j] + RM[j][2];
   }
-  // 2401 CONTINUE
 
-  //      DO 2402 I=1,6
-  //      DO 2402 J=1,6
-  //      COV(I,J,2)=DBLE(0.)
-  //      DO 2405 K=1,N
-  // 2405 COV(I,J,2)=COV(I,J,2)+(AA(K,I)-RM(I,2))*(AA(K,J)-RM(J,2))
-  // 2402 COV(I,J,2)=COV(I,J,2)/DBLE(FLOAT(N-6)**2)
 #ifdef USMTCORE_DEBUG
   std::cout << std::endl;
 #endif
@@ -1687,11 +1495,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   //      IF(.NOT.REALLY) RETURN
   if (!REALLY) return;
 
-  //      SIG=0.
-  //      DO 202 I=1,6
-  //      SIGH=SNGL(DSQRT(COV(I,I,2)))
-  //      IF(SIG.LT.SIGH) SIG=SIGH
-  //  202 CONTINUE
   SIG = 0.0;
   for (int i = 1; i <= 6; i++) {
     double SIGH = sqrt(COV[i][i][2]);
@@ -1699,19 +1502,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   }
   RMERR[2] = SIG;
 
-  //C     in L1 calculation only the RM(?,2) is important
-  //C     Output:
-  //      WRITE(RESULT(13),5006)
-  // 5006 FORMAT('  Trace null solution :',33X)
-  //      WRITE(75,5000) RESULT(13)
-  //      WRITE(RESULT(14),5003) RM(1,2),RM(2,2),RM(3,2)
-  //      WRITE(75,5000) RESULT(14)
-  //      WRITE(RESULT(15),5003) RM(2,2),RM(4,2),RM(5,2)
-  //      WRITE(75,5000) RESULT(15)
-  //      WRITE(RESULT(16),5003) RM(3,2),RM(5,2),RM(6,2)
-  //      WRITE(75,5000) RESULT(16)
-  //      WRITE(RESULT(17),5004) TROZ,RM0(2),RMT(2),SIG
-  //      WRITE(75,5000) RESULT(17)
 #ifdef USMTCORE_DEBUG
   std::cout << "Trace-null solution:" << std::endl;
   std::cout << RM[1][2] << '\t' << RM[2][2] << '\t' << RM[3][2] << std::endl;
@@ -1721,13 +1511,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   std::cout << std::endl;
 #endif
 
-  //      CALL EIGGEN(EQQ1,EQQ2,EQQ3,DUM,PCLVD(2),PDBCP(2))
-  //      RMAG=.6667*ALOG10(RM0(2))-6.0
-  //      IF(RMAG.GE.100.) RMAG=99.9
-  //      IF(RMAG.LE.-10.) RMAG=-9.9
-  //      WRITE(RESULT(18),5007) PCLVD(2),PDBCP(2),RMAG
-  // 5007 FORMAT(18X,'CLVD.=',F6.1,'%   DBCP.=',F6.1,'%   M=',F4.1)
-  //      WRITE(75,5000) RESULT(18)
   EIGGEN(EQQ1, EQQ2, EQQ3, DUM, PCLVD[2], PDBCP[2]);
   RMAG = mw(RM0[2]);
   MAGN[2] = RMAG;
@@ -1741,99 +1524,50 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 
   //==== DOUBLE COUPLE SOLUTION ==============================================
 
-  //C     #################### TRACE 0, DET 0 TENSOR PART:
-  //      ISTER=1
-  //      CALL FIJGEN
-  //ISTER = 1;
   FIJGEN();
 
-  //      DO 1003 I=1,6
-  // 1003 B(I)=RM(I,2)
   for (int i = 1; i <= 6; i++)
     B[i] = RM[i][2];
 
-  //      CALL EIG3(B,ISTER,EQM)
   EIG3(B, 1, EQM);
 
-  //      RMM=(EQM(1)+EQM(2)+EQM(3))/3.
-  //      RMX=EQM(1)
-  //      IF(ABS(EQM(2)).LT.ABS(RMx)) RMX=EQM(2)
-  //      IF(ABS(EQM(3)).LT.ABS(RMx)) RMX=EQM(3)
-  //RMM = (EQM[1] + EQM[2] + EQM[3]) / 3.0;
   RMX = EQM[1];
   if (fabs(EQM[2]) < fabs(RMX)) RMX = EQM[2];
   if (fabs(EQM[3]) < fabs(RMX)) RMX = EQM[3];
 
-  //      RMY=EQM(3)
-  //      IF(ABS(EQM(1)).GT.ABS(RMy)) RMY=EQM(1)
-  //      IF(ABS(EQM(2)).GT.ABS(RMy)) RMY=EQM(2)
   RMY = EQM[3];
   if (fabs(EQM[1]) > fabs(RMY)) RMY = EQM[1];
   if (fabs(EQM[2]) > fabs(RMY)) RMY = EQM[2];
 
-  //      IF((EQM(1).NE.RMX).AND.(EQM(1).NE.RMY)) RMZ=EQM(1)
-  //      IF((EQM(2).NE.RMX).AND.(EQM(2).NE.RMY)) RMZ=EQM(2)
-  //      IF((EQM(3).NE.RMX).AND.(EQM(3).NE.RMY)) RMZ=EQM(3)
   if (EQM[1] != RMX && EQM[1] != RMY) RMZ = EQM[1];
   if (EQM[2] != RMX && EQM[2] != RMY) RMZ = EQM[2];
   if (EQM[3] != RMX && EQM[3] != RMY) RMZ = EQM[3];
 
-  //      CALL BETTER(RMY,RMZ,RM0(3),RMT(3),ICOND)
   BETTER(RMY, RMZ, RM0[3], RMT[3], ICOND);
 
-  //      DO 2003 I=1,6
-  // 2003 B(I)=RM(I,3)
   for (int i = 1; i <= 6; i++)
     B[i] = RM[i][3];
 
-  //      CALL EIG3(B,ISTER,EQM)
   EIG3(B, 1, EQM);
 
-  //      EQQ1=EQM(1)
-  //      EQQ2=EQM(2)
-  //      EQQ3=EQM(3)
   EQQ1 = EQM[1];
   EQQ2 = EQM[2];
   EQQ3 = EQM[3];
 
-  //C     Error calculation:
-  //      DO 3401 I=1,N
   for (int i = 1; i <= N; i++) {
-    //      EPS=U(I)
-    //      DO 3406 J=1,6
-    // 3406 EPS=EPS-A(I,J)*RM(J,3)*1.E-12
     EPS = U[i];
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][3] * USMT_DOWNSCALE;
-
-    //      SAI22=DBLE(0.)
-    //      DO 3403 J=1,6
-    // 3403 SAI22=SAI22+a(I,J)*A(I,J)
     SAI22 = 0.0;
     for (int j = 1; j <= 6; j++)
       SAI22 = SAI22 + A[i][j] * A[i][j];
-
-    //      SAI2=SNGL(SAI22)
     double SAI2 = double(SAI22);
-
-    //      DO 3404 J=1,6
-    // 3404 AA(I,J)=EPS*(A(I,J)/SAI2)*1.E+12
     for (int j = 1; j <= 6; j++)
       AA[i][j] = EPS * (A[i][j] / SAI2) * USMT_UPSCALE;
-
-    //      DO 3401 J=1,6
-    //      AA(I,J)=AA(I,J)+RM(J,3)
     for (int j = 1; j <= 6; j++)
       AA[i][j] = AA[i][j] + RM[j][3];
   }
-  // 3401 CONTINUE
 
-  //      DO 3402 I=1,6
-  //      DO 3402 J=1,6
-  //      COV(I,J,3)=DBLE(0.)
-  //      DO 3405 K=1,N
-  // 3405 COV(I,J,3)=COV(I,J,3)+(AA(K,I)-RM(I,3))*(AA(K,J)-RM(J,3))
-  // 3402 COV(I,J,3)=COV(I,J,3)/DBLE(FLOAT(N-6)**2)
 #ifdef USMTCORE_DEBUG
   std::cout << std::endl;
 #endif
@@ -1855,11 +1589,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 #ifdef USMTCORE_DEBUG
   std::cout << std::endl;
 #endif
-  //      SIG=0.
-  //      DO 203 I=1,6
-  //      SIGH=SNGL(DSQRT(COV(I,I,3)))
-  //      IF(SIG.LT.SIGH) SIG=SIGH
-  //  203 CONTINUE
   SIG = 0.0;
   for (int i = 1; i <= 6; i++) {
     double SIGH = sqrt(COV[i][i][3]);
@@ -1867,18 +1596,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   }
   RMERR[3] = SIG;
 
-  //C     Output:
-  //      WRITE(RESULT(24),5008)
-  // 5008 FORMAT('  Double couple solution :',30X)
-  //      WRITE(75,5000) RESULT(24)
-  //      WRITE(RESULT(25),5003) RM(1,3),RM(2,3),RM(3,3)
-  //      WRITE(75,5000) RESULT(25)
-  //      WRITE(RESULT(26),5003) RM(2,3),RM(4,3),RM(5,3)
-  //      WRITE(75,5000) RESULT(26)
-  //      WRITE(RESULT(27),5003) RM(3,3),RM(5,3),RM(6,3)
-  //      WRITE(75,5000) RESULT(27)
-  //      WRITE(RESULT(28),5004) TROZ,RM0(3),RMT(3),SIG
-  //      WRITE(75,5000) RESULT(28)
 #ifdef USMTCORE_DEBUG
   std::cout << "Double-couple solution:" << std::endl;
   std::cout << RM[1][3] << '\t' << RM[2][3] << '\t' << RM[3][3] << std::endl;
@@ -1888,12 +1605,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   std::cout << std::endl;
 #endif
 
-  //      RMAG=.6667*ALOG10(RM0(3))-6.0
-  //      IF(RMAG.GE.100.) RMAG=99.9
-  //      IF(RMAG.LE.-10.) RMAG=-9.9
-  //      WRITE(RESULT(29),5009) RMAG
-  // 5009 FORMAT(34X,'DBCP.= 100.0%   M=',F4.1)
-  //      WRITE(75,5000) RESULT(29)
   RMAG = mw(RM0[3]);
   MAGN[3] = RMAG;
   PDBCP[3] = 100.0;
@@ -1904,11 +1615,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   std::cout << " PDBCP = 100% Mw = " << RMAG << std::endl;
   std::cout << std::endl;
 #endif
-
-  //      CALL XTRINF(ICOND)
-  //      NORM=2
-  //      CALL WROUT(NORM)
-  //      CALL WRCOV
 
   //---- Transfer data to Taquart::FaultSolution structures
 
@@ -1923,14 +1629,6 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     Solution[1].U_measured[i - 1] = U[i];
     Solution[2].U_measured[i - 1] = U[i];
     Solution[3].U_measured[i - 1] = U[i];
-    /*
-     Solution[1].U_th.push_back(UTH[i]);
-     Solution[2].U_th.push_back(UTH[i]);
-     Solution[3].U_th.push_back(UTH[i]);
-     Solution[1].U_measured.push_back(U[i]);
-     Solution[2].U_measured.push_back(U[i]);
-     Solution[3].U_measured.push_back(U[i]);
-     */
   }
 
   double uerr = 0.0;
@@ -1972,19 +1670,10 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 
   ICOND = QualityType;
   XTRINF(ICOND, 2, RM0, RMERR);
-  // WROUT(NORM);
-  // WRCOV();
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::INVMAT(double A[][10], double B[][10], int NP) {
-  //      SUBROUTINE INVMAT(A,B,NP)
-  //C     Routine inverts matrix A of dimensions 9*9
-  //      DIMENSION A(9,9),B(9,9),Y(9,9),ALU(9,9),INDX(9)
-  //      EXTERNAL LUDCMP,LUBKSB
-
   double Y[10][10];
   Zero(&Y[0][0], 100);
   double ALU[10][10];
@@ -1993,101 +1682,46 @@ void Taquart::UsmtCore::INVMAT(double A[][10], double B[][10], int NP) {
   for (int i = 0; i < 10; i++)
     INDX[i] = 0;
   double D = 0;
-
-  //      DO 12 I=1,NP
-  //       DO 11 J=1,NP
-  //        Y(I,J)=0.
-  //   11   CONTINUE
-  //       Y(I,I)=1.
-  //   12 CONTINUE
   for (int i = 1; i <= NP; i++) {
     for (int j = 1; j <= NP; j++) {
       Y[i][j] = 0.0;
     }
     Y[i][i] = 1.0;
   }
-
-  //      CALL LUDCMP(A,ALU,INDX,D,NP)
   LUDCMP(A, ALU, INDX, D, NP);
-
-  //      DO 13 J=1,NP
-  //       CALL LUBKSB(ALU,INDX,Y(1,J),B(1,J),NP)
-  //   13  CONTINUE
   for (int j = 1; j <= NP; j++) {
     LUBKSB2(ALU, INDX, Y, B, NP, j);
   }
-
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::LUBKSB2(double A[][10], int INDX[], double C[][10],
     double B[][10], int &NP, int jj) {
-  //      SUBROUTINE LUBKSB(A,INDX,C,B,NP)
-  //C     Routine solves set of linear equations AX=B. Matrix A is input as its
-  //C     LU decomposition. INDX is permutation vector. C is input as right-hand
-  //C     side vector and solution is returned as B. A, and INDX are not modified.
-  //      DIMENSION A(9,9),INDX(9),B(9),C(9)
 
-  //      DO 1 I=1,NP
-  //    1  B(I)=C(I)
   for (int i = 1; i <= NP; i++)
     B[i][jj] = C[i][jj];
-
-  //      II=0
   int II = 0;
-
-  //      DO 12 I=1,NP
   for (int i = 1; i <= NP; i++) {
-    //       LL=INDX(I)
-    //       SUM=B(LL)
-    //       B(LL)=B(I)
     int LL = INDX[i];
     double SUM = B[LL][jj];
     B[LL][jj] = B[i][jj];
-
-    //       IF(II.NE.0) THEN
     if (II != 0) {
-      //        DO 11 J=II,I-1
-      //         SUM=SUM-A(I,J)*B(J)
-      //   11    CONTINUE
       for (int j = II; j <= i - 1; j++)
         SUM = SUM - A[i][j] * B[j][jj];
     }
-    //        ELSE IF(SUM.NE.0.) THEN
     else if (SUM != 0.0) {
-      //         II=I
       II = i;
     }
-    //        ENDIF
-    //       B(I)=SUM
     B[i][jj] = SUM;
   }
-  //   12  CONTINUE
-
-  //      DO 14 I=NP,1,-1
   for (int i = NP; i >= 1; i--) {
-    //       SUM=B(I)
     double SUM = B[i][jj];
-    //       IF(I.LT.NP) THEN
     if (i < NP) {
-      //        DO 13 J=I+1,NP
-      //         SUM=SUM-A(I,J)*B(J)
-      //   13    CONTINUE
       for (int j = i + 1; j <= NP; j++)
         SUM = SUM - A[i][j] * B[j][jj];
     }
-    //        ENDIF
-    //       B(I)=SUM/A(I,I)
     B[i][jj] = SUM / A[i][i];
   }
-  //   14  CONTINUE
-
-  //      RETURN
-  //      END
-  //
-  //
 }
 
 //-----------------------------------------------------------------------------
@@ -2108,108 +1742,55 @@ void Taquart::UsmtCore::LUDCMP(double B[][10], double A[][10], int INDX[],
   double SUM = 0.0;
   double DUM = 0.0;
 
-  //      DO 1 I=1,NP
-  //       DO 1 J=1,NP
-  //    1   A(I,J)=B(I,J)
   for (int i = 1; i <= NP; i++)
     for (int j = 1; j <= NP; j++)
       A[i][j] = B[i][j];
 
-  //      D=1.
   D = 1.0;
 
-  //      DO 12 I=1,NP
   for (int i = 1; i <= NP; i++) {
-    //       AAMAX=0.
     AAMAX = 0.0;
-    //       DO 11 j=1,NP
     for (int j = 1; j <= NP; j++) {
-      //        IF(ABS(A(I,J)).GT.AAMAX) AAMAX=ABS(A(I,J))
       if (fabs(A[i][j]) > AAMAX) AAMAX = fabs(A[i][j]);
     }
-    //   11   CONTINUE
-    //       IF(AAMAX.EQ.0.) AAMAX=TINY
     if (AAMAX == 0.0) AAMAX = TINY;
-    //       VV(I)=1./AAMAX
     VV[i] = 1.0 / AAMAX;
   }
-  //   12  CONTINUE
 
-  //      DO 19 J=1,NP
   for (int j = 1; j <= NP; j++) {
-    //       DO 14 I=1,J-1
     for (int i = 1; i <= j - 1; i++) {
-      //        SUM=A(I,J)
       SUM = A[i][j];
-      //        DO 13 K=1,I-1
       for (int k = 1; k <= i - 1; k++) {
-        //         SUM=SUM-A(I,K)*A(K,J)
         SUM = SUM - A[i][k] * A[k][j];
       }
-      //   13    CONTINUE
-      //        A(I,J)=SUM
       A[i][j] = SUM;
     }
-    //   14   CONTINUE
-    //       AAMAX=0.
     AAMAX = 0.0;
     IMAX = 0;
 
-    //       DO 16 I=J,NP
     for (int i = j; i <= NP; i++) {
-      //        SUM=A(I,J)
       SUM = A[i][j];
-      //        DO 15 K=1,J-1
       for (int k = 1; k <= j - 1; k++) {
-        //         SUM=SUM-A(I,K)*A(K,J)
         SUM = SUM - A[i][k] * A[k][j];
       }
-      //   15    CONTINUE
-      //        A(I,J)=SUM
-      //        DUM=VV(I)*ABS(SUM)
       A[i][j] = SUM;
       DUM = VV[i] * fabs(SUM);
-      //        IF(DUM.GE.AAMAX) THEN
-      //         IMAX=I
-      //         AAMAX=DUM
-      //         ENDIF
       if (DUM >= AAMAX) {
         IMAX = i;
         AAMAX = DUM;
       }
     }
-    //   16   CONTINUE
-
-    //       IF(J.NE.IMAX) THEN
     if (j != IMAX) {
-      //        DO 17 K=1,NP
       for (int k = 1; k <= NP; k++) {
-        //         DUM=A(IMAX,K)
-        //         A(IMAX,K)=A(J,K)
-        //         A(J,K)=DUM
         DUM = A[IMAX][k];
         A[IMAX][k] = A[j][k];
         A[j][k] = DUM;
       }
-      //   17    CONTINUE
-      //        D=-D
       D = -D;
-      //        VV(IMAX)=VV(J)
       VV[IMAX] = VV[j];
     }
-    //        ENDIF
-
-    //       INDX(J)=IMAX
-    //       IF(A(J,J).EQ.0.) A(J,J)=TINY
     INDX[j] = IMAX;
     if (A[j][j] == 0.0) A[j][j] = TINY;
-
-    //       IF(J.NE.NP) THEN
-    //        DUM=1./A(J,J)
-    //        DO 18 I=J+1,NP
-    //         A(I,J)=A(I,J)*DUM
-    //   18    CONTINUE
-    //        ENDIF
     if (j != NP) {
       DUM = 1.0 / A[j][j];
       for (int i = j + 1; i <= NP; i++) {
@@ -2217,10 +1798,6 @@ void Taquart::UsmtCore::LUDCMP(double B[][10], double A[][10], int INDX[],
       }
     }
   }
-  //   19  CONTINUE
-
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
@@ -2296,13 +1873,6 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   double DHELP1 = 0.0;
   double DHELP2 = 0.0;
 
-  //      DO 336 I=1,6
-  //  336 RM(I,3)=RM(I,2)
-  //      RM2=RM(2,3)
-  //      RM3=RM(3,3)
-  //      RM5=RM(5,3)
-  //      RMMAX=0.
-  //      IRMAX=0
   for (int i = 1; i <= 6; i++)
     RM[i][3] = RM[i][2];
 
@@ -2312,25 +1882,12 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   double RMMAX = 0.0;
   int IRMAX = 0;
 
-  //      DO 333 I=1,6
-  //      IF(ABS(RM(I,3)).LT.ABS(RMMAX)) GO TO 333
-  //      RMMAX=RM(I,3)
-  //      IRMAX=I
-  //  333 CONTINUE
   for (int i = 1; i <= 6; i++) {
     if (fabs(RM[i][3]) < fabs(RMMAX)) continue;
     RMMAX = RM[i][3];
     IRMAX = i;
   }
 
-  //      HELP1=RM(1,3)-RMY
-  //      HELP2=RM(4,3)-RMY
-  //      HELP3=RM(6,3)-RMY
-  //      CALL VEIG(HELP1,RM2,RM3,HELP2,RM5,HELP3,VN)
-  //      HELP1=RM(1,3)-RMZ
-  //      HELP2=RM(4,3)-RMZ
-  //      HELP3=RM(6,3)-RMZ
-  //      CALL VEIG(HELP1,RM2,RM3,HELP2,RM5,HELP3,VE)
   double HELP1 = RM[1][3] - RMY;
   double HELP2 = RM[4][3] - RMY;
   double HELP3 = RM[6][3] - RMY;
@@ -2340,16 +1897,6 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   HELP3 = RM[6][3] - RMZ;
   VEIG(HELP1, RM2, RM3, HELP2, RM5, HELP3, VE);
 
-  //      SE=0.
-  //      SN=0.
-  //      DO 3101 I=1,3
-  //      SE=SE+VE(I)*VE(I)
-  // 3101 SN=SN+VN(I)*VN(I)
-  //      SE=SQRT(SE)
-  //      SN=SQRT(SN)
-  //      DO 3201 I=1,3
-  //      VE(I)=VE(I)/SE
-  // 3201 VN(I)=VN(I)/SN
   double SE = 0.0;
   double SN = 0.0;
   for (int i = 1; i <= 3; i++) {
@@ -2363,14 +1910,6 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
     VN[i] = VN[i] / SN;
   }
 
-  //      DO 3203 L=1,N
-  //      U0=dble(0.)
-  //      U1=dble(0.)
-  //      DO 3202 I=1,3
-  //      DO 3202 J=1,3
-  // 3202 U0=U0+dble(FIJ(I,J,L)*(VN(I)*VE(J)+VN(J)*VE(I)))
-  //      U1=U1+dble(U(L))
-  // 3203 AM0(L)=U1/U0
   for (int l = 1; l <= N; l++) {
     double U0 = 0.0;
     double U1 = 0.0;
@@ -2384,23 +1923,10 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   }
 
   //C     Finds scalar seismic moment:
-  //      DO 9 I=1,6
-  //    9 DD(I)=RM(I,3)
-  //      CALL EIG3(DD,0,EQM)
   for (int i = 1; i <= 6; i++)
     DD[i] = RM[i][3];
   EIG3(DD, 0, EQM);
 
-  //      EQM(1)=ABS(EQM(1))*1.E-12
-  //      EQM(2)=ABS(EQM(2))*1.E-12
-  //      EQM(3)=ABS(EQM(3))*1.E-12
-  //      HELP1=ABS(EQM(1)-EQM(2))
-  //      HELP2=ABS(EQM(1)-EQM(3))
-  //      HELP3=ABS(EQM(2)-EQM(3))
-  //      EC=AMAX1(HELP1,HELP2)
-  //      EC=AMAX1(EC,HELP3)
-  //      RMT=EC*1.E+12
-  //      RM0=RMT
   EQM[1] = fabs(EQM[1]) * USMT_DOWNSCALE;
   EQM[2] = fabs(EQM[2]) * USMT_DOWNSCALE;
   EQM[3] = fabs(EQM[3]) * USMT_DOWNSCALE;
@@ -2412,35 +1938,21 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   RMT = EC * USMT_UPSCALE;
   RM0 = RMT;
 
-  //      do 3001 i=1,n
   for (int i = 1; i <= N; i++) {
-    //      do 3103 j=1,3
-    // 3103 c(j,i)=dble(0.)
-    for (int j = 1; j <= 6; j++) //???? Poprawka bï¿½ï¿½du!
+    for (int j = 1; j <= 6; j++) // error correction
       C[j][i] = 0.0;
 
-    //      do 3001 j=1,3
     for (int j = 1; j <= 3; j++) {
-      //      do 3104 k=1,3
-      // 3104 c(k,i)=c(k,i)+dble(ve(j)*(fij(k,j,i)+fij(j,k,i)))*AM0(I)
       for (int k = 1; k <= 3; k++)
         C[k][i] = C[k][i]
             + double(VE[j] * (FIJ[k][j][i] + FIJ[j][k][i])) * AM0[i];
-      //      do 3105 k=1,3
-      // 3105 c(k+3,i)=c(k+3,i)+dble(vn(j)*(fij(k,j,i)+fij(j,k,i)))*AM0(I)
       for (int k = 1; k <= 3; k++)
         C[k + 3][i] = C[k + 3][i]
             + double(VN[j] * (FIJ[k][j][i] + FIJ[j][k][i])) * AM0[i];
     }
   }
-  // 3001 continue
 
   //C     calculate matrix bb and its inverse
-  //      do 3008 i=1,6
-  //      do 3008 j=1,6
-  //      bb(i,j)=dble(0.)
-  //      do 3008 k=1,n
-  // 3008 bb(i,j)=bb(i,j)+c(i,k)*c(j,k)
   for (int i = 1; i <= 6; i++) {
     for (int j = 1; j <= 6; j++) {
       BB[i][j] = 0.0;
@@ -2449,11 +1961,6 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
     }
   }
 
-  //      DO 3204 I=1,3
-  //      BB(7,I)=dble(VE(I))
-  //      bb(7,I+3)=dble(VN(I))
-  //      bb(8,I)=dble(VN(I))
-  // 3204 BB(8,I+3)=-dble(VE(I))
   for (int i = 1; i <= 3; i++) {
     BB[7][i] = VE[i];
     BB[7][i + 3] = VN[i];
@@ -2461,58 +1968,34 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
     BB[8][i + 3] = -VE[i];
   }
 
-  //      bb(7,7)=dble(0.)
-  //      bb(7,8)=dble(0.)
-  //      bb(8,7)=dble(0.)
-  //      bb(8,8)=dble(0.)
   BB[7][7] = 0.0;
   BB[7][8] = 0.0;
   BB[8][7] = 0.0;
   BB[8][8] = 0.0;
 
-  //      do 3009 i=1,8
-  //      bb(i,7)=bb(7,i)
-  // 3009 bb(i,8)=bb(8,i)
   for (int i = 1; i <= 8; i++) {
     BB[i][7] = BB[7][i];
     BB[i][8] = BB[8][i];
   }
 
-  //      DO 3371 I=1,8
-  //      DO 3371 J=1,8
-  // 3371 Z1(I,J)=BB(I,J)
   for (int i = 1; i <= 8; i++) {
     for (int j = 1; j <= 8; j++) {
       Z1[i][j] = BB[i][j];
     }
   }
 
-  //      call invmat(Z1,Z2,8)
   INVMAT(Z1, Z2, 8);
 
-  //      DO 3372 I=1,8
-  //      DO 3372 J=1,8
-  // 3372 BBINV(I,J)=Z2(I,J)
   for (int i = 1; i <= 8; i++) {
     for (int j = 1; j <= 8; j++) {
       BBINV[i][j] = Z2[i][j];
     }
   }
 
-  //C     Initial de and dn are given by rotation of .01 radians:
-  //      ICOND=1
-  //      SF=SIN(.01)
-  //      CF=COS(.01)
   ICOND = 1;
   double SF = sin(0.01);
   double CF = cos(0.01);
 
-  //      DE(1)=DBLE(VE(1)*CF+VE(2)*SF)
-  //      DE(2)=DBLE(-VE(1)*SF+VE(2)*CF)
-  //      DE(3)=DBLE(VE(3))
-  //      DN(1)=DBLE(VN(1)*CF+VN(2)*SF)
-  //      DN(2)=DBLE(-VN(1)*SF+VN(2)*CF)
-  //      DN(3)=DBLE(VN(3))
   DE[1] = VE[1] * CF + VE[2] * SF;
   DE[2] = -VE[1] * SF + VE[2] * CF;
   DE[3] = VE[3];
@@ -2520,44 +2003,24 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   DN[2] = -VN[1] * SF + VN[2] * CF;
   DN[3] = VN[3];
 
-  //      DO 3004 i=1,3
-  //      DE(i)=DE(i)-DBLE(VE(i))
-  // 3004 DN(i)=DN(I)-DBLE(VN(I))
   for (int i = 1; i <= 3; i++) {
     DE[i] = DE[i] - VE[i];
     DN[i] = DN[i] - VN[i];
   }
 
-  //      EPS=1.d-6
-  //      iter=1
   double EPS = 1.0e-06;
   int ITER = 1;
 
-  // 3012 do 3002 i=1,n
   p3012: for (int i = 1; i <= N; i++) {
-    //      du(i)=dble(0.)
     DU[i] = 0.0;
-    //      do 3005 j=1,3
-    //      do 3005 k=1,3
-    // 3005 du(i)=du(i)+dble(vn(k)*(fij(j,k,i)+fij(k,j,i)))*de(j)
     for (int j = 1; j <= 3; j++)
       for (int k = 1; k <= 3; k++)
         DU[i] = DU[i] + double(VN[k] * (FIJ[j][k][i] + FIJ[k][j][i])) * DE[j];
-    //      do 3006 j=1,3
-    //      do 3006 k=1,3
-    // 3006 du(i)=du(i)+dble(ve(k)*(fij(j,k,i)+fij(k,j,i)))*dn(j)
     for (int j = 1; j <= 3; j++)
       for (int k = 1; k <= 3; k++)
         DU[i] = DU[i] + double(VE[k] * (FIJ[j][k][i] + FIJ[k][j][i])) * DN[j];
-    //      du(i)=du(i)*am0(I)
     DU[i] = DU[i] * AM0[i];
   }
-  // 3002 continue
-
-  //      do 3007 i=1,6
-  //      ctdu(i)=dble(0.)
-  //      do 3007 j=1,n
-  // 3007 ctdu(i)=ctdu(i)+c(i,j)*du(j)
 
   for (int i = 1; i <= 6; i++) {
     CTDU[i] = 0.0;
@@ -2566,67 +2029,38 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
     }
   }
 
-  //      ctdu(7)=dble(0.)
-  //      ctdu(8)=dble(0.)
   CTDU[7] = 0.0;
   CTDU[8] = 0.0;
 
-  //      do 3010 i=1,8
-  //      x(i)=dble(0.)
-  //      do 3010 j=1,8
-  // 3010 x(i)=x(i)+bbinv(i,j)*ctdu(j)
   for (int i = 1; i <= 8; i++) {
     X[i] = 0.0;
     for (int j = 1; j <= 8; j++)
       X[i] = X[i] + BBINV[i][j] * CTDU[j];
   }
 
-  //      IF(ITER.EQ.1000) go TO 3418
-  //      IF(ITER.GE.500) EPS=1.d-3
   if (ITER == 1000) goto p3418;
   if (ITER > 500) EPS = 1.0e-03;
 
-  //      DO 3428 i=1,8
-  //      if(dabs(x(i)).gt.1.d+99) go to 3417
-  // 3428 continue
   for (int i = 1; i <= 8; i++) {
     if (fabs(X[i]) > 1.0e+99) goto p3417;
   }
 
-  //      do 3013 i=1,3
-  //      dhelp1=dabs(x(i+3)-de(i))
-  //      dhelp2=dabs(de(i))*eps
-  //      if((dhelp1.gt.dhelp2).and.(dabs(de(i)).gt.1.d-6)) go to 3014
-  // 3013 continue
   for (int i = 1; i <= 3; i++) {
     DHELP1 = fabs(X[i + 3] - DE[i]);
     DHELP2 = fabs(DE[i]) * EPS;
     if (DHELP1 > DHELP2 && fabs(DE[i]) > 1.0e-06) goto p3014;
   }
 
-  //      do 3015 i=1,3
-  //      dhelp1=dabs(x(i)-dn(i))
-  //      dhelp2=dabs(dn(i))*eps
-  //      if((dhelp1.gt.dhelp2).and.(dabs(dn(i)).gt.1.d-6)) go to 3014
-  // 3015 continue
   for (int i = 1; i <= 3; i++) {
     DHELP1 = fabs(X[i] - DN[i]);
     DHELP2 = fabs(DN[i]) * EPS;
     if (DHELP1 > DHELP2 && fabs(DN[i]) > 1.0e-06) goto p3014;
   }
-  //      go to 3017
   goto p3017;
 
-  // 3014 dhelp1=dble(0.)
-  //      dhelp2=dble(0.)
   p3014: DHELP1 = 0.0;
   DHELP2 = 0.0;
 
-  //      do 3011 i=1,3
-  //      de(i)=x(i+3)
-  //      dn(i)=x(i)
-  //      dhelp1=dhelp1+de(i)*de(i)
-  // 3011 dhelp2=dhelp2+dn(i)*dn(i)
   for (int i = 1; i <= 3; i++) {
     DE[i] = X[i + 3];
     DN[i] = X[i];
@@ -2634,85 +2068,48 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
     DHELP2 = DHELP2 + DN[i] * DN[i];
   }
 
-  //      if((sngl(dhelp1).ge.1.).or.(sngl(dhelp2).ge.1.)) go to 3417
   if (DHELP1 >= 1.0 || DHELP2 >= 1.0) goto p3417;
-  //      iter=iter+1
-  //      go to 3012
   ITER++;
   goto p3012;
 
-  // 3418 ICOND=2
-  //      GO TO 3419
   p3418: ICOND = 2;
   goto p3419;
 
-  // 3417 ICOND=3
   p3417: ICOND = 3;
-  // 3419 IF(ISTA.EQ.0) GO TO 8887
   p3419: if (ISTA == 0) goto p8887;
-  //      WRITE(75,400)
-  //  400 FORMAT(' Warning: iteration does not converge - initial eigen',
-  //     $'vectors used',/,'          Double couple solution may be art',
-  //     $'ificial.')
-  //      go to 8887
 #ifdef USMTCORE_DEBUG
   std::cout << "Iteration does not converge - initial eigenvectors used. Double "
   "couple solution may be artificial.";
 #endif
   goto p8887;
 
-  // 3017 CALL ORT(VE,VN,DE,DN)
   p3017: ORT(VE, VN, DE, DN);
 
-  //c     These ve and vn correspond to force coordinates XY;
-  //c     they need to be converted to displacement axes PT.
-  // 8887 do 8888 i=1,3
-  //      de(i)=dble(ve(i)+vn(i))
-  // 8888 dn(i)=dble(vn(i)-ve(i))
   p8887: for (int i = 1; i <= 3; i++) {
     DE[i] = VE[i] + VN[i];
     DN[i] = VN[i] - VE[i];
   }
 
-  //      sume=dble(0.)
-  //      sumn=dble(0.)
   double SUME = 0.0;
   double SUMN = 0.0;
 
-  //      do 8889 i=1,3
-  //      sume=sume+de(i)*de(i)
-  // 8889 sumn=sumn+dn(i)*dn(i)
   for (int i = 1; i <= 3; i++) {
     SUME = SUME + DE[i] * DE[i];
     SUMN = SUMN + DN[i] * DN[i];
   }
 
-  //      sume=dsqrt(sume)
-  //      sumn=dsqrt(sumn)
   SUME = sqrt(SUME);
   SUMN = sqrt(SUMN);
 
-  //      do 8890 i=1,3
-  //      ve(i)=sngl(de(i)/sume)
-  // 8890 vn(i)=sngl(dn(i)/sumn)
   for (int i = 1; i <= 3; i++) {
     VE[i] = DE[i] / SUME;
     VN[i] = DN[i] / SUMN;
   }
 
-  //      r1=rm(1,3)
-  //      r2=rm(4,3)
-  //      r3=rm(6,3)
   double R1 = RM[1][3];
   double R2 = RM[4][3];
   double R3 = RM[6][3];
 
-  //      rm(1,3)=2.*ve(1)*vn(1)
-  //      rm(2,3)=ve(1)*vn(2)+ve(2)*vn(1)
-  //      rm(3,3)=ve(1)*vn(3)+ve(3)*vn(1)
-  //      rm(4,3)=2.*ve(2)*vn(2)
-  //      rm(5,3)=ve(2)*vn(3)+ve(3)*vn(2)
-  //      rm(6,3)=2.*ve(3)*vn(3)
   RM[1][3] = 2.0 * VE[1] * VN[1];
   RM[2][3] = VE[1] * VN[2] + VE[2] * VN[1];
   RM[3][3] = VE[1] * VN[3] + VE[3] * VN[1];
@@ -2720,49 +2117,28 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   RM[5][3] = VE[2] * VN[3] + VE[3] * VN[2];
   RM[6][3] = 2.0 * VE[3] * VN[3];
 
-  //      j=1
   int j = 1;
-  //      if(abs(r2).gt.abs(r1)) then
   if (fabs(R2) > fabs(R1)) {
-    //      j=4
-    //      r1=r2
-    //      endif
     j = 4;
     R1 = R2;
   }
-  //      if(abs(r3).gt.abs(r1)) then
   if (fabs(R3) > fabs(R1)) {
-    //      j=6
-    //      r1=r3
-    //      endif
     j = 6;
     R1 = R3;
   }
-  //      help=r1*rm(j,3)
-  //      if(help.ge.0.) go to 8899
   double HELP = R1 * RM[j][3];
   if (HELP < 0.0) {
-    //      do 8898 i=1,6
-    // 8898 rm(i,3)=-rm(i,3)
     for (int i = 1; i <= 6; i++)
       RM[i][3] = -RM[i][3];
   }
-  // 8899 do 3020 i=1,6
-  // 3020 rm(i,3)=rm(i,3)*rm0
   for (int i = 1; i <= 6; i++)
     RM[i][3] = RM[i][3] * RM0;
 
-  //      help=sign(1.,rmmax)*rm(irmax,3)
-  //      if(help.gt.0.) go to 334
   HELP = sign(1.0, RMMAX) * RM[IRMAX][3];
   if (HELP <= 0.0) {
-    //      do 335 i=1,6
-    //  335 rm(i,3)=-rm(i,3)
     for (int i = 1; i <= 6; i++)
       RM[i][3] = -RM[i][3];
   }
-  //  334 return
-  //      end
 }
 
 //-----------------------------------------------------------------------------
@@ -3351,20 +2727,10 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
   double xmem[5 + 1][5 + 1], vmem[5 + 1];
   Zero(&xmem[0][0], 36);
   Zero(vmem, 6);
-  //int METH = 3;
 
-  //      IF((IEXP.LT.10).OR.(IEXP.GT.30)) IEXP=20
-  //      ZERO=dble(0.)
-  //      iter=0
-  //      jter=1
   if (IEXP < 10 || IEXP > 30) IEXP = 20;
   double ZERO = 0.0;
   int iter = 0;
-  //int jter = 1;
-  //      do 5 i=1,5
-  //      vmem(i)=1.e+30
-  //      do 5 j=1,5
-  //    5 xmem(i,j)=0.
   for (int i = 1; i <= 5; i++) {
     vmem[i] = 1.0e+30;
     for (int j = 1; j <= 5; j++)
@@ -3372,11 +2738,6 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
   }
 
   //C     Search for X1,X2,X3,X4; X5 is calculated:
-  //      val=1.d+30
-  //      do 1 i=1,4
-  //      xlo(i)=DBLE(-1.*10.**IEXP)
-  //      xhi(i)=DBLE(10.**IEXP)
-  //    1 ix(i)=0
   val = 1e+30;
   for (int i = 1; i <= 4; i++) {
     xlo[i] = -1.0 * pow(10.0, IEXP);
@@ -3384,127 +2745,56 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
     ix[i] = 0;
   }
 
-  //int j7 = 0;
-
-  //      DO 8 L=1,50
   for (int l = 1; l <= 50; l++) {
     PROGRESS(l + 100, 350);
-    //      do 2 i=1,4
-    //    2 xstep(i)=(xhi(i)-xlo(i))/SIX
     for (int i = 1; i <= 4; i++)
       xstep[i] = (xhi[i] - xlo[i]) / SIX;
 
-    //      size=xhi(1)-xlo(1)
-    //      iter=iter+1
-    //      xtry(5)=DBLE(0.)
-    //      J7=7
-    //SIZE = xhi[1] - xlo[1];
     iter++;
     xtry[5] = 0.0;
-    //j7 = 7;
 
-    //      CALL POSTEP(METH,JTER,J7)
-    //POSTEP(METH,jter,j7);
-
-    //      do 3 j1=1,7
     for (int j1 = 1; j1 <= 7; j1++) {
-      //      xtry(1)=xlo(1)+DBLE(j1-1)*xstep(1)
       xtry[1] = xlo[1] + double(j1 - 1) * xstep[1];
-      //      do 3 j2=1,7
       for (int j2 = 1; j2 <= 7; j2++) {
-        //      xtry(2)=xlo(2)+DBLE(j2-1)*xstep(2)
         xtry[2] = xlo[2] + double(j2 - 1) * xstep[2];
-        //      do 3 j3=1,7
         for (int j3 = 1; j3 <= 7; j3++) {
-          //      xtry(3)=xlo(3)+DBLE(j3-1)*xstep(3)
           xtry[3] = xlo[3] + double(j3 - 1) * xstep[3];
-          //      do 3 j4=1,7
           for (int j4 = 1; j4 <= 7; j4++) {
-            //      xtry(4)=xlo(4)+DBLE(j4-1)*xstep(4)
             xtry[4] = xlo[4] + double(j4 - 1) * xstep[4];
-
-            //      if(dabs(xtry(1)).lt.1.d-6) go to 23
             if (fabs(xtry[1]) < 1.0e-6) goto p23;
-
-            //      do 21 i=1,5
-            //   21 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
-
-            //      DEL=(TWO*y(2)*y(3))**2+FOUR*Y(1)*(Y(4)*(-Y(1)**2-Y(1)*Y(4)-
-            //     $Y(3)**2+Y(2)**2)+Y(2)**2*Y(1))
             DEL = pow(TWO * y[2] * y[3], 2.0)
                 + FOUR * y[1]
                     * (y[4]
                         * (-pow(y[1], 2.0) - y[1] * y[4] - pow(y[3], 2.0)
                             + pow(y[2], 2.0)) + pow(y[2], 2.0) * y[1]);
-
-            //      IF(DEL.LT.ZERO) GO TO 3
             if (DEL < ZERO) continue;
-
-            //      DEL=DSQRT(DEL)
-            //      Y(5)=(TWO*Y(2)*Y(3)+DEL)/TWO/Y(1)
-            //      XTRY(5)=Y(5)*1.D+10
-            //      call f2(xtry,try)
             DEL = sqrt(DEL);
             y[5] = (TWO * y[2] * y[3] + DEL) / TWO / y[1];
             xtry[5] = y[5] * 1.0e+10;
             f2(xtry, tryy);
-
-            //      IF(TRY.GT.VAL) GO TO 22
-            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             if (tryy > val) goto p22;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
-
-            //      DO 12 i=1,5
-            //   12 x(i)=SNGL(XTRY(I))
             for (int i = 1; i <= 5; i++)
               x[i] = double(xtry[i]);
-
-            //   22 Y(5)=(TWO*Y(2)*Y(3)-DEL)/TWO/Y(1)
-            //      XTRY(5)=Y(5)*1.D+10
-            //      call f2(xtry,try)
             p22: y[5] = (TWO * y[2] * y[3] - DEL) / TWO / y[1];
             xtry[5] = y[5] * 1.0e+10;
             f2(xtry, tryy);
-
-            //      IF(TRY.GT.VAL) GO TO 3
-            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             if (tryy > val) continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
-
-            //      DO 25 i=1,5
-            //   25 x(i)=SNGL(xtry(i))
             for (int i = 1; i <= 5; i++)
               x[i] = double(xtry[i]);
-            //      go to 3
             continue;
-
-            //   23 if((DABS(XTRY(2)).lt.1.d-6).OR.(DABS(XTRY(3)).LT.1.d-6)) GO TO 3
             p23: if (fabs(xtry[2]) < 1.0e-6 || fabs(xtry[3]) < 1.0e-6) continue;
-
-            //      DO 27 i=1,5
-            //   27 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
-
-            //      DEL=Y(4)*(-Y(1)**2-Y(1)*Y(4)-Y(3)**2+Y(2)**2)+Y(2)**2*Y(1)
-
             DEL = y[4]
                 * (-pow(y[1], 2.0) - y[1] * y[4] - pow(y[3], 2.0)
                     + pow(y[2], 2.0)) + pow(y[2], 2.0) * y[1];
-
-            //      Y(5)=-DEL/TWO/Y(3)/Y(2)
-            //      XTRY(5)=Y(5)*1.d+10
-            //      call f2(xtry,try)
             y[5] = -DEL / TWO / y[3] / y[2];
             xtry[5] = y[5] * 1.0e+10;
             f2(xtry, tryy);
-
-            //      if(try.gt.val) go to 3
-            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
-            //      do 28 i=1,5
-            //   28 x(i)=SNGL(xtry(i))
             if (tryy > val) continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
             for (int i = 1; i <= 5; i++)
@@ -3513,33 +2803,18 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
         }
       }
     }
-    //    3 continue
 
-    //      if(val.eq.1.d+30) go to 30
     if (val == 1e+30) goto p30;
-    //      DO 4 I=1,4
-    //      xhi(i)=xlo(i)+DBLE(ix(i)+1)*xstep(i)
-    //    4 xlo(i)=xlo(i)+DBLE(ix(i)-3)*xstep(i)
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
     }
   }
-  //    8 CONTINUE
-
-  //      DO 29 I=1,5
-  //   29 XMEM(1,I)=X(I)
-  //      VMEM(1)=SNGL(VAL)
   for (int i = 1; i <= 5; i++)
     xmem[1][i] = x[i];
   vmem[1] = val;
 
   //C     Search for X1,X2,X3,X5; X4 is calculated:
-  //   30 val=1.d+30
-  //      do 101 i=1,4
-  //      xlo(i)=DBLE(-1.*10.**IEXP)
-  //      xhi(i)=DBLE(10.**IEXP)
-  //  101 ix(i)=0
   p30: val = 1.0e+30;
   for (int i = 1; i <= 4; i++) {
     xlo[i] = -1.0 * pow(10, IEXP);
@@ -3547,85 +2822,46 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
     ix[i] = 0;
   }
 
-  //      DO 108 l=1,50
   for (int l = 1; l <= 50; l++) {
     PROGRESS(l + 150, 350);
-    //      do 102 i=1,4
-    //  102 xstep(i)=(xhi(i)-xlo(i))/SIX
     for (int i = 1; i <= 4; i++)
       xstep[i] = (xhi[i] - xlo[i]) / SIX;
 
-    //      size=xhi(1)-xlo(1)
-    //      iter=iter+1
-    //      xtry(4)=DBLE(0.)
-    //      CALL POSTEP(METH,JTER,J7)
-    //SIZE = xhi[1] - xlo[1];
     iter++;
     xtry[4] = 0.0;
-    //POSTEP(METH,jter,j7);
 
-    //      do 103 j1=1,7
     for (int j1 = 1; j1 <= 7; j1++) {
-      //      xtry(1)=xlo(1)+DBLE(j1-1)*xstep(1)
       xtry[1] = xlo[1] + double(j1 - 1) * xstep[1];
-      //      do 103 j2=1,7
       for (int j2 = 1; j2 <= 7; j2++) {
-        //      xtry(2)=xlo(2)+DBLE(j2-1)*xstep(2)
         xtry[2] = xlo[2] + double(j2 - 1) * xstep[2];
-        //      do 103 j3=1,7
         for (int j3 = 1; j3 <= 7; j3++) {
-          //      xtry(3)=xlo(3)+DBLE(j3-1)*xstep(3)
           xtry[3] = xlo[3] + double(j3 - 1) * xstep[3];
-          //      do 103 j4=1,7
           for (int j4 = 1; j4 <= 7; j4++) {
-            //      xtry(5)=xlo(4)+DBLE(j4-1)*xstep(4)  
-            //      if(dabs(xtry(1)).lt.1.d-6) go to 123
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
             if (fabs(xtry[1]) < 1.0e-06) goto p123;
-
-            //      do 121 i=1,5
-            //  121 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
-
-            //      DEL=(-y(1)**2-y(3)**2+y(2)**2)**2+FOUR*Y(1)*(TWO*Y(2)*Y(3)*
-            //     $Y(5)-Y(1)*Y(5)**2+Y(1)*Y(2)**2)
             DEL = pow(-pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0), 2.0)
                 + FOUR * y[1]
                     * (TWO * y[2] * y[3] * y[5] - y[1] * pow(y[5], 2.0)
                         + y[1] * pow(y[2], 2.0));
-
-            //      IF(DEL.LT.ZERO) GO TO 103
             if (DEL < ZERO) continue;
 
-            //      DEL=DSQRT(DEL)
-            //      Y(4)=(-Y(1)**2-Y(3)**2+Y(2)**2+DEL)/TWO/Y(1)
-            //      XTRY(4)=Y(4)*1.D+10
-            //      call f2(xtry,try)
             DEL = sqrt(DEL);
             y[4] = (-pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0) + DEL)
                 / TWO / y[1];
             xtry[4] = y[4] * 1.0e+10;
             f2(xtry, tryy);
 
-            //      IF(TRY.GT.VAL) GO TO 122
-            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
-            //      DO 112 i=1,5
-            //  112 x(i)=SNGL(XTRY(I))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
                 x[i] = xtry[i];
             }
 
-            //  122 Y(4)=(-Y(1)**2-Y(3)**2+Y(2)**2-DEL)/TWO/Y(1)
             y[4] = (-pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0) - DEL)
                 / TWO / y[1];
 
-            //      XTRY(4)=Y(4)*1.D+10
-            //      call f2(xtry,try)
-            //      IF(TRY.GT.VAL) GO TO 103
-            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             xtry[4] = y[4] * 1.0e+10;
             f2(xtry, tryy);
             if (tryy > val) continue;
