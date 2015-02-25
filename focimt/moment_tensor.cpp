@@ -320,8 +320,8 @@ int main(int argc, char* argv[]) {
 
     // Regular moment tensor inversion using all stations.
     try {
-      //int ThreadProgress = 0;
-      USMTCore(InversionNormType, QualityType, InputData);
+      int ThreadProgress = 0;
+      USMTCore(InversionNormType, QualityType, InputData, &ThreadProgress);
     }
     catch (...) {
       std::cout << "Inversion error." << std::endl;
@@ -362,8 +362,8 @@ int main(int argc, char* argv[]) {
 
         // Calculate SMT with one station removed.
         try {
-          //int ThreadProgress = 0;
-          USMTCore(InversionNormType, QualityType, td);
+          int ThreadProgress = 0;
+          USMTCore(InversionNormType, QualityType, td, &ThreadProgress);
         }
         catch (...) {
           std::cout << "Inversion error." << std::endl;
@@ -397,8 +397,8 @@ int main(int argc, char* argv[]) {
 
           // Calculate SMT with one station removed.
           try {
-            //int ThreadProgress = 0;
-            USMTCore(InversionNormType, QualityType, td);
+            int ThreadProgress = 0;
+            USMTCore(InversionNormType, QualityType, td, &ThreadProgress);
           }
           catch (...) {
             std::cout << "Inversion error." << std::endl;

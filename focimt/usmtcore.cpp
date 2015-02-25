@@ -65,7 +65,7 @@ namespace Taquart {
     int ICOND = 0;
     Taquart::FaultSolution Solution[4];
     int ISTA = 1;
-    //int * ThreadProgress;
+    int * ThreadProgress;
   } // namespace UsmtCore
 } // namespace Foci
 
@@ -95,9 +95,9 @@ double Taquart::UsmtCore::mw(double m0) {
 
 //---------------------------------------------------------------------------
 void USMTCore(Taquart::NormType ANormType, int QualityType,
-    Taquart::SMTInputData &InputData) {
+    Taquart::SMTInputData &InputData, int * const AThreadProgress) {
   int IEXP = 0;
-  //ThreadProgress = AThreadProgress;
+  ThreadProgress = AThreadProgress;
   PROGRESS(0, 350);
   RDINP(InputData);
   ANGGA();
@@ -1016,10 +1016,16 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     }
 
     // Do the rake calculations with routines from GMT.
-    RAKE[i][1] = Taquart::computed_rake2(STRIKE[i][2], DIP[i][2], STRIKE[i][1],
-        DIP[i][1], FaultType[i]);
-    RAKE[i][2] = Taquart::computed_rake2(STRIKE[i][1], DIP[i][1], STRIKE[i][2],
-        DIP[i][2], FaultType[i]);
+    double Strike1 = STRIKE[i][1];
+    double Strike2 = STRIKE[i][2];
+    double Dip1 = DIP[i][1];
+    double Dip2 = DIP[i][2];
+    double Rake1 = Taquart::computed_rake2(Strike2, Dip2, Strike1, Dip1,
+        FaultType[i]);
+    double Rake2 = Taquart::computed_rake2(Strike1, Dip1, Strike2, Dip2,
+        FaultType[i]);
+    RAKE[i][1] = Rake1;
+    RAKE[i][2] = Rake2;
 
     for (int k = 1; k <= 3; k++) {
       TREND[i][k] = TREND[i][k] * 180.0 / PI;
@@ -2445,7 +2451,7 @@ void Taquart::UsmtCore::PROGRESS(double Progress, double Max) {
   std::cout << std::endl;
 #endif
 
- // if (ThreadProgress) *ThreadProgress = int(Progress);
+  if (ThreadProgress) *ThreadProgress = int(Progress);
 
 }
 
@@ -2867,20 +2873,32 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
             for (int i = 1; i <= 5; i++)
               x[i] = xtry[i];
 
-            continue; // TODO: It's not clear what is the side effects of this line, test!
+            continue;
 
+            //  123 DO 127 i=1,5
+            //  127 y(i)=xtry(i)*1.d-10
             p123: for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      HELP=-y(1)**2-y(3)**2+y(2)**2
+            //      IF(DABS(HELP).LT.1.d-20) GO TO 103
+            //      DEL=TWO*y(2)*y(3)*y(5)-y(5)**2*y(1)+y(2)**2*y(1)
             help = -pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0);
             if (fabs(help) < 1.0e-20) continue;
             DEL = TWO * y[2] * y[3] * y[5] - y[5] * y[5] * y[1]
                 + y[2] * y[2] * y[1];
 
+            //      Y(4)=-DEL/HELP
+            //      XTRY(4)=Y(4)*1.d+10
+            //      call f2(xtry,try)
             y[4] = -DEL / help;
             xtry[4] = y[4] * 1.0e+10;
             f2(xtry, tryy);
 
+            //      if(try.gt.val) go to 103
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      do 128 i=1,5
+            //  128 x(i)=SNGL(xtry(i))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
@@ -2890,91 +2908,155 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
         }
       }
     }
-
+    //  103 continue
+    //      if(val.eq.1.d+30) go to 130
+    //      DO 104 I=1,4
+    //      xhi(i)=xlo(i)+DBLE(ix(i)+1)*xstep(i)
+    //  104 xlo(i)=xlo(i)+DBLE(ix(i)-3)*xstep(i)
     if (val == 1.0e+30) goto p130;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
     }
   }
+  //  108 CONTINUE
+  //      DO 129 I=1,5
+  //  129 XMEM(2,I)=X(I)
+  //      VMEM(2)=SNGL(VAL)
   for (int i = 1; i <= 5; i++)
     xmem[2][i] = x[i];
   vmem[2] = val;
 
   //C     Search for X1,X2,X4,X5; X3 is calculated:
+  //  130 val=1.d+30
   p130: val = 1.0e+30;
 
+  //      do 201 i=1,4
+  //      xlo(i)=DBLE(-1.*10.**IEXP)
+  //      xhi(i)=DBLE(10.**IEXP)
+  //  201 ix(i)=0
   for (int i = 1; i <= 4; i++) {
     xlo[i] = -1.0 * pow(10, IEXP);
     xhi[i] = pow(10, IEXP);
     ix[i] = 0;
   }
 
+  //      DO 208 l=1,50
   for (int l = 1; l <= 50; l++) {
     PROGRESS(l + 200, 350);
+    //      do 202 i=1,4
+    //  202 xstep(i)=(xhi(i)-xlo(i))/SIX
     for (int i = 1; i <= 4; i++)
       xstep[i] = (xhi[i] - xlo[i]) / SIX;
 
+    //      size=xhi(1)-xlo(1)
+    //      iter=iter+1
+    //      xtry(3)=ZERO
+    //      CALL POSTEP(METH,JTER,J7)
+    //SIZE = xhi[1] - xlo[1];
     iter++;
     xtry[3] = 0.0;
     //POSTEP(METH,jter,j7);
 
+    //      do 203 j1=1,7
     for (int j1 = 1; j1 <= 7; j1++) {
+      //      xtry(1)=xlo(1)+DBLE(j1-1)*xstep(1)
       xtry[1] = xlo[1] + double(j1 - 1) * xstep[1];
+      //      do 203 j2=1,7
       for (int j2 = 1; j2 <= 7; j2++) {
+        //      xtry(2)=xlo(2)+DBLE(j2-1)*xstep(2)
         xtry[2] = xlo[2] + double(j2 - 1) * xstep[2];
+        //      do 203 j3=1,7
         for (int j3 = 1; j3 <= 7; j3++) {
+          //      xtry(4)=xlo(3)+DBLE(j3-1)*xstep(3)
           xtry[4] = xlo[3] + double(j3 - 1) * xstep[3];
+          //      do 203 j4=1,7
           for (int j4 = 1; j4 <= 7; j4++) {
+            //      xtry(5)=xlo(4)+DBLE(j4-1)*xstep(4)
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
+
+            //      if(abs(xtry(4)).lt.1.d-6) go to 223
             if (fabs(xtry[4]) < 1.0e-06) goto p223;
 
+            //      do 221 i=1,5
+            //  221 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      DEL=(TWO*Y(2)*Y(5))**2+FOUR*Y(4)*(-y(1)**2*y(4)-Y(1)*Y(4)**2-
+            //     $Y(5)**2*Y(1)+Y(2)**2*Y(1)+Y(2)**2*Y(4))
             DEL = pow(TWO * y[2] * y[5], 2.0)
                 + FOUR * y[4]
                     * (-y[1] * y[1] * y[4] - y[1] * y[4] * y[4]
                         - y[5] * y[5] * y[1] + y[2] * y[2] * y[1]
                         + y[2] * y[2] * y[4]);
 
+            //      IF(DEL.LT.ZERO) GO TO 203
             if (DEL < ZERO) continue;
 
+            //      DEL=dSQRT(DEL)
+            //      Y(3)=(TWO*Y(2)*Y(5)+DEL)/TWO/Y(4)
+            //      XTRY(3)=Y(3)*1.D+10
+            //      call f2(xtry,try)
             DEL = sqrt(DEL);
             y[3] = (TWO * y[2] * y[5] + DEL) / TWO / y[4];
             xtry[3] = y[3] * 1.0e+10;
             f2(xtry, tryy);
 
+            //      IF(TRY.GT.VAL) GO TO 222
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      DO 212 i=1,5
+            //  212 x(i)=SNGL(XTRY(I))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
                 x[i] = xtry[i];
             }
 
+            //  222 Y(3)=(TWO*Y(2)*Y(5)-DEL)/TWO/Y(4)
             y[3] = (TWO * y[2] * y[5] - DEL) / TWO / y[4];
 
+            //      XTRY(3)=Y(3)*1.d+10
+            //      call f2(xtry,try)
+            //      IF(TRY.GT.VAL) GO TO 203
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             xtry[3] = y[3] * 1.0e+10;
             f2(xtry, tryy);
             if (tryy > val) continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
+            //      DO 225 i=1,5
+            //  225 x(i)=sngl(xtry(i))
+            //      go to 203
             for (int i = 1; i <= 5; i++)
               x[i] = xtry[i];
-            continue; // TODO: It's not clear what is the purpose of this line.
+            continue;
 
+            //  223 IF((dABS(XTRY(2)).LT.1.d-6).OR.(dABS(XTRY(5)).LT.1.d-6))
+            //     $ GO TO 203
             p223: if (fabs(xtry[2]) < 1.0e-6 || fabs(xtry[5]) < 1.0e-06)
               continue;
 
+            //      DO 227 i=1,5
+            //  227 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      DEL=-y(1)**2*y(4)-Y(1)*y(4)**2-Y(5)**2*Y(1)+Y(2)**2*(Y(1)+Y(4))
             DEL = -y[1] * y[1] * y[4] - y[1] * y[4] * y[4] - y[5] * y[5] * y[1]
                 + y[2] * y[2] * (y[1] + y[4]);
 
+            //      Y(3)=-DEL/TWO/Y(2)/Y(5)
+            //      XTRY(3)=Y(3)*1.d+10
+            //      call f2(xtry,try)
             y[3] = -DEL / TWO / y[2] / y[5];
             xtry[3] = y[3] * 1.0e+10;
             f2(xtry, tryy);
 
+            //      if(try.gt.val) go to 203
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      do 228 i=1,5
+            //  228 x(i)=SNGL(xtry(i))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
@@ -2984,20 +3066,32 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
         }
       }
     }
-
+    //  203 continue
+    //      if(val.eq.1.d+30) go to 230
+    //      DO 204 I=1,4
+    //      xhi(i)=xlo(i)+DBLE(ix(i)+1)*xstep(i)
+    //  204 xlo(i)=xlo(i)+DBLE(ix(i)-3)*xstep(i)
     if (val == 1.0e+30) goto p230;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
     }
   }
+  //  208 CONTINUE
 
+  //      DO 229 I=1,5
+  //  229 XMEM(3,I)=X(I)
+  //      VMEM(3)=SNGL(VAL)
   for (int i = 1; i <= 5; i++)
     xmem[3][i] = x[i];
   vmem[3] = val;
 
   //C     Search for X1,X3,X4,X5; X2 is calculated:
-
+  //  230 val=1.d+30
+  //      do 301 i=1,4
+  //      xlo(i)=DBLE(-1.*10.**IEXP)
+  //      xhi(i)=DBLE(10.**IEXP)
+  //  301 ix(i)=0
   p230: val = 1.0e+30;
   for (int i = 1; i <= 4; i++) {
     xlo[i] = -1.0 * pow(10, IEXP);
@@ -3005,70 +3099,121 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
     ix[i] = 0;
   }
 
+  //      DO 308 l=1,50
   for (int l = 1; l <= 50; l++) {
     PROGRESS(l + 250, 350);
+    //      do 302 i=1,4
+    //  302 xstep(i)=(xhi(i)-xlo(i))/SIX
     for (int i = 1; i <= 4; i++)
       xstep[i] = (xhi[i] - xlo[i]) / SIX;
 
+    //      size=xhi(1)-xlo(1)
+    //      iter=iter+1
+    //      xtry(2)=ZERO
+    //      CALL POSTEP(METH,JTER,J7)
+    //SIZE = xhi[1] - xlo[1];
     iter++;
     xtry[2] = 0.0;
     //POSTEP(METH,jter,j7);
 
+    //      do 303 j1=1,7
     for (int j1 = 1; j1 <= 7; j1++) {
+      //      xtry(1)=xlo(1)+DBLE(j1-1)*xstep(1)
       xtry[1] = xlo[1] + double(j1 - 1) * xstep[1];
+      //      do 103 j2=1,7
       for (int j2 = 1; j2 <= 7; j2++) {
+        //      xtry(3)=xlo(2)+DBLE(j2-1)*xstep(2)
         xtry[3] = xlo[2] + double(j2 - 1) * xstep[2];
+        //      do 303 j3=1,7
         for (int j3 = 1; j3 <= 7; j3++) {
+          //      xtry(4)=xlo(3)+DBLE(j3-1)*xstep(3)
           xtry[4] = xlo[3] + double(j3 - 1) * xstep[3];
+          //      do 303 j4=1,7
           for (int j4 = 1; j4 <= 7; j4++) {
+            //      xtry(5)=xlo(4)+DBLE(j4-1)*xstep(4)
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
+            //      if(dabs(xtry(4)+XTRY(1)).lt.1.d-6) go to 323
             if (fabs(xtry[4] + xtry[1]) < 1.0e-06) goto p323;
 
+            //      do 321 i=1,5
+            //  321 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      DEL=(TWO*Y(3)*Y(5))**2-FOUR*(Y(1)+Y(4))*(-y(1)**2*y(4)-Y(1)*
+            //     $Y(4)**2-Y(5)**2*Y(1)-y(3)**2*Y(4))
             DEL = pow(TWO * y[3] * y[5], 2.0)
                 - FOUR * (y[1] + y[4])
                     * (-y[1] * y[1] * y[4] - y[1] * y[4] * y[4]
                         - y[5] * y[5] * y[1] - y[3] * y[3] * y[4]);
 
+            //      IF(DEL.LT.ZERO) GO TO 303
             if (DEL < ZERO) continue;
 
+            //      DEL=DSQRT(DEL)
+            //      Y(2)=(-TWO*Y(3)*Y(5)-DEL)/TWO/(Y(1)+Y(4))
+            //      XTRY(2)=Y(2)*1.D+10
+            //      call f2(xtry,try)
             DEL = sqrt(DEL);
             y[2] = (-TWO * y[3] * y[5] - DEL) / TWO / (y[1] + y[4]);
             xtry[2] = y[2] * 1.0e+10;
             f2(xtry, tryy);
 
-            if (tryy <= val) {
+            //      IF(TRY.GT.VAL) GO TO 322
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      DO 312 i=1,5
+            //  312 x(i)=SNGL(XTRY(I))
+            if (tryy <= val) /* ONE : poprawiony bï¿½ï¿½d 2006.10.05 */
+            {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
                 x[i] = xtry[i];
             }
 
+            //  322 Y(2)=(-TWO*Y(3)*Y(5)+DEL)/TWO/(Y(1)+Y(4))
+            //      XTRY(2)=Y(2)*1.D+10
+            //      call f2(xtry,try)
             y[2] = (-TWO * y[3] * y[5] + DEL) / TWO / (y[1] + y[4]);
             xtry[2] = y[2] * 1.0e+10;
             f2(xtry, tryy);
 
+            //      IF(TRY.GT.VAL) GO TO 303
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             if (tryy > val) continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
+            //      DO 325 i=1,5
+            //  325 x(i)=SNGL(xtry(i))
+            //      go to 303
             for (int i = 1; i <= 5; i++)
               x[i] = xtry[i];
             continue;
 
+            //  323 IF((DABS(XTRY(3)).LT.1.d-6).OR.(DABS(XTRY(5)).LT.1.d-6))
+            //     $ GO TO 303
             p323: if (fabs(xtry[3]) < 1.0e-06 || fabs(xtry[5]) < 1.0e-06)
               continue;
 
+            //      DO 327 i=1,5
+            //  327 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      DEL=-y(1)**2*y(4)-Y(1)*y(4)**2-Y(5)**2*Y(1)-Y(3)**2*Y(4)
             DEL = -y[1] * y[1] * y[4] - y[1] * y[4] * y[4] - y[5] * y[5] * y[1]
                 - y[3] * y[3] * y[4];
 
+            //      Y(2)=-DEL/TWO/Y(3)/Y(5)
+            //      XTRY(2)=Y(2)*1.d+10
+            //      call f2(xtry,try)
             y[2] = -DEL / TWO / y[3] / y[5];
             xtry[2] = y[2] * 1.0e+10;
             f2(xtry, tryy);
 
+            //      if(try.gt.val) go to 303
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      do 328 i=1,5
+            //  328 x(i)=SNGL(xtry(i))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
@@ -3078,86 +3223,152 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
         }
       }
     }
+    //  303 continue
+    //      if(val.eq.1.d+30) go to 330
+    //      DO 304 I=1,4
+    //      xhi(i)=xlo(i)+DBLE(ix(i)+1)*xstep(i)
+    //  304 xlo(i)=xlo(i)+DBLE(ix(i)-3)*xstep(i)
     if (val == 1.0e+30) goto p330;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
     }
   }
+  //  308 CONTINUE
+  //      DO 329 I=1,5
+  //  329 XMEM(4,I)=X(I)
+  //      VMEM(4)=SNGL(VAL)
   for (int i = 1; i <= 5; i++)
     xmem[4][i] = x[i];
   vmem[4] = val;
 
+  //C     Search for X2,X2,X3,X5; X1 is calculated:
+  //  330 val=1.d+30
   p330: val = 1.0e+30;
+  //      do 401 i=1,4
+  //      xlo(i)=DBLE(-1.*10.**IEXP)
+  //      xhi(i)=DBLE(10.**IEXP)
+  //  401 ix(i)=0
   for (int i = 1; i <= 4; i++) {
     xlo[i] = -1.0 * pow(10, IEXP);
     xhi[i] = pow(10, IEXP);
     ix[i] = 0;
   }
 
+  //      DO 408 l=1,50
   for (int l = 1; l <= 50; l++) {
     PROGRESS(l + 300, 350);
+    //      do 402 i=1,4
+    //  402 xstep(i)=(xhi(i)-xlo(i))/SIX
     for (int i = 1; i <= 4; i++)
       xstep[i] = (xhi[i] - xlo[i]) / SIX;
 
+    //      size=xhi(1)-xlo(1)
+    //      iter=iter+1
+    //      xtry(1)=ZERO
+    //      CALL POSTEP(METH,JTER,J7)
+    //SIZE = xhi[1] - xlo[1];
     iter++;
-    xtry[1] = 0.0; /* Corrected 2006.10.05 */
+    xtry[1] = 0.0; /* ONE : poprawiony bï¿½ï¿½d 2006.10.05 */
+    //POSTEP(METH,jter,j7);
 
+    //      do 403 j1=1,7
     for (int j1 = 1; j1 <= 7; j1++) {
+      //      xtry(2)=xlo(1)+DBLE(j1-1)*xstep(1)
       xtry[2] = xlo[1] + double(j1 - 1) * xstep[1];
+      //      do 403 j2=1,7
       for (int j2 = 1; j2 <= 7; j2++) {
+        //      xtry(2)=xlo(2)+DBLE(j2-1)*xstep(2)
         xtry[2] = xlo[2] + double(j2 - 1) * xstep[2];
+        //      do 403 j3=1,7
         for (int j3 = 1; j3 <= 7; j3++) {
+          //      xtry(3)=xlo(3)+DBLE(j3-1)*xstep(3)
           xtry[3] = xlo[3] + double(j3 - 1) * xstep[3];
+          //      do 403 j4=1,7
           for (int j4 = 1; j4 <= 7; j4++) {
+            //      xtry(5)=xlo(4)+DBLE(j4-1)*xstep(4)
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
 
+            //      if(dabs(xtry(4)).lt.1.d-6) go to 423
             if (fabs(xtry[4]) < 1.0e-06) goto p423;
 
+            //      do 421 i=1,5
+            //  421 y(i)=xtry(i)*1.d-10
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      DEL=(-y(4)**2-y(5)**2+y(2)**2)**2+FOUR*Y(4)*(TWO*Y(2)*Y(3)*Y(5)
+            //     $-Y(4)*Y(3)**2+Y(4)*Y(2)**2)
             DEL = pow(-y[4] * y[4] - y[5] * y[5] + y[2] * y[2], 2.0)
                 + FOUR * y[4]
                     * (TWO * y[2] * y[3] * y[5] - y[4] * y[3] * y[3]
                         + y[4] * y[2] * y[2]);
 
+            //      IF(DEL.LT.ZERO) GO TO 403
             if (DEL < ZERO) continue;
 
+            //      DEL=DSQRT(DEL)
+            //      Y(1)=(-Y(4)**2-Y(5)**2+Y(2)**2+DEL)/TWO/Y(4)
+            //      XTRY(1)=Y(1)*1.D+10
+            //      call f2(xtry,try)
             DEL = sqrt(DEL);
             y[1] = (-y[4] * y[4] - y[5] * y[5] + y[2] * y[2] + DEL) / TWO
                 / y[4];
             xtry[1] = y[1] * 1.0e+10;
             f2(xtry, tryy);
 
+            //      IF(TRY.GT.VAL) GO TO 422
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      DO 412 i=1,5
+            //  412 x(i)=SNGL(XTRY(I))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
                 x[i] = xtry[i];
             }
 
+            //  422 Y(1)=(-Y(4)**2-Y(5)**2+Y(2)**2-DEL)/TWO/Y(4)
             y[1] = (-y[4] * y[4] - y[5] * y[5] + y[2] * y[2] - DEL) / TWO
                 / y[4];
 
+            //      XTRY(1)=Y(1)*1.D+10
+            //      call f2(xtry,try)
+            //      IF(TRY.GT.VAL) GO TO 403
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
             xtry[1] = y[1] * 1.0e+10;
             f2(xtry, tryy);
             if (tryy > val) continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
+            //      DO 425 i=1,5
+            //  425 x(i)=SNGL(xtry(i))
+            //      go to 403
             for (int i = 1; i <= 5; i++)
               x[i] = xtry[i];
             continue;
+            //  423 DO 427 i=1,5
+            //  427 y(i)=xtry(i)*1.d-10
             p423: for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
 
+            //      HELP=-y(4)**2-y(5)**2+y(2)**2
+            //      IF(DABS(HELP).LT.1.d-20) GO TO 403
+            //      DEL=TWO*y(2)*y(3)*y(5)-y(3)**2*y(4)+y(2)**2*y(4)
             help = -pow(y[4], 2.0) - pow(y[5], 2.0) + pow(y[2], 2.0);
             if (fabs(help) < 1.0e-20) continue;
             DEL = TWO * y[2] * y[3] * y[5] - y[3] * y[3] * y[4]
                 + y[2] * y[2] * y[4];
 
+            //      Y(1)=-DEL/HELP
+            //      XTRY(1)=Y(1)*1.d+10
+            //      call f2(xtry,try)
             y[1] = -DEL / help;
             xtry[1] = y[1] * 1.0e+10;
             f2(xtry, tryy);
+            //      if(try.gt.val) go to 403
+            //      CALL RENUM(TRY,VAL,IX,J1,J2,J3,J4)
+            //      do 428 i=1,5
+            //  428 x(i)=SNGL(xtry(i))
             if (tryy <= val) {
               RENUM(tryy, val, ix, j1, j2, j3, j4);
               for (int i = 1; i <= 5; i++)
@@ -3168,12 +3379,21 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
       }
     }
 
+    //  403 continue
+    //      if(val.eq.1.d+30) go to 430
+    //      DO 404 I=1,4
+    //      xhi(i)=xlo(i)+DBLE(ix(i)+1)*xstep(i)
+    //  404 xlo(i)=xlo(i)+DBLE(ix(i)-3)*xstep(i)
     if (val == 1.0e+30) goto p430;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
     }
   }
+  //  408 CONTINUE
+  //      DO 429 I=1,5
+  //  429 XMEM(5,I)=X(I)
+  //      VMEM(5)=SNGL(VAL)
   for (int i = 1; i <= 5; i++)
     xmem[5][i] = x[i];
   vmem[5] = val;
