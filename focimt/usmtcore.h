@@ -61,7 +61,7 @@
 #endif
 
 void USMTCore(Taquart::NormType ANormType, int QualityType,
-    Taquart::SMTInputData &InputData, int * const AThreadProgress);
+    Taquart::SMTInputData &InputData);
 
 void TransferSolution(Taquart::SolutionType AType,
     std::list<Taquart::FaultSolution> &ASolution);
@@ -100,7 +100,7 @@ namespace Taquart {
     //extern int ACTIV[FOCIMT_MAXCHANNEL+1];
     //extern char RPSTCP[FOCIMT_MAXCHANNEL+1];
     extern int ISTA;
-    extern int * ThreadProgress;
+    //extern int * ThreadProgress;
 
     void PROGRESS(double Progress, double Max);
     bool ANGGA(void);
