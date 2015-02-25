@@ -5,6 +5,10 @@
 //
 // Copyright (c) 2013-2015, Grzegorz Kwiatek.
 //
+// These routines were mostly translated to C++ from FORTRAN program USMT
+// (Unix Seismic Moment Tensor) program by dr Pawel Wiejacz from Institute of
+// Geophysics, Polish Academy of Sciences).
+//
 // Permission is hereby granted, free of charge, to any person or organization
 // obtaining a copy of the software and accompanying documentation covered by
 // this license (the "Software") to use, reproduce, display, distribute,

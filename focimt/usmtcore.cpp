@@ -5,6 +5,10 @@
 //
 // Copyright (c) 2013-2015, Grzegorz Kwiatek.
 //
+// These routines were mostly translated to C++ from FORTRAN program USMT
+// (Unix Seismic Moment Tensor) program by dr Pawel Wiejacz from Institute of
+// Geophysics, Polish Academy of Sciences).
+//
 // Permission is hereby granted, free of charge, to any person or organization
 // obtaining a copy of the software and accompanying documentation covered by
 // this license (the "Software") to use, reproduce, display, distribute,
@@ -87,7 +91,6 @@ double Taquart::UsmtCore::mw(double m0) {
   if (RMAG >= 100.0) RMAG = 99.9;
   if (RMAG < -10.0) RMAG = -9.9;
   return RMAG;
-
 }
 
 //---------------------------------------------------------------------------
@@ -157,7 +160,6 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   double RMAG = 0.0;
   double MAGN[4];
 
-  //      PI=4.*ATAN(1.)
   const double PI = 4.0 * atan(1.0);
 
   //      DO 3 I=1,N
@@ -262,61 +264,29 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
      }
      */
   }
-  //    3 CONTINUE
-  //      CALL GSOL(B,iexp)
-  //C     Find and sort eigenvalues:
-  //      CALL EIG3(B,0,EQM)
+
+  //---- Full solution calculation.
   GSOL(B, IEXP);
   EIG3(B, 0, EQM);
 
-  //      EQQ1=EQM(1)
-  //      EQQ2=EQM(2)
-  //      EQQ3=EQM(3)
   double EQQ1 = EQM[1];
   double EQQ2 = EQM[2];
   double EQQ3 = EQM[3];
 
-  //      do 1004 i=1,6
-  // 1004 rm(i,1)=b(i)
   for (int i = 1; i <= 6; i++)
     RM[i][1] = B[i];
 
-  //      RMM=(EQM(1)+EQM(2)+EQM(3))/3.
-  //      RMY=EQM(1)
-  //      IF(EQM(2).LT.RMY) RMY=EQM(2)
-  //      IF(EQM(3).LT.RMY) RMY=EQM(3)
-  //      RMX=EQM(3)
-  //double RMM = (EQM[1]+EQM[2]+EQM[3]) / 3.0;
   double RMY = EQM[1];
   if (EQM[2] < RMY) RMY = EQM[2];
   if (EQM[3] < RMY) RMY = EQM[3];
   double RMX = EQM[3];
 
-  //      IF(EQM(1).GT.RMX) RMX=EQM(1)
-  //      IF(EQM(2).GT.RMX) RMX=EQM(2)
-  //      IF((EQM(1).NE.RMX).AND.(EQM(1).NE.RMY)) RMZ=EQM(1)
-  //      IF((EQM(2).NE.RMX).AND.(EQM(2).NE.RMY)) RMZ=EQM(2)
-  //      IF((EQM(3).NE.RMX).AND.(EQM(3).NE.RMY)) RMZ=EQM(3)
   if (EQM[1] > RMX) RMX = EQM[1];
   if (EQM[2] > RMX) RMX = EQM[2];
-  //double RMZ = 0.0;
-  //if(EQM[1] != RMX && EQM[1] != RMY) RMZ = EQM[1];
-  //if(EQM[2] != RMX && EQM[2] != RMY) RMZ = EQM[2];
-  //if(EQM[3] != RMX && EQM[3] != RMY) RMZ = EQM[3];
 
-  //C     Finds scalar seismic moment:
-  //      DO 9 I=1,6
-  //    9 BB(I)=RM(I,1)
   for (int i = 1; i <= 6; i++)
     BB[i] = RM[i][1];
 
-  //      CALL EIG3(BB,0,EQM)
-  //      EQM(1)=ABS(EQM(1))*1.E-12
-  //      EQM(2)=ABS(EQM(2))*1.E-12
-  //      EQM(3)=ABS(EQM(3))*1.E-12
-  //      HELP1=ABS(EQM(1)-EQM(2))
-  //      HELP2=ABS(EQM(1)-EQM(3))
-  //      HELP3=ABS(EQM(2)-EQM(3))
   EIG3(BB, 0, EQM);
   EQM[1] = fabs(EQM[1]) * USMT_DOWNSCALE;
   EQM[2] = fabs(EQM[2]) * USMT_DOWNSCALE;
@@ -325,96 +295,42 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   double HELP2 = fabs(EQM[1] - EQM[3]);
   double HELP3 = fabs(EQM[2] - EQM[3]);
 
-  //      EU=SQRT(.5*(EQM(1)*EQM(1)+EQM(2)*EQM(2)+EQM(3)*EQM(3)))
-  //      EC=AMAX1(HELP1,HELP2)
-  //      EC=AMAX1(EC,HELP3)
-  //      RMT(1)=AMAX1(EC,EU)*1.E+12
-  //      RM0(1)=AMIN1(EC,EU)*1.E+12
   double EU = sqrt(0.5 * (EQM[1] * EQM[1] + EQM[2] * EQM[2] + EQM[3] * EQM[3]));
   double EC = Taquart::amax1(HELP1, HELP2);
   EC = amax1(EC, HELP3);
   RMT[1] = amax1(EC, EU) * USMT_UPSCALE;
   RM0[1] = amin1(EC, EU) * USMT_UPSCALE;
 
-  //C     Error calculation:
-  //      DO 401 I=1,N
+  // Error calculation.
   for (int i = 1; i <= N; i++) {
-    //      EPS=U(I)
     double EPS = U[i];
-
-    //      DO 406 J=1,6
-    //  406 EPS=EPS-A(I,J)*RM(J,1)
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][1];
-
-    //      SAI=0.
     double SAI = 0.0;
-
-    //      DO 403 J=1,6
-    //  403 SAI=SAI+ABS(A(I,J))
     for (int j = 1; j <= 6; j++)
       SAI = SAI + fabs(A[i][j]);
-
-    //      DO 404 J=1,6
-    //  404 AA(I,J)=EPS/SAI*SIGN(1.,A(I,J))
     for (int j = 1; j <= 6; j++)
       AA[i][j] = EPS / SAI * sign(1.0, A[i][j]);
-
-    //      DO 401 J=1,6
-    //      AA(I,J)=AA(I,J)+RM(J,1)
     for (int j = 1; j <= 6; j++)
       AA[i][j] = AA[i][j] + RM[j][1];
-
   }
-  //  401 CONTINUE
 
-  //      COV=DBLE(0.) 
   double COV = 0.0;
-  //      DO 4384 I=1,6
-  //      DO 4384 J=1,6
-  //      DO 405 K=1,N
   for (int i = 1; i <= 6; i++) {
     for (int j = 1; j <= 6; j++) {
       for (int k = 1; k <= N; k++) {
-        //      DHELP1=DBLE(AA(K,I)-RM(I,1))*1.E-12
-        //      DHELP2=DBLE(AA(K,J)-RM(J,1))*1.E-12
-        //  405 COV=COV+DHELP1*DHELP2
         double DHELP1 = (AA[k][i] - RM[i][1]) * USMT_DOWNSCALE;
         double DHELP2 = (AA[k][j] - RM[j][1]) * USMT_DOWNSCALE;
         COV = COV + DHELP1 * DHELP2;
       }
     }
   }
-  // 4384 CONTINUE
 
-  //      COV=COV/36.
-  //      DHELP1=DABS(COV)/DBLE(FLOAT(N-1))
-  //      SIG=SNGL(DSQRT(DHELP1))*1.E+12
   COV = COV / 36.0;
   double DHELP1 = fabs(COV) / double(N - 1);
   double SIG = sqrt(DHELP1) * USMT_UPSCALE;
   RMERR[1] = SIG;
 
-  //C     Output:
-  //      WRITE(75,4999)
-  // 4999 FORMAT(1X,/,72(1H-))
-  //      WRITE(RESULT(1),5011) TITLE
-  // 5011 FORMAT('L1 tensor for : ',A40)
-  //      WRITE(75,5000) RESULT(1)
-  // 5000 FORMAT(1H ,A56)
-  //      WRITE(RESULT(2),5012)
-  // 5012 FORMAT('  Full solution :',39X)
-  //      WRITE(75,5000) RESULT(2)
-  //      WRITE(RESULT(3),5013) RM(1,1),RM(2,1),RM(3,1)
-  //      WRITE(75,5000) RESULT(3)
-  //      WRITE(RESULT(4),5013) RM(2,1),RM(4,1),RM(5,1)
-  //      WRITE(75,5000) RESULT(4)
-  //      WRITE(RESULT(5),5013) RM(3,1),RM(5,1),RM(6,1)
-  //      WRITE(75,5000) RESULT(5)
-  // 5013 FORMAT(11X,E10.3,2X,E10.3,2X,E10.3,11X)
-  //      WRITE(RESULT(6),5014) TROZ,RM0(1),RMT(1),SIG
-  // 5014 FORMAT(2X,'T0=',F8.4,2X,'M0=',E9.3,2X,'MT=',E9.3,2X,'ERR=',E9.3)
-  //      WRITE(75,5000) RESULT(6)
 #ifdef USMTCORE_DEBUG
   std::cout << "L1 Tensor:" << std::endl;
   std::cout << RM[1][1] << RM[2][1] << RM[3][1] << std::endl;
@@ -423,90 +339,42 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   std::cout << "T0 = " << TROZ << " M0 = " << RM0[1] << " MT = " << RMT[1] << " ERR = " << SIG;
 #endif
 
-  //      CALL EIGGEN(EQQ1,EQQ2,EQQ3,PEXPL,PCLVD(1),PDBCP(1))
-  //      RMAG=.6667*ALOG10(RM0(1))-6.0
-  //      IF(RMAG.GE.100.) RMAG=99.9
-  //      IF(RMAG.LE.-10.) RMAG=-9.9
   EIGGEN(EQQ1, EQQ2, EQQ3, PEXPLO, PCLVD[1], PDBCP[1]);
   RMAG = mw(RM0[1]);
   MAGN[1] = RMAG;
 
-  //      WRITE(RESULT(7),5015) PEXPL,PCLVD(1),PDBCP(1),RMAG
-  // 5015 FORMAT(2X,'Expl.=',F6.1,'%   CLVD.=',F6.1,'%   DBCP.=',F6.1,
-  //     $'%   M=',F4.1)
-  //      WRITE(75,5000) RESULT(7)
 #ifdef USMTCORE_DEBUG
   std::cout << " EXPL = " << PEXPL << " PCLVD = " << PCLVD[1];
   std::cout << " PDBCP = " << PDBCP[1] << " Mw = " << RMAG << std::endl;
 #endif
+
   PEXPL[1] = PEXPLO;
 
-  //C     Postep wyswietlany przez rutyny GSOL?
-  //C     ### TRACE NULL TENSOR:
-
-  //      CALL GSOL5(H,iexp)
-  //      DO 55 I=1,5
-  //   55 RM(I,2)=H(I)
-  //      RM(6,2)=-RM(1,2)-RM(4,2)
+  //---- Trace-null solution calculation.
   GSOL5(H, IEXP);
+
   for (int i = 1; i <= 5; i++)
     RM[i][2] = H[i];
   RM[6][2] = -RM[1][2] - RM[4][2];
 
-  //C     Find and sort eigenvalues:
-  //      DO 1003 I=1,6
-  // 1003 B(I)=RM(I,2)
-  //      CALL EIG3(B,0,EQM)
   for (int i = 1; i <= 6; i++)
     B[i] = RM[i][2];
   EIG3(B, 0, EQM);
 
-  //      EQQ1=EQM(1)
-  //      EQQ2=EQM(2)
-  //      EQQ3=EQM(3)
-  //      RMM=(EQM(1)+EQM(2)+EQM(3))/3.
-  //      RMY=EQM(1)
-  //      IF(EQM(2).LT.RMY) RMY=EQM(2)
-  //      IF(EQM(3).LT.RMY) RMY=EQM(3)
-  //      RMX=EQM(3)
   EQQ1 = EQM[1];
   EQQ2 = EQM[2];
   EQQ3 = EQM[3];
-  //RMM = (EQM[1] + EQM[2] + EQM[3]) / 3.0;
   RMY = EQM[1];
   if (EQM[2] < RMY) RMY = EQM[2];
   if (EQM[3] < RMY) RMY = EQM[3];
   RMX = EQM[3];
 
-  //      IF(EQM(1).GT.RMX) RMX=EQM(1)
-  //      IF(EQM(2).GT.RMX) RMX=EQM(2)
-  //      IF((EQM(1).NE.RMX).AND.(EQM(1).NE.RMY)) RMZ=EQM(1)
-  //      IF((EQM(2).NE.RMX).AND.(EQM(2).NE.RMY)) RMZ=EQM(2)
-  //      IF((EQM(3).NE.RMX).AND.(EQM(3).NE.RMY)) RMZ=EQM(3)
   if (EQM[1] > RMX) RMX = EQM[1];
   if (EQM[2] > RMX) RMX = EQM[2];
-  //if(EQM[1] != RMX && EQM[1] != RMY) RMZ = EQM[1];
-  //if(EQM[2] != RMX && EQM[2] != RMY) RMZ = EQM[2];
-  //if(EQM[3] != RMX && EQM[3] != RMY) RMZ = EQM[3];
 
-  //C     Finds scalar seismic moment:
-  //      DO 2009 I=1,6
-  // 2009 BB(I)=RM(I,2)
+  // Find scalar seismic moment.
   for (int i = 1; i <= 6; i++)
     BB[i] = RM[i][2];
-
-  //      CALL EIG3(BB,0,EQM)
-  //      EQM(1)=ABS(EQM(1))*1.E-12
-  //      EQM(2)=ABS(EQM(2))*1.E-12
-  //      EQM(3)=ABS(EQM(3))*1.E-12
-  //      HELP1=ABS(EQM(1)-EQM(2))
-  //      HELP2=ABS(EQM(1)-EQM(3))
-  //      HELP3=ABS(EQM(2)-EQM(3))
-  //      EU=SQRT(.5*(EQM(1)*EQM(1)+EQM(2)*EQM(2)+EQM(3)*EQM(3)))
-  //      EC=AMAX1(HELP1,HELP2)
-  //      EC=AMAX1(EC,HELP3)
-  //      RMT(2)=AMAX1(EC,EU)*1.E+12
-  //      RM0(2)=AMIN1(EC,EU)*1.E+12
 
   EIG3(BB, 0, EQM);
   EQM[1] = fabs(EQM[1]) * USMT_DOWNSCALE;
@@ -521,44 +389,19 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   RMT[2] = amax1(EC, EU) * USMT_UPSCALE;
   RM0[2] = amin1(EC, EU) * USMT_UPSCALE;
 
-  //C     Error calculation:
-  //      DO 2401 I=1,N
+  // Error calculation.
   for (int i = 1; i <= N; i++) {
-    //      EPS=U(I)
     double EPS = U[i];
-    //      DO 2406 J=1,6
-    // 2406 EPS=EPS-A(I,J)*RM(J,2)
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][2];
-
-    //      SAI=0.
     double SAI = 0.0;
-
-    //      DO 2403 J=1,6
-    // 2403 SAI=SAI+ABS(A(I,J))
     for (int j = 1; j <= 6; j++)
       SAI = SAI + fabs(A[i][j]);
-
-    //      DO 2404 J=1,6
-    // 2404 AA(I,J)=EPS/SAI*SIGN(1.,A(I,J))
     for (int j = 1; j <= 6; j++)
       AA[i][j] = EPS / SAI * sign(1.0, A[i][j]);
-
-    //      DO 2401 J=1,6
-    //      AA(I,J)=AA(I,J)+RM(J,2)
     for (int j = 1; j <= 6; j++)
       AA[i][j] = AA[i][j] + RM[j][2];
   }
-  // 2401 CONTINUE
-
-  //      COV=DBLE(0.)
-  //      DO 4482 I=1,6
-  //      DO 4482 J=1,6
-  //      DO 2405 K=1,N
-  //      DHELP1=DBLE(AA(K,I)-RM(I,2))*1.E-12
-  //      DHELP2=DBLE(AA(K,J)-RM(J,2))*1.E-12
-  // 2405 COV=COV+DHELP1*DHELP2
-  // 4482 CONTINUE
 
   COV = 0.0;
   for (int i = 1; i <= 6; i++) {
@@ -571,28 +414,11 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
     }
   }
 
-  //      COV=COV/36.
-  //      DHELP1=DABS(COV)/DBLE(FLOAT(N-1))
-  //      SIG=SNGL(DSQRT(DHELP1))*1.E+12
   COV = COV / 36.0;
   DHELP1 = fabs(COV) / double(N - 1);
   SIG = sqrt(DHELP1) * USMT_UPSCALE;
   RMERR[2] = SIG;
 
-  //C     Output:
-  //      WRITE(75,4998)
-  // 4998 FORMAT(1H )
-  //      WRITE(RESULT(13),5016)
-  // 5016 FORMAT('  Trace null solution :',33X)
-  //      WRITE(75,5000) RESULT(13)
-  //      WRITE(RESULT(14),5013) RM(1,2),RM(2,2),RM(3,2)
-  //      WRITE(75,5000) RESULT(14)
-  //      WRITE(RESULT(15),5013) RM(2,2),RM(4,2),RM(5,2)
-  //      WRITE(75,5000) RESULT(15)
-  //      WRITE(RESULT(16),5013) RM(3,2),RM(5,2),RM(6,2)
-  //      WRITE(75,5000) RESULT(16)
-  //      WRITE(RESULT(17),5014) TROZ,RM0(2),RMT(2),SIG
-  //      WRITE(75,5000) RESULT(17)
 #ifdef USMTCORE_DEBUG
   std::cout << RM[1][2] << RM[2][2] << RM[3][2] << std::endl;
   std::cout << RM[2][2] << RM[4][2] << RM[5][2] << std::endl;
@@ -600,55 +426,27 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   std::cout << "T0 = " << TROZ << " M0 = " << RM0[2] << " MT = " << RMT[2] << " ERR = " << SIG;
 #endif
 
-  //      CALL EIGGEN(EQQ1,EQQ2,EQQ3,DUM,PCLVD(2),PDBCP(2))
-  //      RMAG=.6667*ALOG10(RM0(2))-6.0
-  //      IF(RMAG.GE.100.) RMAG=99.9
-  //      IF(RMAG.LE.-10.) RMAG=-9.9
-
   double DUM = 0.0;
   EIGGEN(EQQ1, EQQ2, EQQ3, DUM, PCLVD[2], PDBCP[2]);
   RMAG = mw(RM0[2]);
   MAGN[2] = RMAG;
 
-  //      WRITE(RESULT(18),5017) PCLVD(2),PDBCP(2),RMAG
-  // 5017 FORMAT(18X,'CLVD.=',F6.1,'%   DBCP.=',F6.1,'%   M=',F4.1)
-  //      WRITE(75,5000) RESULT(18)
 #ifdef USMTCORE_DEBUG
   std::cout << " PCLVD = " << PCLVD[2];
   std::cout << " PDBCP = " << PDBCP[2] << " Mw = " << RMAG << std::endl;
 #endif
+
   PEXPL[2] = 0.0;
 
-  //C     ### DOUBLE COUPLE
-  //      CALL GSOLA(H,IEXP)
-  //      DO 3055 I=1,5
-  // 3055 RM(I,3)=H(I)
-  //      RM(6,3)=-RM(1,3)-RM(4,3)
+  //---- Double-couple solution calculation.
   GSOLA(H, IEXP);
   for (int i = 1; i <= 5; i++)
     RM[i][3] = H[i];
   RM[6][3] = -RM[1][3] - RM[4][3];
 
-  //C     Finds scalar seismic moment:
-  //      DO 3009 I=1,6
-  // 3009 BB(I)=RM(I,3)
+  // Finds scalar seismic moment.
   for (int i = 1; i <= 6; i++)
     BB[i] = RM[i][3];
-
-  //      CALL EIG3(BB,0,EQM)
-  //      EQQ1=EQM(1)
-  //      EQQ2=EQM(2)
-  //      EQQ3=EQM(3)
-  //      EQM(1)=ABS(EQM(1))*1.E-12
-  //      EQM(2)=ABS(EQM(2))*1.E-12
-  //      EQM(3)=ABS(EQM(3))*1.E-12
-  //      HELP1=ABS(EQM(1)-EQM(2))
-  //      HELP2=ABS(EQM(1)-EQM(3))
-  //      HELP3=ABS(EQM(2)-EQM(3))
-  //      EC=AMAX1(HELP1,HELP2)
-  //      EC=AMAX1(EC,HELP3)
-  //      RMT(3)=EC*1.E+12
-  //      RM0(3)=RMT(3)
 
   EIG3(BB, 0, EQM);
   EQQ1 = EQM[1];
@@ -665,43 +463,20 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   RMT[3] = EC * USMT_UPSCALE;
   RM0[3] = RMT[3];
 
-  //C     Error calculation:
-  //      DO 3401 I=1,N
+  // Error calculation.
   for (int i = 1; i <= N; i++) {
-    //      EPS=U(I)
     double EPS = U[i];
-    //      DO 3406 J=1,6
-    // 3406 EPS=EPS-A(I,J)*RM(J,3)
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][3];
-
-    //      SAI=0.
-    //      DO 3403 J=1,6
-    // 3403 SAI=SAI+ABS(A(I,J))
     double SAI = 0.0;
     for (int j = 1; j <= 6; j++)
       SAI = SAI + fabs(A[i][j]);
-
-    //      DO 3404 J=1,6
-    // 3404 AA(I,J)=EPS/SAI*SIGN(1.,A(I,J))
     for (int j = 1; j <= 6; j++)
       AA[i][j] = EPS / SAI * sign(1.0, A[i][j]);
-
-    //      DO 3401 J=1,6
-    //      AA(I,J)=AA(I,J)+RM(J,3)
     for (int j = 1; j <= 6; j++)
       AA[i][j] = AA[i][j] + RM[j][3];
   }
-  // 3401 CONTINUE
 
-  //      COV=DBLE(0.)
-  //      DO 4492 I=1,6
-  //      DO 4492 J=1,6
-  //      DO 3405 K=1,N
-  //      DHELP1=DBLE(AA(K,I)-RM(I,3))*1.E-12
-  //      DHELP2=DBLE(AA(K,J)-RM(J,3))*1.E-12
-  // 3405 COV=COV+DHELP1*DHELP2
-  // 4492 CONTINUE
   COV = 0.0;
   for (int i = 1; i <= 6; i++) {
     for (int j = 1; j <= 6; j++) {
@@ -713,27 +488,11 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
     }
   }
 
-  //      COV=COV/36.
-  //      DHELP1=DABS(COV)/DBLE(FLOAT(N-1))
-  //      SIG=SNGL(DSQRT(DHELP1))*1.E+12
   COV = COV / 36.0;
   DHELP1 = fabs(COV) / double(N - 1);
   SIG = sqrt(DHELP1) * USMT_UPSCALE;
   RMERR[3] = SIG;
 
-  //C     Output:
-  //      WRITE(75,4998)
-  //      WRITE(RESULT(24),5018)
-  // 5018 FORMAT('  Double couple solution :',30X)
-  //      WRITE(75,5000) RESULT(24)
-  //      WRITE(RESULT(25),5013) RM(1,3),RM(2,3),RM(3,3)
-  //      WRITE(75,5000) RESULT(25)
-  //      WRITE(RESULT(26),5013) RM(2,3),RM(4,3),RM(5,3)
-  //      WRITE(75,5000) RESULT(26)
-  //      WRITE(RESULT(27),5013) RM(3,3),RM(5,3),RM(6,3)
-  //      WRITE(75,5000) RESULT(27)
-  //      WRITE(RESULT(28),5014) TROZ,RM0(3),RMT(3),SIG
-  //      WRITE(75,5000) RESULT(28)
 #ifdef USMTCORE_DEBUG
   std::cout << RM[1][3] << RM[2][3] << RM[3][3] << std::endl;
   std::cout << RM[2][3] << RM[4][3] << RM[5][3] << std::endl;
@@ -741,30 +500,18 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   std::cout << "T0 = " << TROZ << " M0 = " << RM0[3] << " MT = " << RMT[3] << " ERR = " << SIG;
 #endif
 
-  //      RMAG=.6667*ALOG10(RM0(3))-6.0
-  //      IF(RMAG.GE.100.) RMAG=99.9
-  //      IF(RMAG.LE.-10.) RMAG=-9.9
-  //      WRITE(RESULT(29),5019) RMAG
   RMAG = mw(RM0[3]);
   MAGN[3] = RMAG;
 
-  // 5019 FORMAT(34X,'DBCP.= 100.0%   M=',F4.1)
 #ifdef USMTCORE_DEBUG
   std::cout << " PDBCP = 100% Mw = " << RMAG << std::endl;
 #endif
+
   PEXPL[3] = 0.0;
   PCLVD[3] = 0.0;
   PDBCP[3] = 100.0;
 
-  //      WRITE(75,5000) RESULT(29)
-  //      WRITE(75,4997)
-  // 4997 FORMAT(72(1H-))
-  //      ICOND=1
-  //      CALL XTRINF(ICOND)
-  //      NORM=1
-  //      CALL WROUT(NORM)
-
-  //---- Transfer data to Taquart::FaultSolution structures
+  // Transfer data to output structure
 
   for (int i = 1; i <= 3; i++) {
     int z = 0;
@@ -788,18 +535,12 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   }
 
   ICOND = 1;
-
   XTRINF(ICOND, 1, RM0, RMERR);
-
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
+// Routine finds eigenvalues of matrix 3*3 by solving characteristic equation.
 void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
-  //      SUBROUTINE EIG3(RM,ISTER,E)
-  //C     Routine finds eigenvalues of matrix 3*3 by solving characteristic
-  //C     equation.
   //      DIMENSION RM(6),E(3)
   //      DOUBLE PRECISION A2,A1,A0,VAL,ONE,TWO,ZERO,A,B,X,Q(6)
   //      ZERO=DBLE(0.)
@@ -812,18 +553,8 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
   double F = 0.0, G = 0.0, OX = 0.0, FF = 0.0, FG = 0.0, QX = 0.0, HELP = 0.0;
   double FX = 0.0;
 
-  //      DO 1 I=1,6
-  //    1 Q(I)=DBLE(RM(I))
   for (int i = 1; i <= 6; i++)
     Q[i] = RM[i];
-
-  //      A2=-(Q(1)+Q(4)+Q(6))
-  //      A1=Q(1)*Q(6)+Q(4)*Q(6)+Q(1)*Q(4)-Q(2)*Q(2)-Q(3)*Q(3)-Q(5)*Q(5)
-  //      A0=-TWO*Q(2)*Q(3)*Q(5)-Q(1)*Q(4)*Q(6)+Q(3)*Q(3)*Q(4)+Q(2)*Q(2)*Q(6)+Q(5)*Q(5)*Q(1)
-  //      A=-1.D+30
-  //      B=1.D+30
-  //      X=ZERO
-
   A2 = -(Q[1] + Q[4] + Q[6]);
   A1 = Q[1] * Q[6] + Q[4] * Q[6] + Q[1] * Q[4] - Q[2] * Q[2] - Q[3] * Q[3]
       - Q[5] * Q[5];
@@ -833,38 +564,20 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
   B = 1.0e+30;
   X = ZERO;
 
-  //      DO 2 KROK=1,200
   for (int KROK = 1; KROK <= 200; KROK++) {
-    //      VAL=X**3+A2*X**2+A1*X+A0
     VAL = pow(X, 3.0) + A2 * pow(X, 2) + A1 * X + A0;
-    //      IF(VAL.EQ.ZERO) GO TO 3
-    //      IF(VAL.LT.ZERO) A=X
-    //      IF(VAL.GT.ZERO) B=X
-    //      X=(A+B)/TWO
     if (VAL == ZERO) goto p3;
     if (VAL < ZERO) A = X;
     if (VAL > ZERO) B = X;
     X = (A + B) / TWO;
   }
-  //    2 CONTINUE
-
-  //    3 A0=A1+A2*X+X*X
-  //      A1=A2+X
-  //      VAL=A1*A1-TWO*TWO*A0
 
   p3: A0 = A1 + A2 * X + X * X;
   A1 = A2 + X;
   VAL = A1 * A1 - TWO * TWO * A0;
 
-  //      IF(VAL.GE.ZERO) GO TO 5
   if (VAL < ZERO) VAL = ZERO;
 
-  //    5 VAL=DSQRT(VAL)
-  //      A=(-A1-VAL)/TWO
-  //      B=(-A1+VAL)/TWO
-  //      E(1)=SNGL(X)
-  //      E(2)=SNGL(A)
-  //      E(3)=SNGL(B)
   VAL = sqrt(VAL);
   A = (-A1 - VAL) / TWO;
   B = (-A1 + VAL) / TWO;
@@ -872,21 +585,10 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
   E[2] = A;
   E[3] = B;
 
-  //      IF(ISTER.EQ.0) RETURN
   if (ISTER == 0) return;
 
-  //      DO 6 I=1,3
   for (int i = 1; i <= 3; i++) {
-    //      iter=0
     int iter = 0;
-
-    //      IF(E(I).EQ.0.) THEN
-    //       F=-1.E-06
-    //       G=1.E-06
-    //      ELSE
-    //       F=E(I)*.999
-    //       G=E(I)*1.001
-    //      ENDIF
     F = 0.0;
     G = 0.0;
     if (E[i] == 0.0) {
@@ -897,21 +599,13 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
       F = E[i] * 0.999;
       G = E[i] * 1.001;
     }
-
-    //      OX=F
     OX = F;
 
-    p7:
-    //    7 FF=DETR(RM,F)
-    //      FG=DETR(RM,G)
-    //      QX=(F+G)/2.
-    //      iter=iter+1
-    FF = DETR(RM, F);
+    p7: FF = DETR(RM, F);
     FG = DETR(RM, G);
     QX = (F + G) / 2.0;
     iter = iter + 1;
 
-    //      if(iter.gt.1000) go to 6
     if (iter > 1000) continue;
 
     //      IF(ABS((QX-OX)/E(I)).LT.1.E-06) GO TO 8
@@ -921,67 +615,28 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
     //--------------------------------------
     if (fabs((QX - OX) / ee) < 1.0e-6) goto p8;
 
-    //      HELP=FF*FG
     HELP = FF * FG;
 
-    //      IF(HELP.GT.0.) GO TO 9
     if (HELP > 0.0) goto p9;
-
-    //      FX=DETR(RM,QX)
-    //      HELP=FF*FX
     FX = DETR(RM, QX);
     HELP = FF * FX;
-
-    //      IF(HELP.LT.0.) THEN
-    //       G=QX
-    //      ELSE
-    //       F=QX
-    //      ENDIF
     if (HELP < 0.0) {
       G = QX;
     }
     else {
       F = QX;
     }
-
-    //      OX=QX
-    //      GO TO 7
     OX = QX;
     goto p7;
 
-    //    9 F=.999*F
-    //      G=1.001*G
-    //      GO TO 7
     p9: F = 0.999 * F;
     G = 1.001 * G;
     goto p7;
 
-    //    8 E(I)=QX
     p8: E[i] = QX;
   }
-  //    6 CONTINUE
-  //      RETURN
-  //      END
 }
 
-/*
- disp('skladowe tensora liczone wedlug Jost and Herrmann, 1989');
- W=eig(M);
- Wa=eig(M)-trace(M)/3;
- V1=(Wa(find(abs(Wa)==max(abs(Wa)))));
- V3=Wa(find(abs(Wa)==min(abs(Wa))));
- FF=-V3/V1;
- iso1=sum(eig(M))/3;
- clvd1=V1*FF;
- dc1=V1*(1-2*FF);
- dc1=abs(dc1);
- ISO=iso1/(abs(iso1)+abs(clvd1)+abs(dc1))
- CLVD=clvd1/(abs(iso1)+abs(clvd1)+abs(dc1))
- DC=dc1/(abs(iso1)+abs(clvd1)+abs(dc1))
- void Taquart::UsmtCore::EIGGEN_NEW(double &e1, double &e2, double &e3, double &ALFA, double &BETA,
- {
- }
- */
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::EIGGEN_NEW(double e1, double e2, double e3, double &iso,
     double &clvd, double &dbcp) {
@@ -1012,7 +667,6 @@ void Taquart::UsmtCore::EIGGEN_NEW(double e1, double e2, double e3, double &iso,
   if (e3a <= e1a && e3a <= e2a) {
     v3 = e3 - trace;
   }
-
 
   // The percentage of moment tensor components is calculated with the method of Jost and Herrmann:
   const double ff = -v3 / v1;
@@ -1151,99 +805,52 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
   int IMAX = 0;
   int j = 0;
 
-  //C     Quality factor calculation
-  //      READ(RESULT(1),1) LNORM
-  //    1 FORMAT(1X,I1)
-
-  //      IF(LNORM.EQ.2) GO TO 2
+  // Quality factor calculation.
   if (LNORM != 2) {
-    //      DO 4 I=1,3
-    //      READ(RESULT(11*I-5),3) HELP1,HELP2
-    //    3 FORMAT(18X,E9.3,20X,E9.3)
-    //    4 ETA(I)=1.-HELP2/HELP1
-    //      GO TO 5
     for (int i = 1; i <= 3; i++)
       ETA[i] = 1.0 - MomentErr[i] / Moment0[i];
   }
   else {
-    //    2 DO 6 I=1,3
     for (int i = 1; i <= 3; i++) {
-      //      READ(RESULT(11*I-5),7) HELP1
-      //    7 FORMAT(18X,E9.3)
-      //      HELP2=SNGL(DSQRT(COV(1,1,I)))
       HELP1 = Moment0[i];
       HELP3 = 0.0;
       HELP2 = sqrt(COV[1][1][i]);
-      //      DO 8 J=2,6
       for (int j = 2; j <= 6; j++) {
-        //      HELP3=SNGL(DSQRT(COV(J,J,I)))
-        //    8 HELP2=AMAX1(HELP2,HELP3)
         HELP3 = sqrt(COV[j][j][i]);
         HELP2 = amax1(HELP2, HELP3);
       }
       ETA[i] = 1.0 - HELP2 / HELP1;
     }
-    //    6 ETA(I)=1.-HELP2/HELP1
   }
-  //    5 RNU(1)=FLOAT(N-7)/FLOAT(N)
-  //      RNU(2)=FLOAT(N-6)/FLOAT(N)
-  //      RNU(3)=FLOAT(N-5)/FLOAT(N)
   double RNU[4];
   RNU[1] = double(N - 7) / double(N);
   RNU[2] = double(N - 6) / double(N);
   RNU[3] = double(N - 5) / double(N);
 
-  //      IF((ICOND.LE.0).OR.(ICOND.GT.3)) ICOND=1
-  //      RKAPPA(1)=1.
-  //      RKAPPA(2)=1.
-  //      RKAPPA(3)=VALKAP(ICOND)
   if (ICOND <= 0 || ICOND > 3) ICOND = 1;
   const double VALKAP[4] = { 0.0, 1.0, 0.707, 0.5 };
   double RKAPPA[4] = { 0.0, 1.0, 1.0, VALKAP[ICOND] };
 
-  //      DO 10 I=1,3
   for (int i = 1; i <= 3; i++) {
-    //      IF(ETA(I).LT.0.) ETA(I)=.01
-    //      ETA(I)=ETA(I)*RNU(I)*RKAPPA(I)*100.
-    //      IF(QF.NE.0) ETA(I)=ETA(I)*QSD
     if (ETA[i] < 0.0) ETA[i] = 0.01;
     ETA[i] = ETA[i] * RNU[i] * RKAPPA[i] * 100.0;
     if (QF != 0.0) ETA[i] = ETA[i] * QSD;
   }
-  //   10 CONTINUE
 
-  //C     Calculate eigenvectors for three solutions
-  //      DO 11 I=1,3
-  //      DO 12 J=1,6
-  //   12 B(J)=RM(J,I)
   for (int i = 1; i <= 3; i++) {
     for (int j = 1; j <= 6; j++)
       B[j] = RM[j][i];
 
-    //      CALL EIG3(B,0,EQM)
     EIG3(B, 0, EQM);
 
-    //      IMIN=1
-    //      IMAX=3
     IMIN = 1;
     IMAX = 3;
 
-    //      IF(EQM(1).GT.EQM(2)) IMIN=2
-    //      IF(EQM(IMIN).GT.EQM(3)) IMIN=3
-    //      IF(EQM(3).LT.EQM(2)) IMAX=2
-    //      IF(EQM(IMAX).LT.EQM(1)) IMAX=1
     if (EQM[1] > EQM[2]) IMIN = 2;
     if (EQM[IMIN] > EQM[3]) IMIN = 3;
     if (EQM[3] < EQM[2]) IMAX = 2;
     if (EQM[IMAX] < EQM[1]) IMAX = 1;
 
-    //      INUL=6-IMIN-IMAX
-    //      HELP1=EQM(IMIN)
-    //      HELP2=EQM(INUL)
-    //      HELP3=EQM(IMAX)
-    //      EQM(1)=HELP1
-    //      EQM(2)=HELP2
-    //      EQM(3)=HELP3
     int INUL = 6 - IMIN - IMAX;
     HELP1 = EQM[IMIN];
     HELP2 = EQM[INUL];
@@ -1252,57 +859,31 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     EQM[2] = HELP2;
     EQM[3] = HELP3;
 
-    //      DO 13 J=1,3
-    //      B(1)=B(1)-EQM(J)
-    //      B(4)=B(4)-EQM(J)
-    //      B(6)=B(6)-EQM(J)
-    //      HELP1=B(1)*B(4)-B(2)*B(2)
     for (int j = 1; j <= 3; j++) {
       B[1] = B[1] - EQM[j];
       B[4] = B[4] - EQM[j];
       B[6] = B[6] - EQM[j];
       HELP1 = B[1] * B[4] - B[2] * B[2];
-
-      //      IF(ABS(HELP1).LT..001) GO TO 14
       if (fabs(HELP1) >= 0.001) {
-        //      V(3,J,I)=1.
-        //      V(1,J,I)=(-B(3)*B(4)+B(2)*B(5))/HELP1
-        //      V(2,J,I)=(-B(1)*B(5)+B(2)*B(3))/HELP1
-        //      GO TO 15
         V[3][j][i] = 1.0;
         V[1][j][i] = (-B[3] * B[4] + B[2] * B[5]) / HELP1;
         V[2][j][i] = (-B[1] * B[5] + B[2] * B[3]) / HELP1;
       }
       else {
-        //   14 HELP1=B(1)*B(5)-B(2)*B(3)
         HELP1 = B[1] * B[5] - B[2] * B[3];
-        //      IF(ABS(HELP1).LT..001) GO TO 16
         if (fabs(HELP1) >= 0.001) {
-          //      V(2,J,I)=1.
-          //      V(1,J,I)=(-B(2)*B(5)+B(4)*B(3))/HELP1
-          //      V(3,J,I)=(-B(1)*B(4)+B(2)*B(2))/HELP1
-          //      GO TO 15
           V[2][j][i] = 1.0;
           V[1][j][i] = (-B[2] * B[5] + B[4] * B[3]) / HELP1;
           V[3][j][i] = (-B[1] * B[4] + B[2] * B[2]) / HELP1;
         }
         else {
-          //   16 HELP1=B(2)*B(5)-B(4)*B(3)
           HELP1 = B[2] * B[5] - B[4] * B[3];
-          //      IF(ABS(HELP1).LT..001) GO TO 17
           if (fabs(HELP1) >= 0.001) {
-            //      V(1,J,I)=1.
-            //      V(2,J,I)=(-B(1)*B(5)+B(2)*B(3))/HELP1
-            //      V(3,J,I)=(-B(2)*B(2)+B(4)*B(1))/HELP1
             V[1][j][i] = 1.0;
             V[2][j][i] = (-B[1] * B[5] + B[2] * B[3]) / HELP1;
             V[3][j][i] = (-B[2] * B[2] + B[4] * B[1]) / HELP1;
-            //      GO TO 15
           }
           else {
-            //   17 V(3,J,I)=1.
-            //      V(1,J,I)=0.
-            //      V(2,J,I)=0.
             V[3][j][i] = 1.0;
             V[1][j][i] = 0.0;
             V[2][j][i] = 0.0;
@@ -1310,22 +891,14 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
         }
       }
 
-      //   15 HELP1=SQRT(V(1,J,I)*V(1,J,I)+V(2,J,I)*V(2,J,I)+V(3,J,I)*V(3,J,I))
-      //      IF(V(3,J,I).LT.0.) HELP1=-1.*HELP1
       HELP1 = sqrt(
           V[1][j][i] * V[1][j][i] + V[2][j][i] * V[2][j][i]
               + V[3][j][i] * V[3][j][i]);
       if (V[3][j][i] < 0.0) HELP1 = -1.0 * HELP1;
 
-      //      DO 18 K=1,3
-      //   18 V(K,J,I)=V(K,J,I)/HELP1
       for (int k = 1; k <= 3; k++)
         V[k][j][i] = V[k][j][i] / HELP1;
 
-      //      B(1)=B(1)+EQM(J)
-      //      B(4)=B(4)+EQM(J)
-      //   13 B(6)=B(6)+EQM(J)
-      //   11 CONTINUE
       B[1] = B[1] + EQM[j];
       B[4] = B[4] + EQM[j];
       B[6] = B[6] + EQM[j];
@@ -1345,31 +918,20 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       HELP = amin1(V[3][j][i], 1.0);
       PLUNGE[j][i] = asin(amax1(HELP, -1.0));
       //TREND[j][i] = atan2(V[2][j][i],V[1][j][i]);
-
       TREND[j][i] = datan2(V[2][j][i], V[1][j][i]) * M_PI / 180.0; // Correction of ATAN2 error.
-
       AMP[j][i] = sqrt(
           V[1][j][i] * V[1][j][i] + V[2][j][i] * V[2][j][i]
               + V[3][j][i] * V[3][j][i]);
     }
   }
 
-  //C     Plunge & Trend, first ccordinate is PBT, second is FTD
-  //      DO 20 I=1,3
   HELP1 = 0.0;
   j = 0;
   double FaultType[4] = { 0.0, 0.0, 0.0, 0.0 };
   for (int i = 1; i <= 3; i++) {
-    //      J=1
-    //      HELP1=PLUNGE(1,I)
     j = 1;
     HELP1 = PLUNGE[1][i];
     FaultType[i] = -1.0;
-    //      IF(PLUNGE(2,I).LE.HELP1) GO TO 21
-    //      J=2
-    //      HELP1=PLUNGE(2,I)
-    //   21 IF(PLUNGE(3,I).GT.HELP1) J=3
-    //   20 INFFTD(I)=INFO(J)
     if (PLUNGE[2][i] > HELP1) {
       j = 2;
       HELP1 = PLUNGE[2][i];
@@ -1382,62 +944,35 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     }
   }
 
-  //C     INFFTD contains information on fault type.
-  //      DO 22 I=1,3
+  // INFFTD contains information on fault type.
   for (int i = 1; i <= 3; i++) {
-    //      DO 23 K=1,3
     for (int k = 1; k <= 3; k++) {
-      //      X(K)=(V(K,3,I)-V(K,1,I))/SQR2
       X[k] = (V[k][3][i] - V[k][1][i]) / SQR2;
       Y[k] = (V[k][3][i] + V[k][1][i]) / SQR2;
     }
-    //   23 Y(K)=(V(K,3,I)+V(K,1,I))/SQR2
 
-    //      IF(X(3).GE.0.) GO TO 24
     if (X[3] < 0.0) {
-      //      DO 25 K=1,3
-      //   25 X(K)=-X(K)
       for (int k = 1; k <= 3; k++)
         X[k] = -X[k];
     }
-    //   24 IF(Y(3).GE.0.) GO TO 26
     else if (Y[3] < 0.0) {
-      //      DO 27 K=1,3
-      //   27 Y(K)=-Y(K)
       for (int k = 1; k <= 3; k++)
         Y[k] = -Y[k];
     }
-    //   26 STRIKE(I,1)=0.
-    //      STRIKE(I,2)=0.
     STRIKE[i][1] = 0.0;
     STRIKE[i][2] = 0.0;
-    //      X(3)=AMIN1(X(3),1.)
-    //      Y(3)=AMIN1(Y(3),1.)
     X[3] = amin1(X[3], 1.0);
     Y[3] = amin1(Y[3], 1.0);
-    //      DIP(I,1)=ACOS(X(3))
-    //      DIP(I,2)=ACOS(Y(3))
     DIP[i][1] = acos(X[3]);
     DIP[i][2] = acos(Y[3]);
-    //      IF(DIP(I,1).GT..01) STRIKE(I,1)=ATAN2(X(1),-X(2))
-    //      IF(DIP(I,2).GT..01) STRIKE(I,2)=ATAN2(Y(1),-Y(2))
-    //      IF(DIP(I,1).GE.DIP(I,2)) GO TO 22
 
-    /*
-     if(DIP[i][1] > 0.01) STRIKE[i][1] = atan2(X[1],-X[2]);
-     if(DIP[i][2] > 0.01) STRIKE[i][2] = atan2(Y[1],-Y[2]);
-     */
+    //if(DIP[i][1] > 0.01) STRIKE[i][1] = atan2(X[1],-X[2]);
+    //if(DIP[i][2] > 0.01) STRIKE[i][2] = atan2(Y[1],-Y[2]);
     if (DIP[i][1] > 0.01) STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0; // Correction of ATAN2 error.
     if (DIP[i][2] > 0.01) STRIKE[i][2] = datan2(Y[1], -Y[2]) * M_PI / 180.0; // Correction of ATAN2 error.
 
     if (DIP[i][1] >= DIP[i][2]) continue;
 
-    //      HELP1=DIP(I,1)
-    //      DIP(I,1)=DIP(I,2)
-    //      DIP(I,2)=HELP1
-    //      HELP1=STRIKE(I,1)
-    //      STRIKE(I,1)=STRIKE(I,2)
-    //      STRIKE(I,2)=HELP1
     HELP1 = DIP[i][1];
     DIP[i][1] = DIP[i][2];
     DIP[i][2] = HELP1;
@@ -1525,17 +1060,6 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     }
   }
 
-  //      WRITE(RESULT(8),31) STRIKE(1,1),DIP(1,1),
-  //     $STRIKE(1,2),DIP(1,2)
-  //   31 FORMAT(12X,3HfA=,F7.2,2X,3HdA=,F6.2,2X,3HfB=,F7.2,2X,3HdB=,F6.2)
-
-  //      WRITE(RESULT(9),32) TREND(1,1),PLUNGE(1,1)
-  //   32 FORMAT(12X,14HP-axis: trend=,F7.2,2X,7Hplunge=,F6.2,8X)
-  //      WRITE(RESULT(10),33) TREND(3,1),PLUNGE(3,1)
-  //   33 FORMAT(12X,14HT-axis: trend=,F7.2,2X,7Hplunge=,F6.2,8X)
-  //      WRITE(RESULT(11),34) TREND(2,1),PLUNGE(2,1)
-  //   34 FORMAT(12X,14HB-axis: trend=,F7.2,2X,7Hplunge=,F6.2,8X)
-  //      WRITE(RESULT(12),37) ETA(1),INFFTD(1)
 #ifdef USMTCORE_DEBUG
   std::cout << "Full solution:" << std::endl;
   std::cout << "--------------" << std::endl;
@@ -1587,22 +1111,6 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     Solution[i].QI = ETA[i];
     Solution[i].Type = INFFTD[i];
   }
-
-  //   37 FORMAT(12X,15HQuality index =,F6.1,2X,A13,8X)
-  //      WRITE(RESULT(19),31) STRIKE(2,1),DIP(2,1),
-  //     $STRIKE(2,2),DIP(2,2)
-  //      WRITE(RESULT(20),32) TREND(1,2),PLUNGE(1,2)
-  //      WRITE(RESULT(21),33) TREND(3,2),PLUNGE(3,2)
-  //      WRITE(RESULT(22),34) TREND(2,2),PLUNGE(2,2)
-  //      WRITE(RESULT(23),37) ETA(2),INFFTD(2)
-  //      WRITE(RESULT(30),31) STRIKE(3,1),DIP(3,1),
-  //     $STRIKE(3,2),DIP(3,2)
-  //      WRITE(RESULT(31),32) TREND(1,3),PLUNGE(1,3)
-  //      WRITE(RESULT(32),33) TREND(3,3),PLUNGE(3,3)
-  //      WRITE(RESULT(33),34) TREND(2,3),PLUNGE(2,3)
-  //      WRITE(RESULT(34),37) ETA(3),INFFTD(3)
-  //      RETURN
-  //      END
 }
 //-----------------------------------------------------------------------------
 
@@ -2717,32 +2225,10 @@ void Taquart::UsmtCore::LUDCMP(double B[][10], double A[][10], int INDX[],
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::FIJGEN(void) {
-  //      SUBROUTINE FIJGEN
-  //      CHARACTER PS(80),TITLE*40
-  //      REAL U(80),ARR(80),AZM(80),TKF(80)
-  //      INTEGER RO(80),VEL(80),R(80)
-  //      COMMON/MDATA/ PS,U,ARR,AZM,TKF,RO,VEL,R,TITLE,N,TROZ
-  //      COMMON/GAGAGA/ GA(80,3)
-  //      COMMON/AUXIL/ FIJ(3,3,80)
-
-  //      do 3003 i=1,n
   for (int i = 1; i <= N; i++) {
-    //      THE=ACOS(GA(I,3))
-    //      PHI=ATAN2(GA(I,1),GA(I,2))
     double THE = acos(GA[i][3]);
-
     //double PHI = atan2(GA[i][1],GA[i][2);
     double PHI = datan2(GA[i][1], GA[i][2]) * M_PI / 180.0; // Correction in v3.1.19 of FOCI due to ATAN2 error.
-
-    //      FIJ(1,1,I)=(SIN(THE)*SIN(PHI))**2
-    //      FIJ(1,2,I)=.5*SIN(THE)**2*SIN(2.*PHI)
-    //      FIJ(1,3,I)=-.5*SIN(2.*THE)*SIN(PHI)
-    //      FIJ(2,2,I)=(SIN(THE)*COS(PHI))**2
-    //      FIJ(2,3,I)=-.5*SIN(2.*THE)*COS(PHI)
-    //      FIJ(3,3,I)=COS(PHI)**2
-    //      fij(2,1,i)=fij(1,2,i)
-    //      fij(3,1,i)=fij(1,3,i)
-    // 3003 fij(3,2,i)=fij(2,3,i)
     FIJ[1][1][i] = pow(sin(THE) * sin(PHI), 2.0);
     FIJ[1][2][i] = 0.5 * sin(THE) * sin(THE) * sin(2.0 * PHI);
     FIJ[1][3][i] = -0.5 * sin(2.0 * THE) * sin(PHI);
@@ -2753,9 +2239,6 @@ void Taquart::UsmtCore::FIJGEN(void) {
     FIJ[3][1][i] = FIJ[1][3][i];
     FIJ[3][2][i] = FIJ[2][3][i];
   }
-
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
@@ -3285,26 +2768,14 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::VEIG(double &s1, double &s2, double &s3, double &s4,
     double &s5, double &s6, double v[]) {
-  //      SUBROUTINE VEIG(S1,S2,S3,S4,S5,S6,V)
-  //      dimension v(3)
-  //      double precision help0(6),help1,help2
   double help0[6 + 1];
   double help1 = 0.0;
   double help2 = 0.0;
 
-  //      v(1)=1.
-  //      v(2)=0.
-  //      v(3)=0.
   v[1] = 1.0;
   v[2] = 0.0;
   v[3] = 0.0;
 
-  //      help0(1)=s4*s6-s5*s5
-  //      help0(2)=s1*s6-s3*s3
-  //      help0(3)=s1*s4-s2*s2
-  //      help0(4)=s2*s5-s4*s3
-  //      help0(5)=s2*s6-s3*s5
-  //      help0(6)=s1*s5-s2*s3
   help0[1] = s4 * s6 - s5 * s5;
   help0[2] = s1 * s6 - s3 * s3;
   help0[3] = s1 * s4 - s2 * s2;
@@ -3312,55 +2783,14 @@ void Taquart::UsmtCore::VEIG(double &s1, double &s2, double &s3, double &s4,
   help0[5] = s2 * s6 - s3 * s5;
   help0[6] = s1 * s5 - s2 * s3;
 
-  //      IMAX=1
   int IMAX = 1;
 
-  //      DO 600 I=2,6
-  //      IF(DABS(HELP0(I)).LE.DABS(HELP0(1))) GO TO 600
-  //      HELP0(1)=HELP0(I)
-  //      IMAX=I
-  //  600 CONTINUE
   for (int i = 2; i <= 6; i++) {
     if (fabs(help0[i]) <= fabs(help0[1])) continue;
     help0[1] = help0[i];
     IMAX = i;
   }
 
-  //      GO TO (601,602,603,604,605,606),IMAX
-  //  601 help1=s5*s3-s2*s6
-  //      help2=s5*s2-s4*s3
-  //      v(2)=help1/help0(1)
-  //      v(3)=help2/help0(1)
-  //      GO TO 610
-  //  602 v(2)=1.
-  //      help1=s3*s5-s2*s6
-  //      help2=s3*s2-s1*s5
-  //      v(1)=help1/help0(1)
-  //      v(3)=help2/help0(1)
-  //      GO TO 610
-  //  603 v(3)=1.
-  //      help1=s2*s5-s3*s4
-  //      help2=s2*s3-s1*s5
-  //      v(1)=help1/help0(1)
-  //      v(2)=help2/help0(1)
-  //      GO TO 610
-  //  604 v(3)=1.
-  //      help1=s4*s6-s5*s5
-  //      help2=s3*s5-s2*s6
-  //      v(1)=help1/help0(1)
-  //      v(2)=help2/help0(1)
-  //      GO TO 610
-  //  605 v(2)=1.
-  //      help1=s5*s5-s4*s6
-  //      help2=s3*s4-s2*s5
-  //      v(1)=help1/help0(1)
-  //      v(3)=help2/help0(1)
-  //      GO TO 610
-  //  606 v(2)=1.
-  //      help1=s3*s4-s2*s5
-  //      help2=s2*s2-s1*s4
-  //      v(1)=help1/help0(1)
-  //      v(3)=help2/help0(1)
   switch (IMAX) {
     case 1:
       help1 = s5 * s3 - s2 * s6;
@@ -3411,9 +2841,6 @@ void Taquart::UsmtCore::VEIG(double &s1, double &s2, double &s3, double &s4,
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::ORT(double VE[], double VN[], double DE[],
     double DN[]) {
-  //      SUBROUTINE ORT(VE,VN,DE,DN)
-  //      DIMENSION VE(3),VN(3),WE(3),WN(3),B(3),C(3),G(3),V1(3),V2(3)
-  //      DOUBLE PRECISION DE(3),DN(3)
   double WE[3 + 1], WN[3 + 1], C[3 + 1], B[3 + 1], V1[3 + 1], V2[3 + 1],
       G[3 + 1];
   Zero(WE, 4);
@@ -3426,164 +2853,75 @@ void Taquart::UsmtCore::ORT(double VE[], double VN[], double DE[],
   double HELP = 0.0;
   double HELP2 = 0.0;
 
-  //      DO 1 I=1,3
-  //      WE(I)=VE(I)+SNGL(DE(I))
-  //    1 WN(I)=VN(I)+SNGL(DN(I))
   for (int i = 1; i <= 3; i++) {
     WE[i] = VE[i] + DE[i];
     WN[i] = VN[i] + DN[i];
   }
 
-  //      HELP=SQRT(WE(1)*WE(1)+WE(2)*WE(2)+WE(3)*WE(3))
   HELP = sqrt(WE[1] * WE[1] + WE[2] * WE[2] + WE[3] * WE[3]);
-
-  //      DO 2 I=1,3
-  //    2 WE(I)=WE(I)/HELP
   for (int i = 1; i <= 3; i++)
     WE[i] = WE[i] / HELP;
 
-  //      HELP=SQRT(WN(1)*WN(1)+WN(2)*WN(2)+WN(3)*WN(3))
   HELP = sqrt(WN[1] * WN[1] + WN[2] * WN[2] + WN[3] * WN[3]);
-
-  //      DO 4 I=1,3
-  //    4 WN(I)=WN(I)/HELP
   for (int i = 1; i <= 3; i++)
     WN[i] = WN[i] / HELP;
 
-  //      HELP=ABS(WE(1)*WN(1)+WE(2)*WN(2)+WE(3)*WN(3))
-  //      IF(HELP.GT..99) RETURN
   HELP = fabs(WE[1] * WN[1] + WE[2] * WN[2] + WE[3] * WN[3]);
   if (HELP > 0.99) return;
 
-  //      DO 3 I=1,3
-  //    3 C(I)=.5*(WN(I)+WE(I))
   for (int i = 1; i <= 3; i++)
     C[i] = 0.5 * (WN[i] + WE[i]);
 
-  //      B(1)=WN(2)*WE(3)-WN(3)*WE(2)
-  //      B(2)=-WN(1)*WE(3)+WN(3)*WE(1)
-  //      B(3)=WN(1)*WE(2)-WN(2)*WE(1)
-  //      HELP=SQRT(B(1)*B(1)+B(2)*B(2)+B(3)*B(3))
   B[1] = WN[2] * WE[3] - WN[3] * WE[2];
   B[2] = -WN[1] * WE[3] + WN[3] * WE[1];
   B[3] = WN[1] * WE[2] - WN[2] * WE[1];
   HELP = sqrt(B[1] * B[1] + B[2] * B[2] + B[3] * B[3]);
 
-  //      DO 5 I=1,3
-  //    5 B(I)=B(I)/HELP
   for (int i = 1; i <= 3; i++)
     B[i] = B[i] / HELP;
 
-  //      G(1)=B(2)*C(3)-B(3)*C(2)
-  //      G(2)=-B(1)*C(3)+B(3)*C(1)
-  //      G(3)=B(1)*C(2)-B(2)*C(1)
   G[1] = B[2] * C[3] - B[3] * C[2];
   G[2] = -B[1] * C[3] + B[3] * C[1];
   G[3] = B[1] * C[2] - B[2] * C[1];
 
-  //      DO 6 I=1,3
-  //      V1(I)=C(I)+G(I)
-  //    6 V2(I)=C(I)-G(I)
   for (int i = 1; i <= 3; i++) {
     V1[i] = C[i] + G[i];
     V2[i] = C[i] - G[i];
   }
 
-  //      HELP=SQRT(V1(1)*V1(1)+V1(2)*V1(2)+V1(3)*V1(3))
   HELP = sqrt(V1[1] * V1[1] + V1[2] * V1[2] + V1[3] * V1[3]);
 
-  //      DO 10 I=1,3
-  //   10 V1(I)=V1(I)/HELP
   for (int i = 1; i <= 3; i++)
     V1[i] = V1[i] / HELP;
 
-  //      HELP=SQRT(V2(1)*V2(1)+V2(2)*V2(2)+V2(3)*V2(3))
   HELP = sqrt(V2[1] * V2[1] + V2[2] * V2[2] + V2[3] * V2[3]);
-  //      DO 11 I=1,3
-  //   11 V2(I)=V2(I)/HELP
   for (int i = 1; i <= 3; i++)
     V2[i] = V2[i] / HELP;
 
-  //      HELP=V1(1)*WN(1)+V1(2)*WN(2)+V1(3)*WN(3)
-  //      HELP2=V2(1)*WN(1)+V2(2)*WN(2)+V2(3)*WN(3)
   HELP = V1[1] * WN[1] + V1[2] * WN[2] + V1[3] * WN[3];
   HELP2 = V2[1] * WN[1] + V2[2] * WN[2] + V2[3] * WN[3];
 
-  //      IF(HELP.LT.HELP2) GO TO 9
   if (HELP >= HELP2) {
-    //      DO 8 I=1,3
-    //      VN(I)=V1(I)
-    //    8 VE(I)=V2(I)
     for (int i = 1; i <= 3; i++) {
       VN[i] = V1[i];
       VE[i] = V2[i];
     }
-    //      RETURN
   }
   else {
-    //    9 DO 7 I=1,3
-    //      VN(I)=V2(I)
-    //    7 VE(I)=V1(I)
     for (int i = 1; i <= 3; i++) {
       VN[i] = V2[i];
       VE[i] = V1[i];
     }
   }
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
-/*
- inline double Taquart::UsmtCore::alog(double Value)
- {
- return log(Value);
- }
-
- //-----------------------------------------------------------------------------
- inline double Taquart::UsmtCore::alog10(double Value)
- {
- return log10(Value);
- }
-
- //-----------------------------------------------------------------------------
- inline double Taquart::UsmtCore::amax1(double value1, double value2)
- {
- return value1 > value2 ? value1 : value2;
- }
-
- //-----------------------------------------------------------------------------
- inline double Taquart::UsmtCore::amin1(double value1, double value2)
- {
- return value1 > value2 ? value2 : value1;
- }
-
- //-----------------------------------------------------------------------------
- inline double Taquart::UsmtCore::sign(double value1, double value2)
- {
- if(value2 >= 0.0)
- return fabs(value1);
- else return -fabs(value1);
- }
- */
-
-//-----------------------------------------------------------------------------
 bool Taquart::UsmtCore::ANGGA(void) {
-  //      DETOPI=4.*ATAN(1.)/180.
-  //      IOK=.TRUE.
-  //      IF(N.LT.8) GO TO 2
   const double DETOPI = 4.0 * atan(1.0) / 180.0;
   if (N >= FOCIMT_MIN_ALLOWED_CHANNELS) {
-    //      DO 1 I=1,N
     for (int i = 1; i <= N; i++) {
-      //      HELP=TKF(I)
-      //      IF(HELP.EQ.90.0) HELP=89.75
-      //      GA(I,3)=COS(HELP*DETOPI)
-      //      HELP=SQRT(1.-GA(I,3)*GA(I,3))
-      //      GA(I,1)=COS(AZM(I)*DETOPI)*HELP
-      //      GA(I,2)=SIN(AZM(I)*DETOPI)*HELP
       double HELP = TKF[i];
-      if (HELP == 90.0) HELP = 89.75;
+      if (HELP == 90.0) HELP = 89.75; // Not clear why this constrain is here.
       GA[i][3] = cos(HELP * DETOPI);
       HELP = sqrt(1.0 - GA[i][3] * GA[i][3]);
       GA[i][1] = cos(AZM[i] * DETOPI) * HELP;
@@ -3592,11 +2930,6 @@ bool Taquart::UsmtCore::ANGGA(void) {
     return true;
   }
   else {
-    //    2 IOK=.FALSE.
-    //      WRITE(75,3) N
-    //    3 FORMAT(' Error: Angle_calc failed: N = ',I3,' (must be > 7).')
-    //      RETURN
-    //      END
     return false;
   }
 }
@@ -3879,35 +3212,15 @@ void Taquart::UsmtCore::GSOL(double x[], int &iexp) {
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::f1(double X[], double &fff) {
-  //      SUBROUTINE F1(X,FFF)
-  //      CHARACTER PS(80),TITLE*40
-  //      REAL U(80),ARR(80),AZM(80),TKF(80)
-  //      INTEGER RO(80),VEL(80),R(80)
-  //      COMMON/MDATA/ PS,U,ARR,AZM,TKF,RO,VEL,R,TITLE,N,TROZ
-  //      COMMON/PDATA/ A(80,6)
-  //      DOUBLE PRECISION SUM,X(6),FFF
-
-  //      FFF=DBLE(0.)
   fff = 0.0;
-
-  //      DO 1 I=1,N
   for (int i = 1; i <= N; i++) {
-    //      SUM=DBLE(0.)
     double sum = 0.0;
-    //      DO 2 J=1,6
-    //    2 SUM=SUM+DBLE(A(I,J))*X(J)
     for (int j = 1; j <= 6; j++) {
       sum = sum + A[i][j] * X[j];
     }
-    //      FFF=FFF+DABS(SUM-DBLE(U(I)))
     fff = fff + fabs(sum - U[i]);
   }
-  //    1 CONTINUE
-
-  //      IF(DABS(FFF).GT.1.D+30) FFF=1.D+30
   if (fabs(fff) > 1e+30) fff = 1e+30;
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
@@ -4849,79 +4162,33 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
     xmem[5][i] = x[i];
   vmem[5] = val;
 
-  //  430 DO 31 I=1,4
   p430: for (int i = 1; i <= 4; i++) {
-    //      IF(VMEM(I).GT.VMEM(5)) GO TO 31
-    //      VMEM(5)=VMEM(I)
-    //      DO 32 J=1,5
-    //   32 X(J)=XMEM(I,J)
     if (vmem[i] > vmem[5]) break;
     vmem[5] = vmem[i];
     for (int j = 1; j <= 5; j++)
       x[j] = xmem[i][j];
   }
-  //   31 CONTINUE
-  //      return
-  //      END
 }
-//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::f2(double x[], double &ffg) {
-  //      SUBROUTINE F2(X,FFG)
-  //      CHARACTER PS(80),TITLE*40
-  //      REAL U(80),ARR(80),AZM(80),TKF(80)
-  //      INTEGER RO(80),VEL(80),R(80)
-  //      COMMON/MDATA/ PS,U,ARR,AZM,TKF,RO,VEL,R,TITLE,N,TROZ
-  //      COMMON/PDATA/ A(80,6)
-  //      DOUBLE PRECISION SUM,X(5),FFG
-
-  //      FFG=DBLE(0.)
   ffg = 0.0;
   double SUM = 0.0;
-
-  //      DO 1 I=1,N
   for (int i = 1; i <= N; i++) {
-    //      SUM=DBLE(0.)
     SUM = 0.0;
-
-    //      DO 2 J=1,5
-    //    2 SUM=SUM+DBLE(A(I,J))*X(J)
     for (int j = 1; j <= 5; j++)
       SUM += (A[i][j] * x[j]);
-
-    //      SUM=SUM-DBLE(A(I,6))*(X(1)+X(4))
     SUM -= (A[i][6] * (x[1] + x[4]));
-
-    //      FFG=FFG+DABS(SUM-DBLE(U(I)))
     ffg += fabs(SUM - U[i]);
-
   }
-  //    1 CONTINUE
-  //      IF(DABS(FFG).GT.1.D+30) FFG=1.D+30
   if (fabs(ffg) > 1.0e+30) ffg = 1.0e+30;
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::POSTEP(int &METH, int &ITER, int &IND1) {
-  //      SUBROUTINE POSTEP(METH,ITER,IND1)
-  //      INTEGER*4 METH,ITER,IND1
-  //      CHARACTER*42 TEX1,TEX2
   int NCALL = 0;
 
-  //      IF(ITER.GT.1) GO TO 5
   if (ITER <= 1) {
-    //      GO TO (10,20,30), METH
-    //   10 R=FLOAT(IND1)/7.
-    //      PERC=2.*(FLOAT(ITER-1)+R)
-    //      GO TO 40
-    //   20 R=FLOAT(IND1)/7.
-    //      PERC=2.*(FLOAT(ITER-1)+R)
-    //      GO TO 40
-    //   30 R=FLOAT(IND1)/7.
-    //      PERC=(FLOAT(ITER-1)+R)*.4
 #ifdef USMTCORE_DEBUG
     double R = 0.0;
     double PERC = 0.0;
@@ -4946,78 +4213,40 @@ void Taquart::UsmtCore::POSTEP(int &METH, int &ITER, int &IND1) {
 #endif
         break;
     }
-
-    //   40 WRITE(75,41) METH,PERC
-    //	WRITE(*,41) METH,PERC
-    //   41 FORMAT(1X,/,' Method',I2,' (',F6.1,'% blks)',/,' .',$)
-
 #ifdef USMTCORE_DEBUG
     std::cout << "Method " << METH << " ( " << PERC << "% blocks )" << std::endl;
 #endif
-    //      ITER=100
-    //      NCALL=1
     ITER = 100;
     NCALL = 1;
     return;
-    //      RETURN
   }
 
-  //    5 IF(NCALL.EQ.73) GO TO 6
   if (NCALL != 73) {
-    //      WRITE(75,42)
-    //	WRITE(*,42)
-    //   42 FORMAT(1H.,$)
-    //      NCALL=NCALL+1
-    //      RETURN
 #ifdef USMTCORE_DEBUG
     std::cout << "|";
 #endif
     NCALL++;
   }
   else {
-    //    6 WRITE(75,43)
-    //	WRITE(*,43)
-    //   43 FORMAT(1H.,/,' .',$)
-    //      NCALL=1
-    //      RETURN
-    //      END
 #ifdef USMTCORE_DEBUG
     std::cout << "|!";
 #endif
     NCALL = 1;
   }
-
 }
-//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 double Taquart::UsmtCore::DETR(double T[], double X) {
-  //      FUNCTION DETR(T,X)
-  //      DIMENSION S(6),T(6)
-
-  //      SKAL=ABS(T(1))+ABS(T(2))+ABS(T(3))+ABS(T(4))+ABS(T(5))+ABS(T(6))
-  //      IF(SKAL.LT.1.) SKAL=1.
+  double S[6 + 1];
   double SKAL = fabs(T[1]) + fabs(T[2]) + fabs(T[3]) + fabs(T[4]) + fabs(T[5])
       + fabs(T[6]);
   if (SKAL < 1.0) SKAL = 1.0;
-
-  //      DO 1 I=1,6
-  //    1 S(I)=T(I)/SKAL
-  double S[6 + 1];
   for (int i = 1; i <= 6; i++)
     S[i] = T[i] / SKAL;
-
-  //      Y=X/SKAL
   double Y = X / SKAL;
-
-  //      DETR=(S(1)-Y)*(S(4)-Y)*(S(6)-Y)+2.*S(2)*S(3)*S(5)-S(2)*S(2)
-  //     $*(S(6)-Y)-S(3)*S(3)*(S(4)-Y)-S(5)*S(5)*(S(1)-Y)
   return (S[1] - Y) * (S[4] - Y) * (S[6] - Y) + 2.0 * S[2] * S[3] * S[5]
       - S[2] * S[2] * (S[6] - Y) - S[3] * S[3] * (S[4] - Y)
       - S[5] * S[5] * (S[1] - Y);
-
-  //      RETURN
-  //      END
 }
 
 //-----------------------------------------------------------------------------
