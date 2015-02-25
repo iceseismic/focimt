@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
             break;
           case 15:
-            std::cout << "Rev. 3.1.3, 2015.02.11\n"
+            std::cout << "Rev. 3.1.4, 2015.02.25\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
         }
