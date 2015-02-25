@@ -385,10 +385,14 @@ void PrepareHelp(Options &listOpts) {
           "    NOTE #2:                                                                   \n"
           "    Use lowercase arguments in order to data in eye-friendly format.           \n",
       true);
-  listOpts.addOption("l", "length",
-      "Input data length.                                   \n\n"
-          "    Argument: number of input lines, e.g. -l 12                                \n",
+  listOpts.addOption("m", "model",
+      "Velocity model file (with extension)                 \n\n"
+          "    Velocity model in HYPO71 format. Forces different input file format.       \n",
       true);
+  //listOpts.addOption("l", "length",
+  //    "Input data length.                                   \n\n"
+  //        "    Argument: number of input lines, e.g. -l 12                                \n",
+  //    true);
   listOpts.addOption("j", "jacknife", "Switches on/off Jacknife test.\n");
   listOpts.addOption("a", "amplitude",
       "Perform amplitude test.                              \n\n"
@@ -407,10 +411,6 @@ void PrepareHelp(Options &listOpts) {
       "Draw fault plane solution and bootstrap solutions.   \n\n"
           "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
           "                                                                               \n",
-      true);
-  listOpts.addOption("m", "model",
-      "Velocity model file (with extension)                 \n\n"
-          "    Velocity model in HYPO71 format. Forces different input file format.       \n",
       true);
   listOpts.addOption("z", "size",
       "Beach ball file size                                 \n\n"

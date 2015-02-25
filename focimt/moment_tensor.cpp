@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     Taquart::String FilenameIn;
     Taquart::String FilenameOut;
     Taquart::String FilenameVelocity;
-    unsigned int N = 14;
+    unsigned int N = 0;
 
     Options listOpts;
     int switchInt;
