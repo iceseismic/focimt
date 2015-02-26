@@ -1641,7 +1641,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       if (umax < d) umax = d;
       if (umin > d) umin = d;
     }
-    uerr = sqrt(uerr / N) / (umax - umin); // This error measure requires attention.
+    uerr = sqrt(uerr / N) / (umax - umin); // This error measure requires attention (change to seismic moment?)
     Solution[q].UERR = uerr;
   }
 
