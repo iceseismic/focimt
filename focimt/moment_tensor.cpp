@@ -225,12 +225,12 @@ int main(int argc, char* argv[]) {
       InputFile >> density;
       for (unsigned int i = 0; i < N; i++) {
         InputFile >> id;
-        InputFile >> s_northing;
-        InputFile >> s_easting;
-        InputFile >> s_z;
         InputFile >> component;
         InputFile >> phase;
         InputFile >> moment; // Should hold the area below the first P-wave velocity pulse (=moment)
+        InputFile >> s_northing;
+        InputFile >> s_easting;
+        InputFile >> s_z;
 
         // Calculation of azimuth, takeoff, velocity and distance.
         double depth = fabs(e_z * 0.001);
