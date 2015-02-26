@@ -56,7 +56,7 @@ namespace Taquart {
     int RO[FOCIMT_MAXCHANNEL + 1];
     int VEL[FOCIMT_MAXCHANNEL + 1];
     int R[FOCIMT_MAXCHANNEL + 1];
-    double UTH[FOCIMT_MAXCHANNEL + 1];
+    double UTH[FOCIMT_MAXCHANNEL + 1][3 + 1];
     int N = 0;
     double TROZ = 0.0;
     double QSD = 0.0;
@@ -65,8 +65,8 @@ namespace Taquart {
     int ICOND = 0;
     Taquart::FaultSolution Solution[4];
     int ISTA = 1;
-    //int * ThreadProgress;
-  } // namespace UsmtCore
+  //int * ThreadProgress;
+  }// namespace UsmtCore
 } // namespace Foci
 
 //---------------------------------------------------------------------------
@@ -1312,24 +1312,19 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     // Covariance calculation.
     for (int i = 1; i <= N; i++) {
       EPS = U[i];
-
-      // Calculate theoretical displacement.
-      UTH[i] = 0.0f;
+      //---- Calculate theoretical displacement.
+      UTH[i][1] = 0.0f;
       for (int j = 1; j <= 6; j++)
-        UTH[i] += A[i][j] * RM[j][1] * USMT_DOWNSCALE;
-
+        UTH[i][1] += A[i][j] * RM[j][1] * USMT_DOWNSCALE;
+      //---- Calculate theoretical displacement.
       for (int j = 1; j <= 6; j++)
         EPS = EPS - A[i][j] * RM[j][1] * USMT_DOWNSCALE;
-
       SAI22 = 0.0;
       for (int j = 1; j <= 6; j++)
         SAI22 = SAI22 + A[i][j] * A[i][j];
-
       double SAI2 = double(SAI22);
-
       for (int j = 1; j <= 6; j++)
         AA[i][j] = EPS * (A[i][j] / SAI2) * USMT_UPSCALE;
-
       for (int j = 1; j <= 6; j++)
         AA[i][j] = AA[i][j] + RM[j][1];
     }
@@ -1453,6 +1448,11 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 
   for (int i = 1; i <= N; i++) {
     EPS = U[i];
+    //---- Calculate theoretical displacement.
+    UTH[i][2] = 0.0f;
+    for (int j = 1; j <= 6; j++)
+      UTH[i][2] += A[i][j] * RM[j][2] * USMT_DOWNSCALE;
+    //---- Calculate theoretical displacement.
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][2] * USMT_DOWNSCALE;
     SAI22 = 0.0;
@@ -1550,6 +1550,11 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 
   for (int i = 1; i <= N; i++) {
     EPS = U[i];
+    //---- Calculate theoretical displacement.
+    UTH[i][3] = 0.0f;
+    for (int j = 1; j <= 6; j++)
+      UTH[i][3] += A[i][j] * RM[j][3] * USMT_DOWNSCALE;
+    //---- Calculate theoretical displacement.
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][3] * USMT_DOWNSCALE;
     SAI22 = 0.0;
@@ -1612,33 +1617,33 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
 
   //---- Transfer data to Taquart::FaultSolution structures
 
-  // Theoretical displacement (taken from full solution, partially incorrect).
+  // Theoretical displacement
   for (int i = 1; i <= N; i++) {
     Solution[1].U_n = N;
     Solution[2].U_n = N;
     Solution[3].U_n = N;
-    Solution[1].U_th[i - 1] = UTH[i];
-    Solution[2].U_th[i - 1] = UTH[i];
-    Solution[3].U_th[i - 1] = UTH[i];
+    Solution[1].U_th[i - 1] = UTH[i][1];
+    Solution[2].U_th[i - 1] = UTH[i][2];
+    Solution[3].U_th[i - 1] = UTH[i][3];
     Solution[1].U_measured[i - 1] = U[i];
     Solution[2].U_measured[i - 1] = U[i];
     Solution[3].U_measured[i - 1] = U[i];
   }
 
-  double uerr = 0.0;
-  double umax = -1.0e300;
-  double umin = +1.0e300;
-  double d = 0.0;
-  for (int i = 1; i <= N; i++) {
-    d = UTH[i] - U[i];
-    uerr = uerr + d * d;
-    if (umax < d) umax = d;
-    if (umin > d) umin = d;
+  for (int q = 1; q <= 3; q++) {
+    double uerr = 0.0;
+    double umax = -1.0e300;
+    double umin = +1.0e300;
+    double d = 0.0;
+    for (int i = 1; i <= N; i++) {
+      d = UTH[i][q] - U[i];
+      uerr = uerr + d * d;
+      if (umax < d) umax = d;
+      if (umin > d) umin = d;
+    }
+    uerr = sqrt(uerr / N) / (umax - umin); // This error measure requires attention.
+    Solution[q].UERR = uerr;
   }
-  uerr = sqrt(uerr / N) / (umax - umin);
-  Solution[1].UERR = uerr;
-  Solution[2].UERR = uerr;
-  Solution[3].UERR = uerr;
 
   for (int i = 1; i <= 3; i++) {
     int z = 0;
@@ -2445,7 +2450,7 @@ void Taquart::UsmtCore::PROGRESS(double Progress, double Max) {
   std::cout << std::endl;
 #endif
 
- // if (ThreadProgress) *ThreadProgress = int(Progress);
+  // if (ThreadProgress) *ThreadProgress = int(Progress);
 
 }
 
