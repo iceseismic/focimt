@@ -108,10 +108,6 @@ int main(int argc, char* argv[]) {
             DumpOrder =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-            //case 8:
-            //  N =
-            //      Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
-            //  break;
           case 8:
             // Use 1D velocity model from a file (forces different formatting of input file)
             VelocityModel = true;
@@ -318,8 +314,6 @@ int main(int argc, char* argv[]) {
       }
     }
     InputFile.close();
-    //bool Result = false;
-    //InputData.CountRuptureTime(Result); // This is not used in current context.
 
     //---- Perform moment tensor inversion.
     std::vector<Taquart::FaultSolutions> FSList;
@@ -342,7 +336,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    //---- Perform either noise or jacknife solutions.
+    //---- Perform additional moment tensor solutions.
     if (NoiseTest) {
       srand((unsigned) time(0));
 
@@ -381,41 +375,35 @@ int main(int argc, char* argv[]) {
           std::cout << "Inversion error." << std::endl;
           return 1;
         }
-
-        // Transfer solution.
       }
     }
-    else {
-      // Perform additional Jacknife tests.
-      if (JacknifeTest) {
-        const Taquart::SMTInputData fd = InputData;
-        const unsigned int Count = InputData.Count();
+    else if (JacknifeTest) {
+      const Taquart::SMTInputData fd = InputData;
+      const unsigned int Count = InputData.Count();
 
-        // Remove one channel, calculate the solution,
-        for (unsigned int i = 0; i < Count; i++) {
-          Taquart::SMTInputData td = fd;
-          Taquart::SMTInputLine InputLine;
-          td.Get(i, InputLine);
-          int channel = InputLine.Id;
-          td.Remove(i);
+      // Remove one channel, calculate the solution,
+      for (unsigned int i = 0; i < Count; i++) {
+        Taquart::SMTInputData td = fd;
+        Taquart::SMTInputLine InputLine;
+        td.Get(i, InputLine);
+        int channel = InputLine.Id;
+        td.Remove(i);
 
-          // Calculate SMT with one station removed.
-          try {
-            USMTCore(InversionNormType, QualityType, td);
-            Taquart::FaultSolutions fs;
-            fs.Type = 'J';
-            fs.Channel = channel;
-            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-            fs.TraceNullSolution = TransferSolution(
-                Taquart::stTraceNullSolution);
-            fs.DoubleCoupleSolution = TransferSolution(
-                Taquart::stDoubleCoupleSolution);
-            FSList.push_back(fs);
-          }
-          catch (...) {
-            std::cout << "Inversion error." << std::endl;
-            return 1;
-          }
+        // Calculate SMT with one station removed.
+        try {
+          USMTCore(InversionNormType, QualityType, td);
+          Taquart::FaultSolutions fs;
+          fs.Type = 'J';
+          fs.Channel = channel;
+          fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+          fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+          fs.DoubleCoupleSolution = TransferSolution(
+              Taquart::stDoubleCoupleSolution);
+          FSList.push_back(fs);
+        }
+        catch (...) {
+          std::cout << "Inversion error." << std::endl;
+          return 1;
         }
       }
     }
