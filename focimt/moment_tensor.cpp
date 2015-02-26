@@ -145,6 +145,10 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 13:
+            Size =
+                int(Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble() + 0.5);
+            break;
+          case 14:
             std::cout << "Rev. 3.1.4, 2015.02.25\n"
                 "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
             break;
