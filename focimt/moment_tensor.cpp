@@ -108,10 +108,10 @@ int main(int argc, char* argv[]) {
             DumpOrder =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          //case 8:
-          //  N =
-          //      Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
-          //  break;
+            //case 8:
+            //  N =
+            //      Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToInt();
+            //  break;
           case 8:
             // Use 1D velocity model from a file (forces different formatting of input file)
             VelocityModel = true;
@@ -146,7 +146,9 @@ int main(int argc, char* argv[]) {
             break;
           case 13:
             Size =
-                int(Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble() + 0.5);
+                int(
+                    Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
+                        + 0.5);
             break;
           case 14:
             std::cout << "Rev. 3.1.4, 2015.02.25\n"
@@ -193,13 +195,13 @@ int main(int argc, char* argv[]) {
 
     //---- Draw fault with multiple nodal planes and exit program.
     if (DrawFaultsOnly) {
-      DrawFaults(FaultString, FilenameOut);
+      DrawFaults(FaultString, FilenameOut, Size);
       return 0;
     }
 
     //---- Draw fault with single nodal plane and exit program.
     if (DrawFaultOnly) {
-      DrawFault(FaultString, FilenameOut);
+      DrawFault(FaultString, FilenameOut, Size);
       return 0;
     }
 

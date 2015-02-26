@@ -203,7 +203,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 }
 
 //-----------------------------------------------------------------------------
-void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut) {
+void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size) {
   // Read strike, dip and rake.
   Taquart::String temp;
   double strike = 0, dip = 0, rake = 0;
@@ -267,14 +268,15 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut) {
   }
 
   Taquart::String OutName = FilenameOut + ".png";
-  Taquart::TriCairo_Meca Meca(500, 500, Taquart::ctSurface);
+  Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
   GenerateBallCairo(Meca, FSList, InputData, "dbcp");
   Meca.Save(OutName);
 
 }
 
 //-----------------------------------------------------------------------------
-void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut) {
+void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size) {
   // Read strike, dip and rake.
   Taquart::String temp;
   double strike = 0, dip = 0, rake = 0;
@@ -310,7 +312,7 @@ void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut) {
   FSList.push_back(fs);
 
   Taquart::String OutName = FilenameOut + ".png";
-  Taquart::TriCairo_Meca Meca(500, 500, Taquart::ctSurface);
+  Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
   GenerateBallCairo(Meca, FSList, InputData, "dbcp");
   Meca.Save(OutName);
 }

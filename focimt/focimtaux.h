@@ -52,8 +52,10 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     Taquart::SMTInputData &InputData, Taquart::String Type);
 bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
     Taquart::String delimiter);
-void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut);
-void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut);
+void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size);
+void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size);
 void PrepareHelp(Options &listOpts);
 
 //-----------------------------------------------------------------------------
