@@ -87,7 +87,7 @@ namespace Taquart {
     extern int RO[FOCIMT_MAXCHANNEL + 1];
     extern int VEL[FOCIMT_MAXCHANNEL + 1];
     extern int R[FOCIMT_MAXCHANNEL + 1];
-    extern double UTH[FOCIMT_MAXCHANNEL + 1];
+    extern double UTH[FOCIMT_MAXCHANNEL + 1][3 + 1];
     extern int N;
     extern double TROZ;
     extern double QSD;

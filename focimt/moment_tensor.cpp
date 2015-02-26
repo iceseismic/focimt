@@ -602,9 +602,14 @@ int main(int argc, char* argv[]) {
 
             // Export theoretical displacements.
             if (DumpOrder[i] == 'U') {
+              //OutFile << std::endl;
               for (int r = 0; r < Solution.U_n; r++) {
                 OutFile << Solution.U_th[r] << FOCIMT_SEP;
               }
+              //OutFile << std::endl;
+              //for (int r = 0; r < Solution.U_n; r++) {
+              //  OutFile << Solution.U_measured[r] << FOCIMT_SEP;
+              //}
             }
             else if (DumpOrder[i] == 'u') {
               for (int r = 0; r < Solution.U_n; r++) {
