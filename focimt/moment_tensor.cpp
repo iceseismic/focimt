@@ -327,22 +327,20 @@ int main(int argc, char* argv[]) {
 
     // Regular moment tensor inversion using all stations.
     try {
-      //int ThreadProgress = 0;
       USMTCore(InversionNormType, QualityType, InputData);
+      Taquart::FaultSolutions fs;
+      fs.Type = 'N';
+      fs.Channel = 0;
+      fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+      fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+      fs.DoubleCoupleSolution = TransferSolution(
+          Taquart::stDoubleCoupleSolution);
+      FSList.push_back(fs);
     }
     catch (...) {
       std::cout << "Inversion error." << std::endl;
       return 1;
     }
-
-    // Transfer solution.
-    Taquart::FaultSolutions fs;
-    fs.Type = 'N';
-    fs.Channel = 0;
-    fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-    fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-    fs.DoubleCoupleSolution = TransferSolution(Taquart::stDoubleCoupleSolution);
-    FSList.push_back(fs);
 
     //---- Perform either noise or jacknife solutions.
     if (NoiseTest) {
@@ -369,8 +367,15 @@ int main(int argc, char* argv[]) {
 
         // Calculate SMT with one station removed.
         try {
-          //int ThreadProgress = 0;
           USMTCore(InversionNormType, QualityType, td);
+          Taquart::FaultSolutions fs;
+          fs.Type = 'A';
+          fs.Channel = 0;
+          fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+          fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+          fs.DoubleCoupleSolution = TransferSolution(
+              Taquart::stDoubleCoupleSolution);
+          FSList.push_back(fs);
         }
         catch (...) {
           std::cout << "Inversion error." << std::endl;
@@ -378,14 +383,6 @@ int main(int argc, char* argv[]) {
         }
 
         // Transfer solution.
-        Taquart::FaultSolutions fs;
-        fs.Type = 'A';
-        fs.Channel = 0;
-        fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-        fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-        fs.DoubleCoupleSolution = TransferSolution(
-            Taquart::stDoubleCoupleSolution);
-        FSList.push_back(fs);
       }
     }
     else {
@@ -404,22 +401,21 @@ int main(int argc, char* argv[]) {
 
           // Calculate SMT with one station removed.
           try {
-            //int ThreadProgress = 0;
             USMTCore(InversionNormType, QualityType, td);
+            Taquart::FaultSolutions fs;
+            fs.Type = 'J';
+            fs.Channel = channel;
+            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+            fs.TraceNullSolution = TransferSolution(
+                Taquart::stTraceNullSolution);
+            fs.DoubleCoupleSolution = TransferSolution(
+                Taquart::stDoubleCoupleSolution);
+            FSList.push_back(fs);
           }
           catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
-
-          Taquart::FaultSolutions fs;
-          fs.Type = 'J';
-          fs.Channel = channel;
-          fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-          fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-          fs.DoubleCoupleSolution = TransferSolution(
-              Taquart::stDoubleCoupleSolution);
-          FSList.push_back(fs);
         }
       }
     }
