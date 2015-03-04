@@ -617,6 +617,23 @@ int main(int argc, char* argv[]) {
               OutFile << txtb;
             }
 
+            // Export diagonal elements of covariance matrix.
+            if (DumpOrder[i] == 'V') {
+              for (int q = 1; q <= 6; q++) {
+                OutFile << Solution.Covariance[q][q] << FOCIMT_SEP;
+              }
+            }
+            else if (DumpOrder[i] == 'v') {
+              sprintf(txtb, "%11.3e%s%11.3e%s%11.3e%s%11.3e%s%11.3e%s%11.3e%s",
+                  Solution.Covariance[1][1], FOCIMT_SEP2,
+                  Solution.Covariance[2][2], FOCIMT_SEP2,
+                  Solution.Covariance[3][3], FOCIMT_SEP2,
+                  Solution.Covariance[4][4], FOCIMT_SEP2,
+                  Solution.Covariance[5][5], FOCIMT_SEP2,
+                  Solution.Covariance[6][6], FOCIMT_SEP2);
+              OutFile << txtb;
+            }
+
             if (DumpOrder[i] == '*') {
               OutFile << FOCIMT_NEWLINE;
             }
