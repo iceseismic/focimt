@@ -382,6 +382,8 @@ void PrepareHelp(Options &listOpts) {
           "         using '-l' option.                                                    \n"
           "    [E]: RMS Error calculated from theoretical and measured ground             \n"
           "         displacements.                                                        \n"
+          "    [V]: Diagonal elements of covariance matrix in the following order:        \n"
+          "         C11, C22, C33, C44, C55, C66                                          \n"
           "    [*]: Export new line character                                             \n"
           "                                                                               \n"
           "    NOTE #1:                                                                   \n"
@@ -400,10 +402,6 @@ void PrepareHelp(Options &listOpts) {
       "Velocity model file (with extension)                 \n\n"
           "    Velocity model in HYPO71 format. Forces different input file format.       \n",
       true);
-  //listOpts.addOption("l", "length",
-  //    "Input data length.                                   \n\n"
-  //        "    Argument: number of input lines, e.g. -l 12                                \n",
-  //    true);
   // 9
   listOpts.addOption("j", "jacknife", "Switches on/off Jacknife test.\n");
   // 10
