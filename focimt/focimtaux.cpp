@@ -321,41 +321,50 @@ void PrepareHelp(Options &listOpts) {
   // 0
   listOpts.addOption("i", "input", "Full path to the input file", true);
   // 1
-  listOpts.addOption("o", "output", "Output file name (without extension)",
-      true);
+  listOpts.addOption("o", "output",
+      "Output file name (without extension).                \n\n"
+          "    If specified, the output solution data will be exported to a single file.  \n"
+          "    Otherwise, 'fileid' field from input file will be used instead and moment  \n"
+          "    tensor solution data will be exported to multiple files.", true);
   // 2
   listOpts.addOption("s", "solution",
       "Output solution type.                                \n\n"
-          "    Arguments: [F][T][D] for the full, trace-null and double-couple solution.  \n"
-          "    Default option is '-s D'. Combine options to get multiple solutions, e.g.  \n"
-          "    '-s DFT' produces all three solutions at once.                             \n",
+          "    Arguments: [F][T][D] for the (F)ull, (T)race-null and (D)ouble-couple      \n"
+          "    solutions. Defines which moment tensor inversion will be performed. The    \n"
+          "    default option is '-s D'. Combine three options to desired moment tensor   \n"
+          "    solutions, e.g. '-s DFT' will produce all three solutions at once.         \n",
       true);
   // 3
   listOpts.addOption("t", "type",
       "Output file type.                                    \n\n"
-          "    Arguments: [NONE|PNG|SVG|PS|PDF] for different file types (only one can) be\n"
-          "    specified as an output. The default value is '-t PNG'                      \n",
+          "    Arguments: [NONE][PNG][SVG][PS][PDF] for different output file types.      \n"
+          "    Produce graphical representation of the moment tensor solution in a form of\n"
+          "    the beach ball. More than one output file format can be specified. The     \n"
+          "    default value is '-t PNG'.                                                 \n",
       true);
   // 4
   listOpts.addOption("n", "norm",
-      "Norm type.               \n\n"
-          "    Arguments: [L1|L2] for L1 and L2 norm, respectively. The default option is \n"
-          "    is '-n L2' (faster). When Jacknife method is used the option is ignored and\n"
-          "    L2 norm is used.                                                           \n",
+      "Norm type.                                           \n\n"
+          "    Arguments: [L1|L2] for L1 and L2 norm, respectively. Defines norm used in  \n"
+          "    seismic moment tensor inversion. The default option is '-n L2' (faster).   \n"
+          "    When Jacknife method is used the option is ignored and L2 norm is used     \n"
+          "    instead.                                                                   \n",
       true);
   // 5
   listOpts.addOption("p", "projection",
       "Projection type.                                     \n\n"
-          "    Arguments: [W|S][U|L]: Choose either (W)ulff projection or (S)chmidt       \n"
+          "    Arguments: [W|S][U|L]: Defines projection for the graphical representation \n"
+          "    of the seismic moment tensor. Choose either (W)ulff projection or (S)chmidt\n"
           "    projection. Then select (U)pper hemisphere or (L)ower hemispere projection \n"
-          "    The default option is '-p SL'.                                             \n",
+          "    The default option is '-p SL' (Schmidt projection, Lower hemisphere).      \n",
       true);
   // 6
   listOpts.addOption("b", "ball",
       "The details of the beach ball picture                \n\n"
-          "    Arguments: [S][A][C][D]: Plot (S)tations, (A)xes, (C)enter cross, best     \n"
+          "    Arguments: [S][A][C][D]: Defines features of the graphical representation  \n"
+          "    of seismic moment tensor. Plot (S)tations, (A)xes, (C)enter cross, best    \n"
           "    (D)ouble-couple lines. The default option is '-b SACD' (all features are   \n"
-          "    displayed.                                                                 \n",
+          "    displayed on the beach ball.                                               \n",
       true);
   // 7
   listOpts.addOption("d", "dump",
@@ -372,14 +381,15 @@ void PrepareHelp(Options &listOpts) {
           "         are provided in %.                                                    \n"
           "    [A]: P/T/B Axes orientations in format:                                    \n"
           "         PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND/BPLUNGE                          \n"
+          "         All values are in degrees.                                            \n"
           "    [W]: Seismic moment, total seismic moment, maximum error of the seismic    \n"
-          "         moment tensor estiamte and the moment magnitude calculated using      \n"
+          "         moment tensor estimate and the moment magnitude calculated using      \n"
           "         using Hanks&Kanamori formula. The first three values are in [Nm]      \n"
           "    [Q]: Quality index                                                         \n"
-          "    [T]: Fault Type (strike slip/normal/inverse)                               \n"
+          "    [T]: Fault type. 'SS','NF' or 'TF' will be exported depending wheter the   \n"
+          "         faulting style is strike-slip, normal or thrust, respectively.        \n"
           "    [U]: Vector of synthetic moments calculated (the number of exported numbers\n"
-          "         correspond to the number of amplitudes in the input file (specified   \n"
-          "         using '-l' option.                                                    \n"
+          "         correspond to the number of amplitudes in the input file.             \n"
           "    [E]: RMS Error calculated from theoretical and measured ground             \n"
           "         displacements.                                                        \n"
           "    [V]: Diagonal elements of covariance matrix in the following order:        \n"
@@ -395,7 +405,7 @@ void PrepareHelp(Options &listOpts) {
           "    /BPLUNGE/ISO/CLVD/DBCP                                                     \n"
           "                                                                               \n"
           "    NOTE #2:                                                                   \n"
-          "    Use lowercase arguments in order to data in eye-friendly format.           \n",
+          "    Use lowercase arguments in order to export data in eye-friendly format.    \n",
       true);
   // 8
   listOpts.addOption("m", "model",
@@ -421,7 +431,7 @@ void PrepareHelp(Options &listOpts) {
       true);
   // 12
   listOpts.addOption("g", "faults",
-      "Draw fault plane solution and bootstrap solutions.   \n\n"
+      "Draw fault plane solution and jacknife solutions.    \n\n"
           "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
           "                                                                               \n",
       true);
@@ -431,5 +441,5 @@ void PrepareHelp(Options &listOpts) {
           "    Size of the beach ball figure in pixels.                                   \n",
       true);
   // 14
-  listOpts.addOption("v", "version", "Display version number");
+  listOpts.addOption("v", "version", "Display foci-mt version");
 }
