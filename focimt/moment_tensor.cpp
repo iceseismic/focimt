@@ -160,13 +160,13 @@ int main(int argc, char* argv[]) {
 
     if (FilenameOut.Length() == 0 && DrawFaultOnly == false
         && DrawFaultsOnly == false) {
-      FilenameOut = Taquart::ExtractFileName(FilenameIn);
-      if (FilenameOut.Pos("."))
-        FilenameOut = FilenameOut.SubString(1, FilenameOut.Pos(".") - 1);
+      //FilenameOut = Taquart::ExtractFileName(FilenameIn);
+      //if (FilenameOut.Pos("."))
+      //  FilenameOut = FilenameOut.SubString(1, FilenameOut.Pos(".") - 1);
     }
     else if (FilenameOut.Length() == 0
         && (DrawFaultOnly == true || DrawFaultsOnly == true)) {
-      FilenameOut = "default";
+      FilenameOut = "beachball";
     }
 
     //---- Read velocity model if necessary.
@@ -460,7 +460,16 @@ int main(int argc, char* argv[]) {
 
           // Output text data if necessary.
           if (DumpOrder.Length()) {
-            Taquart::String OutName = FilenameOut + "-" + FSuffix + ".asc";
+
+            Taquart::String OutName;
+            if (FilenameOut.Length() == 0) {
+              // No common file name, use file id instead.
+              OutName = Taquart::String(fileid) + "-" + FSuffix + ".asc";
+            }
+            else {
+              OutName = FilenameOut + "-" + FSuffix + ".asc";
+            }
+
             ofstream OutFile(OutName.c_str(),
                 std::ofstream::out | std::ofstream::app);
 
