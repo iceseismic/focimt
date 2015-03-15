@@ -205,9 +205,9 @@ int main(int argc, char* argv[]) {
     Taquart::NormType InversionNormType =
         (NormType == "L2") ? Taquart::ntL2 : Taquart::ntL1;
     int QualityType = 1;
-    Taquart::SMTInputData InputData;
 
     //---- Read input file and fill input data structures.
+    Taquart::SMTInputData InputData;
     char id[50], phase[10], component[10], fileid[50];
     double moment = 0.0;
     double azimuth = 0.0, takeoff = 0.0, velocity = 0.0, distance = 0.0,
@@ -215,265 +215,275 @@ int main(int argc, char* argv[]) {
 
     std::ifstream InputFile;
     InputFile.open(FilenameIn.c_str());
-    if (VelocityModel) {
-      // Reading formatted input file (velocity model format).
-      double e_northing = 0.0f, e_easting = 0.0f, e_z = 0.0f;
-      double s_northing = 0.0f, s_easting = 0.0f, s_z = 0.0f;
-      InputFile >> fileid;
-      InputFile >> N;
-      InputFile >> e_northing;
-      InputFile >> e_easting;
-      InputFile >> e_z;
-      InputFile >> density;
-      for (unsigned int i = 0; i < N; i++) {
-        InputFile >> id;
-        InputFile >> component;
-        InputFile >> phase;
-        InputFile >> moment; // Should hold the area below the first P-wave velocity pulse (=moment)
-        InputFile >> s_northing;
-        InputFile >> s_easting;
-        InputFile >> s_z;
+    while (InputFile.good()) {
+      InputData.Clear();
+      if (VelocityModel) {
+        // Reading formatted input file (velocity model format).
+        double e_northing = 0.0f, e_easting = 0.0f, e_z = 0.0f;
+        double s_northing = 0.0f, s_easting = 0.0f, s_z = 0.0f;
+        InputFile >> fileid;
+        InputFile >> N;
+        InputFile >> e_northing;
+        InputFile >> e_easting;
+        InputFile >> e_z;
+        InputFile >> density;
+        for (unsigned int i = 0; i < N; i++) {
+          InputFile >> id;
+          InputFile >> component;
+          InputFile >> phase;
+          InputFile >> moment; // Should hold the area below the first P-wave velocity pulse (=moment)
+          InputFile >> s_northing;
+          InputFile >> s_easting;
+          InputFile >> s_z;
 
-        // Calculation of azimuth, takeoff, velocity and distance.
-        double depth = fabs(e_z * 0.001);
-        double elevation = s_z * 0.001;
-        double epicentral_distance = 0.001
-            * sqrt(
-                pow(s_northing - e_northing, 2.0)
-                    + pow(s_easting - e_easting, 2.0));
-        azimuth = atan2(s_easting - e_easting, s_northing - e_northing)
-            * 180/ M_PI;
-        double null;
-        bool null2;
-        int null3;
+          // Calculation of azimuth, takeoff, velocity and distance.
+          double depth = fabs(e_z * 0.001);
+          double elevation = s_z * 0.001;
+          double epicentral_distance = 0.001
+              * sqrt(
+                  pow(s_northing - e_northing, 2.0)
+                      + pow(s_easting - e_easting, 2.0));
+          azimuth = atan2(s_easting - e_easting, s_northing - e_northing)
+              * 180/ M_PI;
+          double null;
+          bool null2;
+          int null3;
 
-        for (unsigned int j = Velocity.size() - 1; j >= 0; j--) {
-          if (depth >= Top[j]) {
-            velocity = Velocity[j];
-            break;
+          for (unsigned int j = Velocity.size() - 1; j >= 0; j--) {
+            if (depth >= Top[j]) {
+              velocity = Velocity[j];
+              break;
+            }
+          }
+          CalcTravelTime1D(elevation, depth, epicentral_distance, Top, Velocity,
+              null, takeoff, null2, aoi, null3, distance);
+          // Prepare input line structure.
+          Taquart::SMTInputLine il;
+          il.Name = Taquart::String(id); /*!< Station name.*/
+          il.Id = i + 1; /*!< Station id number.*/
+          il.Component = Taquart::String(component);
+          il.MarkerType = Taquart::String(phase);
+          il.Start = 0.0;
+          il.End = 0.0;
+          il.Duration = 0.0;
+          il.Displacement = moment / cos(aoi * M_PI / 180.0); // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
+          il.Incidence = aoi;
+          il.Azimuth = azimuth;
+          il.TakeOff = takeoff;
+          il.Distance = distance;
+          il.Density = density;
+          il.Velocity = velocity;
+          il.PickActive = true;
+          il.ChannelActive = true;
+          InputData.Add(il);
+        }
+      }
+      else {
+        // Read formatted input file (standard foci-mt format)
+        InputFile >> fileid;
+        InputFile >> N;
+        for (unsigned int i = 0; i < N; i++) {
+          InputFile >> id;
+          InputFile >> component;
+          InputFile >> phase;
+          InputFile >> moment; // Should hold area below the first P-wave velocity pulse
+          InputFile >> azimuth;
+          InputFile >> aoi;
+          InputFile >> takeoff;
+          InputFile >> velocity;
+          InputFile >> distance;
+          InputFile >> density;
+
+          // Prepare input line structure.
+          Taquart::SMTInputLine il;
+          il.Name = Taquart::String(id); /*!< Station name.*/
+          il.Id = i + 1; /*!< Station id number.*/
+          il.Component = Taquart::String(component); //"ZZ";       /*!< Component.*/
+          il.MarkerType = Taquart::String(phase); //"p*ons/p*max";      /*!< Type of the marker used.*/
+          il.Start = 0.0; //tstart;;           /*!< Start time [s].*/
+          il.End = 0.0; //tend;;             /*!< End time [s].*/
+          il.Duration = 0.0; /*!< Duration of first P-wave velocity pulse [s].*/
+          il.Displacement = moment / cos(aoi * M_PI / 180.0); /*!< Seismic moment of the first P-wave displacement pulse (only P wave, Z component) [m]. */
+          il.Incidence = aoi; //incidence;       /*!< Angle of incidence [deg] (not used here) */
+          il.Azimuth = azimuth; /*!< Azimuth between station and source [deg]. */
+          il.TakeOff = takeoff; /*!< Takeoff angle measured from bottom [deg]. */
+          il.Distance = distance; /*!< Distance between station and source [m]. */
+          il.Density = density; /*!< Density in the source [km/m**3]. */
+          il.Velocity = velocity; /*!< Velocity in the source [m/s]. */
+          il.PickActive = true;
+          il.ChannelActive = true;
+          InputData.Add(il);
+        }
+      }
+
+      if(!InputFile.good())
+        continue;
+
+      //---- Perform moment tensor inversion.
+      std::vector<Taquart::FaultSolutions> FSList;
+      Taquart::FaultSolution fu, tr, dc;
+
+      // Regular moment tensor inversion using all stations.
+      try {
+        USMTCore(InversionNormType, QualityType, InputData);
+        Taquart::FaultSolutions fs;
+        fs.Type = 'N';
+        fs.Channel = 0;
+        fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+        fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+        fs.DoubleCoupleSolution = TransferSolution(
+            Taquart::stDoubleCoupleSolution);
+        FSList.push_back(fs);
+      }
+      catch (...) {
+        std::cout << "Inversion error." << std::endl;
+        return 1;
+      }
+
+      //---- Perform additional moment tensor solutions.
+      if (NoiseTest) {
+        srand((unsigned) time(0));
+
+        const Taquart::SMTInputData fd = InputData;
+        for (unsigned int i = 0; i < AmplitudeN; i++) {
+          Taquart::SMTInputData td = fd;
+          Taquart::SMTInputLine InputLine;
+
+          int sample;
+          double u1, u2, z;
+          for (unsigned int j = 0; j < td.Count(); j++) {
+            td.Get(j, InputLine);
+            sample = rand();
+            u1 = (sample + 1) / (double(RAND_MAX) + 1);
+            sample = rand();
+            u2 = (sample + 1) / (double(RAND_MAX) + 1);
+            z = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
+            InputLine.Displacement = InputLine.Displacement
+                + z / 3.0 * InputLine.Displacement * AmpFactor;
+            td.Set(j, InputLine);
+          }
+
+          // Calculate SMT with one station removed.
+          try {
+            USMTCore(InversionNormType, QualityType, td);
+            Taquart::FaultSolutions fs;
+            fs.Type = 'A';
+            fs.Channel = 0;
+            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+            fs.TraceNullSolution = TransferSolution(
+                Taquart::stTraceNullSolution);
+            fs.DoubleCoupleSolution = TransferSolution(
+                Taquart::stDoubleCoupleSolution);
+            FSList.push_back(fs);
+          }
+          catch (...) {
+            std::cout << "Inversion error." << std::endl;
+            return 1;
           }
         }
-        CalcTravelTime1D(elevation, depth, epicentral_distance, Top, Velocity,
-            null, takeoff, null2, aoi, null3, distance);
-        // Prepare input line structure.
-        Taquart::SMTInputLine il;
-        il.Name = Taquart::String(id); /*!< Station name.*/
-        il.Id = i + 1; /*!< Station id number.*/
-        il.Component = Taquart::String(component);
-        il.MarkerType = Taquart::String(phase);
-        il.Start = 0.0;
-        il.End = 0.0;
-        il.Duration = 0.0;
-        il.Displacement = moment / cos(aoi * M_PI / 180.0); // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
-        il.Incidence = aoi;
-        il.Azimuth = azimuth;
-        il.TakeOff = takeoff;
-        il.Distance = distance;
-        il.Density = density;
-        il.Velocity = velocity;
-        il.PickActive = true;
-        il.ChannelActive = true;
-        InputData.Add(il);
       }
-    }
-    else {
-      // Read formatted input file (standard foci-mt format)
-      InputFile >> fileid;
-      InputFile >> N;
-      for (unsigned int i = 0; i < N; i++) {
-        InputFile >> id;
-        InputFile >> component;
-        InputFile >> phase;
-        InputFile >> moment; // Should hold area below the first P-wave velocity pulse
-        InputFile >> azimuth;
-        InputFile >> aoi;
-        InputFile >> takeoff;
-        InputFile >> velocity;
-        InputFile >> distance;
-        InputFile >> density;
+      else if (JacknifeTest) {
+        const Taquart::SMTInputData fd = InputData;
+        const unsigned int Count = InputData.Count();
 
-        // Prepare input line structure.
-        Taquart::SMTInputLine il;
-        il.Name = Taquart::String(id); /*!< Station name.*/
-        il.Id = i + 1; /*!< Station id number.*/
-        il.Component = Taquart::String(component); //"ZZ";       /*!< Component.*/
-        il.MarkerType = Taquart::String(phase); //"p*ons/p*max";      /*!< Type of the marker used.*/
-        il.Start = 0.0; //tstart;;           /*!< Start time [s].*/
-        il.End = 0.0; //tend;;             /*!< End time [s].*/
-        il.Duration = 0.0; /*!< Duration of first P-wave velocity pulse [s].*/
-        il.Displacement = moment / cos(aoi * M_PI / 180.0); /*!< Seismic moment of the first P-wave displacement pulse (only P wave, Z component) [m]. */
-        il.Incidence = aoi; //incidence;       /*!< Angle of incidence [deg] (not used here) */
-        il.Azimuth = azimuth; /*!< Azimuth between station and source [deg]. */
-        il.TakeOff = takeoff; /*!< Takeoff angle measured from bottom [deg]. */
-        il.Distance = distance; /*!< Distance between station and source [m]. */
-        il.Density = density; /*!< Density in the source [km/m**3]. */
-        il.Velocity = velocity; /*!< Velocity in the source [m/s]. */
-        il.PickActive = true;
-        il.ChannelActive = true;
-        InputData.Add(il);
-      }
-    }
-    InputFile.close();
+        // Remove one channel, calculate the solution,
+        for (unsigned int i = 0; i < Count; i++) {
+          Taquart::SMTInputData td = fd;
+          Taquart::SMTInputLine InputLine;
+          td.Get(i, InputLine);
+          int channel = InputLine.Id;
+          td.Remove(i);
 
-    //---- Perform moment tensor inversion.
-    std::vector<Taquart::FaultSolutions> FSList;
-    Taquart::FaultSolution fu, tr, dc;
-
-    // Regular moment tensor inversion using all stations.
-    try {
-      USMTCore(InversionNormType, QualityType, InputData);
-      Taquart::FaultSolutions fs;
-      fs.Type = 'N';
-      fs.Channel = 0;
-      fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-      fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-      fs.DoubleCoupleSolution = TransferSolution(
-          Taquart::stDoubleCoupleSolution);
-      FSList.push_back(fs);
-    }
-    catch (...) {
-      std::cout << "Inversion error." << std::endl;
-      return 1;
-    }
-
-    //---- Perform additional moment tensor solutions.
-    if (NoiseTest) {
-      srand((unsigned) time(0));
-
-      const Taquart::SMTInputData fd = InputData;
-      for (unsigned int i = 0; i < AmplitudeN; i++) {
-        Taquart::SMTInputData td = fd;
-        Taquart::SMTInputLine InputLine;
-
-        int sample;
-        double u1, u2, z;
-        for (unsigned int j = 0; j < td.Count(); j++) {
-          td.Get(j, InputLine);
-          sample = rand();
-          u1 = (sample + 1) / (double(RAND_MAX) + 1);
-          sample = rand();
-          u2 = (sample + 1) / (double(RAND_MAX) + 1);
-          z = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
-          InputLine.Displacement = InputLine.Displacement
-              + z / 3.0 * InputLine.Displacement * AmpFactor;
-          td.Set(j, InputLine);
-        }
-
-        // Calculate SMT with one station removed.
-        try {
-          USMTCore(InversionNormType, QualityType, td);
-          Taquart::FaultSolutions fs;
-          fs.Type = 'A';
-          fs.Channel = 0;
-          fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-          fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-          fs.DoubleCoupleSolution = TransferSolution(
-              Taquart::stDoubleCoupleSolution);
-          FSList.push_back(fs);
-        }
-        catch (...) {
-          std::cout << "Inversion error." << std::endl;
-          return 1;
+          // Calculate SMT with one station removed.
+          try {
+            USMTCore(InversionNormType, QualityType, td);
+            Taquart::FaultSolutions fs;
+            fs.Type = 'J';
+            fs.Channel = channel;
+            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+            fs.TraceNullSolution = TransferSolution(
+                Taquart::stTraceNullSolution);
+            fs.DoubleCoupleSolution = TransferSolution(
+                Taquart::stDoubleCoupleSolution);
+            FSList.push_back(fs);
+          }
+          catch (...) {
+            std::cout << "Inversion error." << std::endl;
+            return 1;
+          }
         }
       }
-    }
-    else if (JacknifeTest) {
-      const Taquart::SMTInputData fd = InputData;
-      const unsigned int Count = InputData.Count();
 
-      // Remove one channel, calculate the solution,
-      for (unsigned int i = 0; i < Count; i++) {
-        Taquart::SMTInputData td = fd;
-        Taquart::SMTInputLine InputLine;
-        td.Get(i, InputLine);
-        int channel = InputLine.Id;
-        td.Remove(i);
+      //---- Produce output file and graphical representation of the moment tensor using Cairo library.
 
-        // Calculate SMT with one station removed.
-        try {
-          USMTCore(InversionNormType, QualityType, td);
-          Taquart::FaultSolutions fs;
-          fs.Type = 'J';
-          fs.Channel = channel;
-          fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-          fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-          fs.DoubleCoupleSolution = TransferSolution(
-              Taquart::stDoubleCoupleSolution);
-          FSList.push_back(fs);
-        }
-        catch (...) {
-          std::cout << "Inversion error." << std::endl;
-          return 1;
+      // Beach ball properties.
+      if (Projection.Pos("W") > 0) WulffProjection = true;
+      if (Projection.Pos("S") > 0) WulffProjection = false;
+      if (Projection.Pos("U") > 0) LowerHemisphere = false;
+      if (Projection.Pos("L") > 0) LowerHemisphere = true;
+      DrawStations = BallContent.Pos("S") > 0 ? true : false;
+      DrawAxes = BallContent.Pos("A") > 0 ? true : false;
+      DrawCross = BallContent.Pos("C") > 0 ? true : false;
+      DrawDC = BallContent.Pos("D") > 0 ? true : false;
+
+      // Text output formatted or not?
+      bool Formatted = false;
+      for (int i = 1; i <= DumpOrder.Length(); i++) {
+        if (DumpOrder[i] >= 'a' && DumpOrder[i] <= 'z') {
+          Formatted = true;
+          break;
         }
       }
-    }
 
-    //---- Produce output file and graphical representation of the moment tensor using Cairo library.
+      //---- Export text output files if requested by the user.
+      char txtb[512] = { };
+      for (unsigned int j = 0; j < FSList.size(); j++) {
+        Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
+        char Type = FSList[j].Type;
+        int Channel = FSList[j].Channel;
 
-    // Beach ball properties.
-    if (Projection.Pos("W") > 0) WulffProjection = true;
-    if (Projection.Pos("S") > 0) WulffProjection = false;
-    if (Projection.Pos("U") > 0) LowerHemisphere = false;
-    if (Projection.Pos("L") > 0) LowerHemisphere = true;
-    DrawStations = BallContent.Pos("S") > 0 ? true : false;
-    DrawAxes = BallContent.Pos("A") > 0 ? true : false;
-    DrawCross = BallContent.Pos("C") > 0 ? true : false;
-    DrawDC = BallContent.Pos("D") > 0 ? true : false;
+        Taquart::String FSuffix = "dbcp";
+        for (int i = 1; i <= SolutionTypes.Length(); i++) {
+          switch (SolutionTypes[i]) {
+            case 'F':
+              Solution = FSList[j].FullSolution;
+              FSuffix = "full";
+              break;
+            case 'T':
+              Solution = FSList[j].TraceNullSolution;
+              FSuffix = "clvd";
+              break;
+            case 'D':
+              Solution = FSList[j].DoubleCoupleSolution;
+              FSuffix = "dbcp";
+              break;
+          }
 
-    // Text output formatted or not?
-    bool Formatted = false;
-    for (int i = 1; i <= DumpOrder.Length(); i++) {
-      if (DumpOrder[i] >= 'a' && DumpOrder[i] <= 'z') {
-        Formatted = true;
-        break;
-      }
-    }
+          // Output text data if necessary.
+          if (DumpOrder.Length()) {
+            Taquart::String OutName = FilenameOut + "-" + FSuffix + ".asc";
+            ofstream OutFile(OutName.c_str(),
+                std::ofstream::out | std::ofstream::app);
 
-    //---- Export text output files if requested by the user.
-    char txtb[512] = { };
-    for (unsigned int j = 0; j < FSList.size(); j++) {
-      Taquart::FaultSolution Solution = FSList[j].DoubleCoupleSolution;
-      char Type = FSList[j].Type;
-      int Channel = FSList[j].Channel;
+            //bool head = false;
+            //if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
 
-      Taquart::String FSuffix = "dbcp";
-      for (int i = 1; i <= SolutionTypes.Length(); i++) {
-        switch (SolutionTypes[i]) {
-          case 'F':
-            Solution = FSList[j].FullSolution;
-            FSuffix = "full";
-            break;
-          case 'T':
-            Solution = FSList[j].TraceNullSolution;
-            FSuffix = "clvd";
-            break;
-          case 'D':
-            Solution = FSList[j].DoubleCoupleSolution;
-            FSuffix = "dbcp";
-            break;
-        }
+            if (j == 0) {
+              OutFile << fileid << FOCIMT_SEP << FSList.size() << std::endl;
+            }
 
-        // Output text data if necessary.
-        if (DumpOrder.Length()) {
-          Taquart::String OutName = FilenameOut + "-" + FSuffix + ".asc";
-          ofstream OutFile(OutName.c_str(),
-              std::ofstream::out | std::ofstream::app);
-
-          //bool head = false;
-          //if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
-
-          if (JacknifeTest) {
+            //if (JacknifeTest) {
             // Dump additional information when Jacknife test performed.
             if (Formatted)
               sprintf(txtb, "%c%s%5d", Type, FOCIMT_SEP2, Channel);
             else
               sprintf(txtb, "%c%s%d", Type, FOCIMT_SEP, Channel);
             OutFile << txtb;
-          }
+            //}
 
-          for (int i = 1; i <= DumpOrder.Length(); i++) {
-            // M - moment, D - decomposition, A - axis, F - fault planes,
-            // C - moment in CMT convention, * - newline
+            for (int i = 1; i <= DumpOrder.Length(); i++) {
+              // M - moment, D - decomposition, A - axis, F - fault planes,
+              // C - moment in CMT convention, * - newline
 
             // Export moment tensor components.
             if (DumpOrder[i] == 'M') {
@@ -605,7 +615,6 @@ int main(int argc, char* argv[]) {
                 sprintf(txtb, "%s%13.5e", FOCIMT_SEP2, Solution.U_th[r]);
                 OutFile << txtb;
               }
-            }
 
             // Export std error of displacement fit.
             if (DumpOrder[i] == 'E') {
@@ -633,69 +642,69 @@ int main(int argc, char* argv[]) {
               OutFile << txtb;
             }
 
-            if (DumpOrder[i] == '*') {
-              OutFile << FOCIMT_NEWLINE;
+            OutFile << FOCIMT_NEWLINE;
+            OutFile.close();
+          }
+
+          // Do not dump anything.
+          if (OutputFileType.Pos("NONE") && j == 0) continue;
+
+          // Export to PNG.
+          if (OutputFileType.Pos("PNG") && j == 0) {
+            try {
+              Taquart::String OutName = Taquart::String(fileid) + "-" + FSuffix
+                  + ".png";
+              Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
+              GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+              Meca.Save(OutName);
+            }
+            catch (...) {
+              return 2;
             }
           }
 
-          OutFile << FOCIMT_NEWLINE;
-          OutFile.close();
-        }
+          // Export to SVG.
+          if (OutputFileType.Pos("SVG") && j == 0) {
+            try {
+              Taquart::String OutName = Taquart::String(fileid) + "-" + FSuffix
+                  + ".svg";
+              Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSVG, OutName);
+              GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+            }
+            catch (...) {
+              return 2;
+            }
+          }
 
-        // Do not dump anything.
-        if (OutputFileType.Pos("NONE") && j == 0) continue;
+          // Export to PS.
+          if (OutputFileType.Pos("PS") && j == 0) {
+            try {
+              Taquart::String OutName = Taquart::String(fileid) + "-" + FSuffix
+                  + ".ps";
+              Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPS, OutName);
+              GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+            }
+            catch (...) {
+              return 2;
+            }
+          }
 
-        // Export to PNG.
-        if (OutputFileType.Pos("PNG") && j == 0) {
-          try {
-            Taquart::String OutName = FilenameOut + "-" + FSuffix + ".png";
-            Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
-            GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-            Meca.Save(OutName);
-          }
-          catch (...) {
-            return 2;
-          }
-        }
-
-        // Export to SVG.
-        if (OutputFileType.Pos("SVG") && j == 0) {
-          try {
-            Taquart::String OutName = FilenameOut + "-" + FSuffix + ".svg";
-            Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSVG, OutName);
-            GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          }
-          catch (...) {
-            return 2;
-          }
-        }
-
-        // Export to PS.
-        if (OutputFileType.Pos("PS") && j == 0) {
-          try {
-            Taquart::String OutName = FilenameOut + "-" + FSuffix + ".ps";
-            Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPS, OutName);
-            GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          }
-          catch (...) {
-            return 2;
+          // Export to PDF.
+          if (OutputFileType.Pos("PDF") && j == 0) {
+            try {
+              Taquart::String OutName = Taquart::String(fileid) + "-" + FSuffix
+                  + ".pdf";
+              Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPDF, OutName);
+              GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+            }
+            catch (...) {
+              return 2;
+            }
           }
         }
-
-        // Export to PDF.
-        if (OutputFileType.Pos("PDF") && j == 0) {
-          try {
-            Taquart::String OutName = FilenameOut + "-" + FSuffix + ".pdf";
-            Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPDF, OutName);
-            GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-          }
-          catch (...) {
-            return 2;
-          }
-        }
-      }
-    } // Loop for all solution types.
-
+      } // Loop for all solution types.
+    } // Loof for all events
+    //InputFile.close();
     return 0;
   }
   catch (...) {
