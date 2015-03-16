@@ -317,22 +317,24 @@ void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
   Meca.Save(OutName);
 }
 
+//-----------------------------------------------------------------------------
 void PrepareHelp(Options &listOpts) {
   // 0
   listOpts.addOption("i", "input", "Full path to the input file", true);
   // 1
   listOpts.addOption("o", "output",
       "Output file name (without extension).                \n\n"
-          "    If specified, the output solution data will be exported to a single file.  \n"
-          "    Otherwise, 'fileid' field from input file will be used instead and moment  \n"
-          "    tensor solution data will be exported to multiple files.", true);
+          "    If specified, the output solution data in ASCII format will be exported to \n"
+          "    a single file. Otherwise, 'fileid' field from input file will be used      \n"
+          "    instead and moment tensor solution data will be exported to multiple files.\n",
+      true);
   // 2
   listOpts.addOption("s", "solution",
       "Output solution type.                                \n\n"
           "    Arguments: [F][T][D] for the (F)ull, (T)race-null and (D)ouble-couple      \n"
           "    solutions. Defines which moment tensor inversion will be performed. The    \n"
-          "    default option is '-s D'. Combine three options to desired moment tensor   \n"
-          "    solutions, e.g. '-s DFT' will produce all three solutions at once.         \n",
+          "    default option is '-s D'. Combine three options to export desired moment   \n"
+          "    tensor solutions, e.g. '-s DFT' will produce all three solutions at once.  \n",
       true);
   // 3
   listOpts.addOption("t", "type",
@@ -375,7 +377,7 @@ void PrepareHelp(Options &listOpts) {
           "    [C]: Moment tensor components in CMT conventions: M33,M11,M22,M13,-M23,-M12\n"
           "         The moment tensor components are in [Nm]                              \n"
           "    [F]: Fault plane solutions in format: STRIKEA/DIPA/RAKEA/STRIKEB/DIPB/RAKEB\n"
-          "         (all values in degrees)                                               \n"
+          "         (all values are in degrees)                                           \n"
           "    [D]: Decomposition of the moment tensor into Isotropic, Compensated linear \n"
           "         vector dipole and double couple in format: ISO/CLVD/DBCP. The numbers \n"
           "         are provided in %.                                                    \n"
@@ -384,12 +386,12 @@ void PrepareHelp(Options &listOpts) {
           "         All values are in degrees.                                            \n"
           "    [W]: Seismic moment, total seismic moment, maximum error of the seismic    \n"
           "         moment tensor estimate and the moment magnitude calculated using      \n"
-          "         using Hanks&Kanamori formula. The first three values are in [Nm]      \n"
+          "         Hanks & Kanamori formula. The first three values are in [Nm]          \n"
           "    [Q]: Quality index                                                         \n"
-          "    [T]: Fault type. 'SS','NF' or 'TF' will be exported depending wheter the   \n"
+          "    [T]: Fault type. 'SS','NF' or 'TF' will be exported depending whether the  \n"
           "         faulting style is strike-slip, normal or thrust, respectively.        \n"
-          "    [U]: Vector of synthetic moments calculated (the number of exported numbers\n"
-          "         correspond to the number of amplitudes in the input file.             \n"
+          "    [U]: Vector of synthetic displacements calculated (the number of exported  \n"
+          "         numbers correspond to the number of amplitudes in the input file.     \n"
           "    [E]: RMS Error calculated from theoretical and measured ground             \n"
           "         displacements.                                                        \n"
           "    [V]: Diagonal elements of covariance matrix in the following order:        \n"

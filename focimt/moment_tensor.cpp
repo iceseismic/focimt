@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
             break;
           case 14:
             std::cout << "Rev. 3.1.6, 2015.03.15\n"
-                "(c) 2011-2015 Grzegorz Kwiatek, GPL license applies.\n";
+                "(c) 2011-2015 Grzegorz Kwiatek.\n";
             break;
         }
       }
