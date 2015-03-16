@@ -669,61 +669,32 @@ int main(int argc, char* argv[]) {
             // Do not dump anything.
             if (OutputFileType.Pos("NONE") && j == 0) continue;
 
-            // Export to PNG.
-            if (OutputFileType.Pos("PNG") && j == 0) {
-              try {
-                Taquart::String OutName = Taquart::String(fileid) + "-"
-                    + FSuffix + ".png";
-                Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
-                GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-                Meca.Save(OutName);
-              }
-              catch (...) {
-                return 2;
-              }
-            }
-
-            // Export to SVG.
-            if (OutputFileType.Pos("SVG") && j == 0) {
-              try {
-                Taquart::String OutName = Taquart::String(fileid) + "-"
-                    + FSuffix + ".svg";
-                Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSVG,
-                    OutName);
-                GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-              }
-              catch (...) {
-                return 2;
-              }
-            }
-
-            // Export to PS.
-            if (OutputFileType.Pos("PS") && j == 0) {
-              try {
-                Taquart::String OutName = Taquart::String(fileid) + "-"
-                    + FSuffix + ".ps";
-                Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPS, OutName);
-                GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-              }
-              catch (...) {
-                return 2;
+            Taquart::String Formats[] = { "PNG", "SVG", "PS", "PDF" };
+            Taquart::TriCairo_CanvasType ctype[] = { Taquart::ctSurface,
+                Taquart::ctSVG, Taquart::ctPS, Taquart::ctPDF };
+            if (j == 0) {
+              for (int q = 0; q < 4; q++) {
+                if (OutputFileType.Pos(Formats[q])) {
+                  try {
+                    Taquart::String OutName = Taquart::String(fileid) + "-"
+                        + FSuffix + "." + Formats[q].LowerCase();
+                    if (ctype[q] == Taquart::ctSurface) {
+                      Taquart::TriCairo_Meca Meca(Size, Size, ctype[q]);
+                      GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+                      Meca.Save(OutName);
+                    }
+                    else {
+                      Taquart::TriCairo_Meca Meca(Size, Size, ctype[q],
+                          OutName);
+                      GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+                    }
+                  }
+                  catch (...) {
+                    return 2;
+                  }
+                }
               }
             }
-
-            // Export to PDF.
-            if (OutputFileType.Pos("PDF") && j == 0) {
-              try {
-                Taquart::String OutName = Taquart::String(fileid) + "-"
-                    + FSuffix + ".pdf";
-                Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctPDF,
-                    OutName);
-                GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-              }
-              catch (...) {
-                return 2;
-              }
-            }
-
           } // Loop for all solution types.
         } // Loof for all events
       }
