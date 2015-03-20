@@ -615,16 +615,13 @@ int main(int argc, char* argv[]) {
 
               // Export theoretical displacements.
               if (DumpOrder[i] == 'U') {
-                //OutFile << std::endl;
+                OutFile << FOCIMT_SEP << Solution.U_n;
                 for (int r = 0; r < Solution.U_n; r++) {
                   OutFile << FOCIMT_SEP << Solution.U_th[r];
                 }
-                //OutFile << std::endl;
-                //for (int r = 0; r < Solution.U_n; r++) {
-                //  OutFile << Solution.U_measured[r] << FOCIMT_SEP;
-                //}
               }
               else if (DumpOrder[i] == 'u') {
+                OutFile << FOCIMT_SEP2 << Solution.U_n;
                 for (int r = 0; r < Solution.U_n; r++) {
                   sprintf(txtb, "%s%13.5e", FOCIMT_SEP2, Solution.U_th[r]);
                   OutFile << txtb;
