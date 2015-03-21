@@ -462,22 +462,33 @@ int main(int argc, char* argv[]) {
           if (DumpOrder.Length()) {
 
             Taquart::String OutName;
+            Taquart::String OutName2;
             if (FilenameOut.Length() == 0) {
               // No common file name, use file id instead.
               OutName = Taquart::String(fileid) + "-" + FSuffix + ".asc";
+              OutName2 = Taquart::String(fileid) + "-" + FSuffix + "-u.asc";
             }
             else {
               OutName = FilenameOut + "-" + FSuffix + ".asc";
+              OutName2 = FilenameOut + "-" + FSuffix + "-u.asc";
             }
+
+            bool ExportU = DumpOrder.Pos("U") > 0 || DumpOrder.Pos("u") > 0;
 
             ofstream OutFile(OutName.c_str(),
                 std::ofstream::out | std::ofstream::app);
+            ofstream OutFile2;
+            if (ExportU)
+              OutFile2.open(OutName2.c_str(),
+                  std::ofstream::out | std::ofstream::app);
 
             //bool head = false;
             //if (DumpOrder.Pos("h") || DumpOrder.Pos("H")) head = true; // TODO: Export header (not implemented yet)
 
             if (j == 0) {
               OutFile << fileid << FOCIMT_SEP << FSList.size() << std::endl;
+              if (ExportU)
+                OutFile2 << fileid << FOCIMT_SEP << FSList.size() << std::endl;
             }
 
             // Dump additional information when Jacknife test performed.
@@ -486,6 +497,7 @@ int main(int argc, char* argv[]) {
             else
               sprintf(txtb, "%c%s%d", Type, FOCIMT_SEP, Channel);
             OutFile << txtb;
+            if (ExportU) OutFile2 << txtb;
 
             for (int i = 1; i <= DumpOrder.Length(); i++) {
               // M - moment, D - decomposition, A - axis, F - fault planes,
@@ -614,17 +626,21 @@ int main(int argc, char* argv[]) {
               }
 
               // Export theoretical displacements.
-              if (DumpOrder[i] == 'U') {
-                OutFile << FOCIMT_SEP << Solution.U_n;
+              if (DumpOrder[i] == 'U' && ExportU) {
+                OutFile2 << FOCIMT_SEP << Solution.U_n << std::endl;
                 for (int r = 0; r < Solution.U_n; r++) {
-                  OutFile << FOCIMT_SEP << Solution.U_th[r];
+                  OutFile2 << Solution.Station[r].c_str() << FOCIMT_SEP
+                      << Solution.U_measured[r] << FOCIMT_SEP
+                      << Solution.U_th[r] << std::endl;
                 }
               }
-              else if (DumpOrder[i] == 'u') {
-                OutFile << FOCIMT_SEP2 << Solution.U_n;
+              else if (DumpOrder[i] == 'u' && ExportU) {
+                OutFile2 << FOCIMT_SEP2 << Solution.U_n << std::endl;
                 for (int r = 0; r < Solution.U_n; r++) {
-                  sprintf(txtb, "%s%13.5e", FOCIMT_SEP2, Solution.U_th[r]);
-                  OutFile << txtb;
+                  sprintf(txtb, "%5s%s%13.5e%s%13.5e", Solution.Station[r].c_str(),
+                      FOCIMT_SEP2, Solution.U_measured[r], FOCIMT_SEP2,
+                      Solution.U_th[r]);
+                  OutFile2 << txtb << std::endl;
                 }
               }
 
