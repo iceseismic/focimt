@@ -57,6 +57,7 @@ namespace Taquart {
     int VEL[FOCIMT_MAXCHANNEL + 1];
     int R[FOCIMT_MAXCHANNEL + 1];
     double UTH[FOCIMT_MAXCHANNEL + 1][3 + 1];
+    Taquart::String Station[FOCIMT_MAXCHANNEL + 1];
     int N = 0;
     double TROZ = 0.0;
     double QSD = 0.0;
@@ -304,6 +305,11 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   // Error calculation.
   for (int i = 1; i <= N; i++) {
     double EPS = U[i];
+    //---- Calculate theoretical displacement.
+    UTH[i][1] = 0.0f;
+    for (int j = 1; j <= 6; j++)
+      UTH[i][1] += A[i][j] * RM[j][1];
+    //---- Calculate theoretical displacement.
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][1];
     double SAI = 0.0;
@@ -392,6 +398,11 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   // Error calculation.
   for (int i = 1; i <= N; i++) {
     double EPS = U[i];
+    //---- Calculate theoretical displacement.
+    UTH[i][2] = 0.0f;
+    for (int j = 1; j <= 6; j++)
+      UTH[i][2] += A[i][j] * RM[j][2];
+    //---- Calculate theoretical displacement.
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][2];
     double SAI = 0.0;
@@ -466,6 +477,11 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   // Error calculation.
   for (int i = 1; i <= N; i++) {
     double EPS = U[i];
+    //---- Calculate theoretical displacement.
+    UTH[i][3] = 0.0f;
+    for (int j = 1; j <= 6; j++)
+      UTH[i][3] += A[i][j] * RM[j][3];
+    //---- Calculate theoretical displacement.
     for (int j = 1; j <= 6; j++)
       EPS = EPS - A[i][j] * RM[j][3];
     double SAI = 0.0;
@@ -512,6 +528,35 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   PDBCP[3] = 100.0;
 
   // Transfer data to output structure
+  for (int i = 1; i <= N; i++) {
+    Solution[1].U_n = N;
+    Solution[2].U_n = N;
+    Solution[3].U_n = N;
+    Solution[1].U_th[i - 1] = UTH[i][1];
+    Solution[2].U_th[i - 1] = UTH[i][2];
+    Solution[3].U_th[i - 1] = UTH[i][3];
+    Solution[1].U_measured[i - 1] = U[i];
+    Solution[2].U_measured[i - 1] = U[i];
+    Solution[3].U_measured[i - 1] = U[i];
+    Solution[1].Station[i - 1] = Station[i];
+    Solution[2].Station[i - 1] = Station[i];
+    Solution[3].Station[i - 1] = Station[i];
+  }
+
+  for (int q = 1; q <= 3; q++) {
+    double uerr = 0.0;
+    double umax = -1.0e300;
+    double umin = +1.0e300;
+    double d = 0.0;
+    for (int i = 1; i <= N; i++) {
+      d = UTH[i][q] - U[i];
+      uerr = uerr + d * d;
+      if (umax < d) umax = d;
+      if (umin > d) umin = d;
+    }
+    uerr = sqrt(uerr / N) / (umax - umin);
+    Solution[q].UERR = uerr;
+  }
 
   for (int i = 1; i <= 3; i++) {
     int z = 0;
@@ -521,6 +566,7 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
         Solution[i].M[m][n] = RM[v[z]][i];
         z++;
       }
+
     Solution[i].T0 = TROZ;
     Solution[i].M0 = RM0[i];
     Solution[i].MT = RMT[i];
@@ -1615,9 +1661,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   std::cout << std::endl;
 #endif
 
-  //---- Transfer data to Taquart::FaultSolution structures
-
-  // Theoretical displacement
+  // Transfer data to output structure
   for (int i = 1; i <= N; i++) {
     Solution[1].U_n = N;
     Solution[2].U_n = N;
@@ -1628,6 +1672,9 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     Solution[1].U_measured[i - 1] = U[i];
     Solution[2].U_measured[i - 1] = U[i];
     Solution[3].U_measured[i - 1] = U[i];
+    Solution[1].Station[i - 1] = Station[i];
+    Solution[2].Station[i - 1] = Station[i];
+    Solution[3].Station[i - 1] = Station[i];
   }
 
   for (int q = 1; q <= 3; q++) {
@@ -1641,7 +1688,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
       if (umax < d) umax = d;
       if (umin > d) umin = d;
     }
-    uerr = sqrt(uerr / N) / (umax - umin); // This error measure requires attention (change to seismic moment?)
+    uerr = sqrt(uerr / N) / (umax - umin);
     Solution[q].UERR = uerr;
   }
 
@@ -3298,6 +3345,7 @@ void Taquart::UsmtCore::RDINP(Taquart::SMTInputData &InputData) {
     RO[i] = InputLine.Density;
     VEL[i] = InputLine.Velocity;
     R[i] = InputLine.Distance;
+    Station[i] = InputLine.Name;
     //ACTIV[i] = 1;
   }
 }
