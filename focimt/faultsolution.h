@@ -91,6 +91,7 @@ namespace Taquart {
       //std::vector<double> U_measured;
       double U_th[FOCIMT_MAXCHANNEL];
       double U_measured[FOCIMT_MAXCHANNEL];
+      Taquart::String Station[FOCIMT_MAXCHANNEL];
       int U_n;
       double UERR;
 

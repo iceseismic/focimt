@@ -310,6 +310,7 @@ void FaultSolution::Assign(const FaultSolution &Source) {
   for (unsigned int i = 0; i < FOCIMT_MAXCHANNEL; i++) {
     U_th[i] = Source.U_th[i];
     U_measured[i] = Source.U_measured[i];
+    Station[i] = Source.Station[i];
   }
   U_n = Source.U_n;
   //U_th = Source.U_th;
