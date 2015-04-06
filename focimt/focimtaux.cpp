@@ -349,8 +349,8 @@ void PrepareHelp(Options &listOpts) {
       "Norm type.                                           \n\n"
           "    Arguments: [L1|L2] for L1 and L2 norm, respectively. Defines norm used in  \n"
           "    seismic moment tensor inversion. The default option is '-n L2' (faster).   \n"
-          "    When Jacknife method is used the option is ignored and L2 norm is used     \n"
-          "    instead.                                                                   \n",
+          "    When Jacknife method is used the option is ignored and L2 norm is always   \n"
+          "    used.                                                                      \n",
       true);
   // 5
   listOpts.addOption("p", "projection",
@@ -380,7 +380,7 @@ void PrepareHelp(Options &listOpts) {
           "         (all values are in degrees)                                           \n"
           "    [D]: Decomposition of the moment tensor into Isotropic, Compensated linear \n"
           "         vector dipole and double couple in format: ISO/CLVD/DBCP. The numbers \n"
-          "         are provided in %.                                                    \n"
+          "         are provided in percents                                              \n"
           "    [A]: P/T/B Axes orientations in format:                                    \n"
           "         PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND/BPLUNGE                          \n"
           "         All values are in degrees.                                            \n"
