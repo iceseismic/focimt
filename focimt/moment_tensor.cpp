@@ -305,9 +305,9 @@ int main(int argc, char* argv[]) {
           il.Incidence = aoi;
           il.Azimuth = azimuth;
           il.TakeOff = takeoff;
-          il.Distance = distance;
+          il.Distance = distance * 1000;
           il.Density = density;
-          il.Velocity = velocity;
+          il.Velocity = velocity * 1000;
           il.PickActive = true;
           il.ChannelActive = true;
           InputData.Add(il);
