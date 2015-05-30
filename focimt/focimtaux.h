@@ -57,6 +57,8 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
 void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
     unsigned int Size);
 void PrepareHelp(Options &listOpts);
+void DispatchFaults(Taquart::String FaultString,
+    std::vector<Taquart::FaultSolutions> &FSList, bool onefault);
 
 //-----------------------------------------------------------------------------
 #endif /* FOCIMTAUX_H_ */

@@ -203,9 +203,12 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 }
 
 //-----------------------------------------------------------------------------
-void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
-    unsigned int Size) {
-  // Read strike, dip and rake.
+void DispatchFaults(Taquart::String FaultString,
+    std::vector<Taquart::FaultSolutions> &FSList, bool onefault) {
+  Taquart::FaultSolutions fs;
+  Taquart::FaultSolution fu;
+
+  // Read strike, dip and rake for the first fault plane
   Taquart::String temp;
   double strike = 0, dip = 0, rake = 0;
   Dispatch(FaultString, temp, "/");
@@ -226,11 +229,6 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
   Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
       M11, M22, M33, M12, M13, M23);
 
-  std::vector<Taquart::FaultSolutions> FSList;
-  Taquart::SMTInputData InputData;
-  Taquart::FaultSolutions fs;
-  Taquart::FaultSolution fu;
-
   fs.Type = 'N';
   fs.Channel = 0;
   SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
@@ -239,6 +237,8 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
   fs.DoubleCoupleSolution = fu;
   FSList.push_back(fs);
 
+  if (onefault) return;
+
   while (FaultString.Length()) {
     Dispatch(FaultString, temp, "/");
     strike = temp.ToDouble();
@@ -246,7 +246,6 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
     dip = temp.ToDouble();
     if (FaultString.Pos(":")) {
       rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-      // Dispatch station data...
       Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
     }
     else {
@@ -267,6 +266,17 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
     FSList.push_back(fs);
   }
 
+}
+
+//-----------------------------------------------------------------------------
+void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size) {
+  std::vector<Taquart::FaultSolutions> FSList;
+  Taquart::SMTInputData InputData;
+
+  // Dispatch "faults" string.
+  DispatchFaults(FaultString, FSList, false);
+
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
   GenerateBallCairo(Meca, FSList, InputData, "dbcp");
@@ -277,39 +287,12 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
 //-----------------------------------------------------------------------------
 void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
     unsigned int Size) {
-  // Read strike, dip and rake.
-  Taquart::String temp;
-  double strike = 0, dip = 0, rake = 0;
-  Dispatch(FaultString, temp, "/");
-  strike = temp.ToDouble();
-  Dispatch(FaultString, temp, "/");
-  dip = temp.ToDouble();
-  if (FaultString.Pos(":")) {
-    rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-    Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-  }
-  else {
-    rake = FaultString.Trim().ToDouble();
-    FaultString = "";
-  }
-
-  // Transfer strike/dip/rake to tensor.
-  double M11, M22, M33, M12, M13, M23;
-  Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
-      M11, M22, M33, M12, M13, M23);
 
   std::vector<Taquart::FaultSolutions> FSList;
   Taquart::SMTInputData InputData;
-  Taquart::FaultSolutions fs;
-  Taquart::FaultSolution fu;
 
-  fs.Type = 'N';
-  fs.Channel = 0;
-  SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
-  fs.FullSolution = fu;
-  fs.TraceNullSolution = fu;
-  fs.DoubleCoupleSolution = fu;
-  FSList.push_back(fs);
+  // Dispatch "faults" string.
+  DispatchFaults(FaultString, FSList, true);
 
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
