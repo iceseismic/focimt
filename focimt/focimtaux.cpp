@@ -203,7 +203,52 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 }
 
 //-----------------------------------------------------------------------------
-void DispatchFaults(Taquart::String FaultString,
+void DispatchStations(Taquart::String &StationString,
+    Taquart::SMTInputData &InputData) {
+
+  Taquart::String temp;
+  double azimuth, takeoff, polarity;
+  Taquart::String name;
+
+  while (StationString.Length()) {
+    Dispatch(StationString, temp, "/");
+    azimuth = temp.ToDouble();
+    Dispatch(StationString, temp, "/");
+    takeoff = temp.ToDouble();
+    Dispatch(StationString, temp, "/");
+    polarity = temp.ToDouble();
+    if (StationString.Pos(":")) {
+      name = StationString.SubString(1, StationString.Pos(":") - 1);
+      Dispatch(StationString, temp, ":"); // Cut rake part first, as it was already interpreted.
+    }
+    else {
+      name = StationString.Trim();
+      StationString = "";
+    }
+
+    Taquart::SMTInputLine il;
+    il.Name = name; /*!< Station name.*/
+    il.Id = 0; /*!< Station id number.*/
+    il.Component = "Z";
+    il.MarkerType = "P";
+    il.Start = 0.0;
+    il.End = 0.0;
+    il.Duration = 0.0;
+    il.Displacement = polarity; // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
+    il.Incidence = takeoff;
+    il.Azimuth = azimuth;
+    il.TakeOff = takeoff;
+    il.Distance = 1000;
+    il.Density = 1000;
+    il.Velocity = 1000;
+    il.PickActive = true;
+    il.ChannelActive = true;
+    InputData.Add(il);
+  }
+}
+
+//-----------------------------------------------------------------------------
+void DispatchFaults(Taquart::String &FaultString,
     std::vector<Taquart::FaultSolutions> &FSList, bool onefault) {
   Taquart::FaultSolutions fs;
   Taquart::FaultSolution fu;
