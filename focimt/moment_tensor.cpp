@@ -68,11 +68,13 @@ int main(int argc, char* argv[]) {
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
     bool DrawFaultsOnly = false;
+    bool DrawStationsOnly= false;
     bool VelocityModel = false;
     double AmpFactor = 1.0f;
     unsigned int AmplitudeN = 100;
     Taquart::String Temp;
     Taquart::String FaultString;
+    Taquart::String StationString;
     if (listOpts.parse(argc, argv))
       while ((switchInt = listOpts.cycle()) >= 0) {
         switch (switchInt) {
@@ -140,12 +142,18 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 13:
+            // Draw fault plane solutions only.
+            DrawStationsOnly = true;
+            StationString =
+                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
+            break;
+          case 14:
             Size =
                 int(
                     Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
                         + 0.5);
             break;
-          case 14:
+          case 15:
             std::cout << "Rev. 3.1.8, 2015.05.28\n"
                 "(c) 2011-2015 Grzegorz Kwiatek.\n";
             break;
@@ -153,17 +161,17 @@ int main(int argc, char* argv[]) {
       }
 
     if (FilenameIn.Length() == 0 && DrawFaultOnly == false
-        && DrawFaultsOnly == false && VelocityModel == false) {
+        && DrawFaultsOnly == false && VelocityModel == false && DrawStationsOnly == false) {
       std::cout << "You must provide a valid filename." << std::endl;
     }
 
     if (FilenameOut.Length() == 0 && DrawFaultOnly == false
-        && DrawFaultsOnly == false) {
+        && DrawFaultsOnly == false && DrawStationsOnly == false) {
       //FilenameOut = Taquart::ExtractFileName(FilenameIn);
       //if (FilenameOut.Pos("."))
       //  FilenameOut = FilenameOut.SubString(1, FilenameOut.Pos(".") - 1);
     } else if (FilenameOut.Length() == 0
-        && (DrawFaultOnly == true || DrawFaultsOnly == true)) {
+        && (DrawFaultOnly == true || DrawFaultsOnly == true || DrawStationsOnly == true)) {
       FilenameOut = "beachball";
     }
 
@@ -225,6 +233,16 @@ int main(int argc, char* argv[]) {
     }
 
     //---- Draw fault with multiple nodal planes and exit program.
+    if(DrawStationsOnly && (DrawFaultsOnly || DrawFaultOnly)) {
+      DrawFaultsStations(FaultString,StationString,FilenameOut, Size);
+      return 0;
+    }
+
+    if(DrawStationsOnly) {
+      PlotStations(StationString, FilenameOut, Size);
+      return 0;
+    }
+
     if (DrawFaultsOnly) {
       DrawFaults(FaultString, FilenameOut, Size);
       return 0;

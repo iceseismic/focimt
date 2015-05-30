@@ -61,6 +61,12 @@ void DispatchFaults(Taquart::String &FaultString,
     std::vector<Taquart::FaultSolutions> &FSList, bool onefault);
 void DispatchStations(Taquart::String &StationString,
     Taquart::SMTInputData &InputData);
+void PlotStations(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size);
+void DrawFaultsStations(Taquart::String FaultString,
+    Taquart::String StationString, Taquart::String FilenameOut,
+    unsigned int Size);
+
 
 //-----------------------------------------------------------------------------
 #endif /* FOCIMTAUX_H_ */
