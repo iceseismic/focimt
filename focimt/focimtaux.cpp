@@ -80,16 +80,20 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     std::vector<Taquart::FaultSolutions> &FSList, Taquart::SMTInputData &id,
     Taquart::String Type) {
 
+  //if (FSList.size() == 0) return;
+
   Taquart::FaultSolution s;
 
-  if (Type == Taquart::String("dbcp")) {
-    s = FSList[0].DoubleCoupleSolution;
-  }
-  else if (Type == "clvd") {
-    s = FSList[0].TraceNullSolution;
-  }
-  else if (Type == "full") {
-    s = FSList[0].FullSolution;
+  if (FSList.size() > 0) {
+    if (Type == Taquart::String("dbcp")) {
+      s = FSList[0].DoubleCoupleSolution;
+    }
+    else if (Type == "clvd") {
+      s = FSList[0].TraceNullSolution;
+    }
+    else if (Type == "full") {
+      s = FSList[0].FullSolution;
+    }
   }
 
   // Setup solution properties.
@@ -103,29 +107,31 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   Meca.Hemisphere = LowerHemisphere ? Taquart::heLower : Taquart::heUpper;
 
   double cmt[6];
-  cmt[0] = s.M[3][3];
-  cmt[1] = s.M[1][1];
-  cmt[2] = s.M[2][2];
-  cmt[3] = s.M[1][3];
-  cmt[4] = s.M[2][3] * -1.0;
-  cmt[5] = s.M[1][2] * -1.0;
-
-  Taquart::TriCairo_MomentTensor mt;
-  for (int i = 0; i < 6; i++)
-    mt.f[i] = cmt[i];
-
-  const double scal =
-      sqrt(
-          FOCIMT_SQ(mt.f[0]) + FOCIMT_SQ(mt.f[1]) + FOCIMT_SQ(mt.f[2])
-              + 2.
-                  * (FOCIMT_SQ(mt.f[3]) + FOCIMT_SQ(mt.f[4])
-                      + FOCIMT_SQ(mt.f[5]))) / M_SQRT2;
-  for (int i = 0; i < 6; i++)
-    mt.f[i] = mt.f[i] / scal;
-
   Taquart::TriCairo_Axis P, T, N;
-  Meca.GMT_momten2axe(mt, &T, &N, &P);
-  Meca.Tensor(T, N, P);
+  if (FSList.size() > 0) {
+    cmt[0] = s.M[3][3];
+    cmt[1] = s.M[1][1];
+    cmt[2] = s.M[2][2];
+    cmt[3] = s.M[1][3];
+    cmt[4] = s.M[2][3] * -1.0;
+    cmt[5] = s.M[1][2] * -1.0;
+
+    Taquart::TriCairo_MomentTensor mt;
+    for (int i = 0; i < 6; i++)
+      mt.f[i] = cmt[i];
+
+    const double scal =
+        sqrt(
+            FOCIMT_SQ(mt.f[0]) + FOCIMT_SQ(mt.f[1]) + FOCIMT_SQ(mt.f[2])
+                + 2.
+                    * (FOCIMT_SQ(mt.f[3]) + FOCIMT_SQ(mt.f[4])
+                        + FOCIMT_SQ(mt.f[5]))) / M_SQRT2;
+    for (int i = 0; i < 6; i++)
+      mt.f[i] = mt.f[i] / scal;
+
+    Meca.GMT_momten2axe(mt, &T, &N, &P);
+    Meca.Tensor(T, N, P);
+  }
 
   // Draw stations.
   if (DrawStations) {
@@ -153,7 +159,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   }
 
   // Draw P and T axes' directions.
-  if (DrawAxes) {
+  if (DrawAxes && FSList.size() > 0) {
     Meca.Axis(P, "P");
     Meca.Axis(T, "T");
   }
@@ -161,7 +167,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   if (DrawCross) Meca.CenterCross();
 
   // Draw double-couple lines.
-  if (DrawDC) {
+  if (DrawDC && FSList.size() > 0) {
     Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
     Meca.DoubleCouple(s.FIA, s.DLA);
     Meca.DoubleCouple(s.FIB, s.DLB);
@@ -203,9 +209,57 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 }
 
 //-----------------------------------------------------------------------------
-void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
-    unsigned int Size) {
-  // Read strike, dip and rake.
+void DispatchStations(Taquart::String &StationString,
+    Taquart::SMTInputData &InputData) {
+
+  Taquart::String temp;
+  double azimuth, takeoff, polarity;
+  Taquart::String name;
+
+  while (StationString.Length()) {
+    Dispatch(StationString, temp, "/");
+    azimuth = temp.ToDouble();
+    Dispatch(StationString, temp, "/");
+    takeoff = temp.ToDouble();
+    Dispatch(StationString, temp, "/");
+    polarity = temp.ToDouble();
+    if (StationString.Pos(":")) {
+      name = StationString.SubString(1, StationString.Pos(":") - 1);
+      Dispatch(StationString, temp, ":"); // Cut rake part first, as it was already interpreted.
+    }
+    else {
+      name = StationString.Trim();
+      StationString = "";
+    }
+
+    Taquart::SMTInputLine il;
+    il.Name = name; /*!< Station name.*/
+    il.Id = 0; /*!< Station id number.*/
+    il.Component = "Z";
+    il.MarkerType = "P";
+    il.Start = 0.0;
+    il.End = 0.0;
+    il.Duration = 0.0;
+    il.Displacement = polarity; // area below the first P wave pulse is divided by angle of incicence. (vertical sensor)
+    il.Incidence = takeoff;
+    il.Azimuth = azimuth;
+    il.TakeOff = takeoff;
+    il.Distance = 1000;
+    il.Density = 1000;
+    il.Velocity = 1000;
+    il.PickActive = true;
+    il.ChannelActive = true;
+    InputData.Add(il);
+  }
+}
+
+//-----------------------------------------------------------------------------
+void DispatchFaults(Taquart::String &FaultString,
+    std::vector<Taquart::FaultSolutions> &FSList, bool onefault) {
+  Taquart::FaultSolutions fs;
+  Taquart::FaultSolution fu;
+
+  // Read strike, dip and rake for the first fault plane
   Taquart::String temp;
   double strike = 0, dip = 0, rake = 0;
   Dispatch(FaultString, temp, "/");
@@ -226,11 +280,6 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
   Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
       M11, M22, M33, M12, M13, M23);
 
-  std::vector<Taquart::FaultSolutions> FSList;
-  Taquart::SMTInputData InputData;
-  Taquart::FaultSolutions fs;
-  Taquart::FaultSolution fu;
-
   fs.Type = 'N';
   fs.Channel = 0;
   SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
@@ -239,6 +288,8 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
   fs.DoubleCoupleSolution = fu;
   FSList.push_back(fs);
 
+  if (onefault) return;
+
   while (FaultString.Length()) {
     Dispatch(FaultString, temp, "/");
     strike = temp.ToDouble();
@@ -246,7 +297,6 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
     dip = temp.ToDouble();
     if (FaultString.Pos(":")) {
       rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-      // Dispatch station data...
       Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
     }
     else {
@@ -267,6 +317,49 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
     FSList.push_back(fs);
   }
 
+}
+
+//-----------------------------------------------------------------------------
+void PlotStations(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size) {
+  std::vector<Taquart::FaultSolutions> FSList;
+  Taquart::SMTInputData InputData;
+
+  // Dispatch "faults" string.
+  DispatchStations(FaultString, InputData);
+
+  Taquart::String OutName = FilenameOut + ".png";
+  Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
+  GenerateBallCairo(Meca, FSList, InputData, "dbcp");
+  Meca.Save(OutName);
+}
+
+//-----------------------------------------------------------------------------
+void DrawFaultsStations(Taquart::String FaultString,
+    Taquart::String StationString, Taquart::String FilenameOut,
+    unsigned int Size) {
+  std::vector<Taquart::FaultSolutions> FSList;
+  Taquart::SMTInputData InputData;
+
+  DispatchStations(StationString, InputData);
+  DispatchFaults(FaultString, FSList, false);
+
+  Taquart::String OutName = FilenameOut + ".png";
+  Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
+  GenerateBallCairo(Meca, FSList, InputData, "dbcp");
+  Meca.Save(OutName);
+
+}
+
+//-----------------------------------------------------------------------------
+void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
+    unsigned int Size) {
+  std::vector<Taquart::FaultSolutions> FSList;
+  Taquart::SMTInputData InputData;
+
+  // Dispatch "faults" string.
+  DispatchFaults(FaultString, FSList, false);
+
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
   GenerateBallCairo(Meca, FSList, InputData, "dbcp");
@@ -277,39 +370,12 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
 //-----------------------------------------------------------------------------
 void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
     unsigned int Size) {
-  // Read strike, dip and rake.
-  Taquart::String temp;
-  double strike = 0, dip = 0, rake = 0;
-  Dispatch(FaultString, temp, "/");
-  strike = temp.ToDouble();
-  Dispatch(FaultString, temp, "/");
-  dip = temp.ToDouble();
-  if (FaultString.Pos(":")) {
-    rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-    Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-  }
-  else {
-    rake = FaultString.Trim().ToDouble();
-    FaultString = "";
-  }
-
-  // Transfer strike/dip/rake to tensor.
-  double M11, M22, M33, M12, M13, M23;
-  Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
-      M11, M22, M33, M12, M13, M23);
 
   std::vector<Taquart::FaultSolutions> FSList;
   Taquart::SMTInputData InputData;
-  Taquart::FaultSolutions fs;
-  Taquart::FaultSolution fu;
 
-  fs.Type = 'N';
-  fs.Channel = 0;
-  SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
-  fs.FullSolution = fu;
-  fs.TraceNullSolution = fu;
-  fs.DoubleCoupleSolution = fu;
-  FSList.push_back(fs);
+  // Dispatch "faults" string.
+  DispatchFaults(FaultString, FSList, true);
 
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
@@ -426,22 +492,28 @@ void PrepareHelp(Options &listOpts) {
           "    a number of samples (default value is 100).                                \n",
       true);
   // 11
-  listOpts.addOption("f", "fault",
-      "Draw fault plane solution directly (and stations).   \n\n"
-          "    Arguments: strike/dip/rake[:azimuth1/takeoff1][:azimuth2/takeoff2]...      \n"
+  listOpts.addOption("f", "drawfault",
+      "Generate picture with fault plane solution           \n\n"
+          "    Arguments: strike/dip/rake                                                 \n"
           "                                                                               \n",
       true);
   // 12
-  listOpts.addOption("g", "faults",
-      "Draw fault plane solution and jacknife solutions.    \n\n"
+  listOpts.addOption("fj", "drawfaults",
+      "Generate picture with jacknife solutions             \n\n"
           "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
           "                                                                               \n",
       true);
   // 13
+  listOpts.addOption("fs", "drawstations",
+      "Generate picture with station and polarity data      \n\n"
+          "    Arguments: azimuth/takeoff/polarity/name[:a2/t2/p2/n2][:a3/t3/p3/n3]...    \n"
+          "                                                                               \n",
+      true);
+  // 14
   listOpts.addOption("z", "size",
       "Beach ball file size                                 \n\n"
           "    Size of the beach ball figure in pixels.                                   \n",
       true);
-  // 14
+  // 15
   listOpts.addOption("v", "version", "Display foci-mt version");
 }
