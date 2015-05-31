@@ -515,5 +515,10 @@ void PrepareHelp(Options &listOpts) {
           "    Size of the beach ball figure in pixels.                                   \n",
       true);
   // 15
+  listOpts.addOption("r", "resampling",
+      "Bootstrap resampling of original input dataset      \n\n"
+          "    Number of bootstrap resamplings                                            \n",
+      true);
+  // 16
   listOpts.addOption("v", "version", "Display foci-mt version");
 }

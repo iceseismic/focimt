@@ -53,6 +53,8 @@ int main(int argc, char* argv[]) {
     Taquart::String FilenameVelocity;
     unsigned int N = 0;
 
+    srand((unsigned) time(0));
+
     Options listOpts;
     int switchInt;
     PrepareHelp(listOpts);
@@ -64,11 +66,13 @@ int main(int argc, char* argv[]) {
     Taquart::String DumpOrder = "";
     Taquart::String OutputFileType = "PNG";
     unsigned int Size = 500;
+    unsigned int BootstrapSamples = 20;
     bool JacknifeTest = false;
+    bool BootstrapTest = false;
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
     bool DrawFaultsOnly = false;
-    bool DrawStationsOnly= false;
+    bool DrawStationsOnly = false;
     bool VelocityModel = false;
     double AmpFactor = 1.0f;
     unsigned int AmplitudeN = 100;
@@ -125,7 +129,8 @@ int main(int argc, char* argv[]) {
             if (Temp.Pos("/")) {
               AmpFactor = Temp.SubString(1, Temp.Pos("/") - 1).ToDouble();
               AmplitudeN = Temp.SubString(Temp.Pos("/") + 1, 1000).ToInt();
-            } else {
+            }
+            else {
               AmpFactor = Temp.ToDouble();
             }
             break;
@@ -154,6 +159,13 @@ int main(int argc, char* argv[]) {
                         + 0.5);
             break;
           case 15:
+            BootstrapTest = true;
+            BootstrapSamples =
+                int(
+                    Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
+                        + 0.5);
+            break;
+          case 16:
             std::cout << "Rev. 3.1.10, 2015.05.30\n"
                 "(c) 2011-2015 Grzegorz Kwiatek.\n";
             break;
@@ -161,7 +173,8 @@ int main(int argc, char* argv[]) {
       }
 
     if (FilenameIn.Length() == 0 && DrawFaultOnly == false
-        && DrawFaultsOnly == false && VelocityModel == false && DrawStationsOnly == false) {
+        && DrawFaultsOnly == false && VelocityModel == false
+        && DrawStationsOnly == false) {
       std::cout << "You must provide a valid filename." << std::endl;
     }
 
@@ -170,8 +183,10 @@ int main(int argc, char* argv[]) {
       //FilenameOut = Taquart::ExtractFileName(FilenameIn);
       //if (FilenameOut.Pos("."))
       //  FilenameOut = FilenameOut.SubString(1, FilenameOut.Pos(".") - 1);
-    } else if (FilenameOut.Length() == 0
-        && (DrawFaultOnly == true || DrawFaultsOnly == true || DrawStationsOnly == true)) {
+    }
+    else if (FilenameOut.Length() == 0
+        && (DrawFaultOnly == true || DrawFaultsOnly == true
+            || DrawStationsOnly == true)) {
       FilenameOut = "beachball";
     }
 
@@ -205,8 +220,7 @@ int main(int argc, char* argv[]) {
         double takeoff = 0.0f, aoi = 0.0f, depth = 0.0f, delta = 0.0f,
             sta_elev = 0.0f;
         int kk = 0;
-        ofstream OutFile(FilenameOut.c_str(),
-            std::ofstream::out);
+        ofstream OutFile(FilenameOut.c_str(), std::ofstream::out);
         while (VelocityFile.good()) {
           VelocityFile >> sta_elev;
           VelocityFile >> depth;
@@ -233,12 +247,12 @@ int main(int argc, char* argv[]) {
     }
 
     //---- Draw fault with multiple nodal planes and exit program.
-    if(DrawStationsOnly && (DrawFaultsOnly || DrawFaultOnly)) {
-      DrawFaultsStations(FaultString,StationString,FilenameOut, Size);
+    if (DrawStationsOnly && (DrawFaultsOnly || DrawFaultOnly)) {
+      DrawFaultsStations(FaultString, StationString, FilenameOut, Size);
       return 0;
     }
 
-    if(DrawStationsOnly) {
+    if (DrawStationsOnly) {
       PlotStations(StationString, FilenameOut, Size);
       return 0;
     }
@@ -330,7 +344,8 @@ int main(int argc, char* argv[]) {
           il.ChannelActive = true;
           InputData.Add(il);
         }
-      } else {
+      }
+      else {
         // Read formatted input file (standard foci-mt format)
         InputFile >> fileid;
         InputFile >> N;
@@ -368,8 +383,7 @@ int main(int argc, char* argv[]) {
         }
       }
 
-      if (!InputFile.good())
-        continue;
+      if (!InputFile.good()) continue;
 
       //---- Perform moment tensor inversion.
       std::vector<Taquart::FaultSolutions> FSList;
@@ -386,14 +400,14 @@ int main(int argc, char* argv[]) {
         fs.DoubleCoupleSolution = TransferSolution(
             Taquart::stDoubleCoupleSolution);
         FSList.push_back(fs);
-      } catch (...) {
+      }
+      catch (...) {
         std::cout << "Inversion error." << std::endl;
         return 1;
       }
 
       //---- Perform additional moment tensor solutions.
       if (NoiseTest) {
-        srand((unsigned) time(0));
 
         const Taquart::SMTInputData fd = InputData;
         for (unsigned int i = 0; i < AmplitudeN; i++) {
@@ -426,12 +440,14 @@ int main(int argc, char* argv[]) {
             fs.DoubleCoupleSolution = TransferSolution(
                 Taquart::stDoubleCoupleSolution);
             FSList.push_back(fs);
-          } catch (...) {
+          }
+          catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
         }
-      } else if (JacknifeTest) {
+      }
+      else if (JacknifeTest) {
         const Taquart::SMTInputData fd = InputData;
         const unsigned int Count = InputData.Count();
 
@@ -455,7 +471,44 @@ int main(int argc, char* argv[]) {
             fs.DoubleCoupleSolution = TransferSolution(
                 Taquart::stDoubleCoupleSolution);
             FSList.push_back(fs);
-          } catch (...) {
+          }
+          catch (...) {
+            std::cout << "Inversion error." << std::endl;
+            return 1;
+          }
+        }
+      }
+      else if (BootstrapTest) {
+        // Perform boostrap resampling of original dataset.
+        const unsigned int StationCount = InputData.Count();
+        Taquart::SMTInputData BootstrapData;
+        Taquart::SMTInputLine InputLine;
+
+        for (unsigned int i = 0; i < BootstrapSamples; i++) {
+
+          // Add randomly stations with replacement.
+          BootstrapData.Clear();
+          for (unsigned int j = 0; j < StationCount; j++) {
+            InputData.Get(rand() % StationCount, InputLine);
+            BootstrapData.Add(InputLine);
+          }
+
+          int channel = i + 1;
+
+          // Calculate SMT with one station removed.
+          try {
+            USMTCore(InversionNormType, QualityType, BootstrapData);
+            Taquart::FaultSolutions fs;
+            fs.Type = 'J';
+            fs.Channel = channel;
+            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+            fs.TraceNullSolution = TransferSolution(
+                Taquart::stTraceNullSolution);
+            fs.DoubleCoupleSolution = TransferSolution(
+                Taquart::stDoubleCoupleSolution);
+            FSList.push_back(fs);
+          }
+          catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
@@ -465,14 +518,10 @@ int main(int argc, char* argv[]) {
       //---- Produce output file and graphical representation of the moment tensor using Cairo library.
 
       // Beach ball properties.
-      if (Projection.Pos("W") > 0)
-        WulffProjection = true;
-      if (Projection.Pos("S") > 0)
-        WulffProjection = false;
-      if (Projection.Pos("U") > 0)
-        LowerHemisphere = false;
-      if (Projection.Pos("L") > 0)
-        LowerHemisphere = true;
+      if (Projection.Pos("W") > 0) WulffProjection = true;
+      if (Projection.Pos("S") > 0) WulffProjection = false;
+      if (Projection.Pos("U") > 0) LowerHemisphere = false;
+      if (Projection.Pos("L") > 0) LowerHemisphere = true;
       DrawStations = BallContent.Pos("S") > 0 ? true : false;
       DrawAxes = BallContent.Pos("A") > 0 ? true : false;
       DrawCross = BallContent.Pos("C") > 0 ? true : false;
@@ -520,7 +569,8 @@ int main(int argc, char* argv[]) {
               // No common file name, use file id instead.
               OutName = Taquart::String(fileid) + "-" + FSuffix + ".asc";
               OutName2 = Taquart::String(fileid) + "-" + FSuffix + "-u.asc";
-            } else {
+            }
+            else {
               OutName = FilenameOut + "-" + FSuffix + ".asc";
               OutName2 = FilenameOut + "-" + FSuffix + "-u.asc";
             }
@@ -549,8 +599,7 @@ int main(int argc, char* argv[]) {
             else
               sprintf(txtb, "%c%s%d", Type, FOCIMT_SEP, Channel);
             OutFile << txtb;
-            if (ExportU)
-              OutFile2 << txtb;
+            if (ExportU) OutFile2 << txtb;
 
             for (int i = 1; i <= DumpOrder.Length(); i++) {
               // M - moment, D - decomposition, A - axis, F - fault planes,
@@ -564,7 +613,8 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.M[2][2];
                 OutFile << FOCIMT_SEP << Solution.M[2][3];
                 OutFile << FOCIMT_SEP << Solution.M[3][3];
-              } else if (DumpOrder[i] == 'm') {
+              }
+              else if (DumpOrder[i] == 'm') {
                 sprintf(txtb,
                     "%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e",
                     FOCIMT_SEP2, Solution.M[1][1], FOCIMT_SEP2,
@@ -584,7 +634,8 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.M[1][3];
                 OutFile << FOCIMT_SEP << -Solution.M[2][3];
                 OutFile << FOCIMT_SEP << -Solution.M[1][2];
-              } else if (DumpOrder[i] == 'c') {
+              }
+              else if (DumpOrder[i] == 'c') {
                 sprintf(txtb,
                     "%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e",
                     FOCIMT_SEP2, Solution.M[3][3], FOCIMT_SEP2,
@@ -601,7 +652,8 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.EXPL;
                 OutFile << FOCIMT_SEP << Solution.CLVD;
                 OutFile << FOCIMT_SEP << Solution.DBCP;
-              } else if (DumpOrder[i] == 'd') {
+              }
+              else if (DumpOrder[i] == 'd') {
                 sprintf(txtb, "%s%+7.1f%s%+7.1f%s%+7.1f", FOCIMT_SEP2,
                     Solution.EXPL,
                     FOCIMT_SEP2, Solution.CLVD, FOCIMT_SEP2, Solution.DBCP);
@@ -616,7 +668,8 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.TXPL;
                 OutFile << FOCIMT_SEP << Solution.BXTR;
                 OutFile << FOCIMT_SEP << Solution.BXPL;
-              } else if (DumpOrder[i] == 'a') {
+              }
+              else if (DumpOrder[i] == 'a') {
                 sprintf(txtb, "%s%5.1f%s%4.1f%s%5.1f%s%4.1f%s%5.1f%s%4.1f",
                 FOCIMT_SEP2, Solution.PXTR, FOCIMT_SEP2, Solution.PXPL,
                 FOCIMT_SEP2, Solution.TXTR, FOCIMT_SEP2, Solution.TXPL,
@@ -632,7 +685,8 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.FIB;
                 OutFile << FOCIMT_SEP << Solution.DLB;
                 OutFile << FOCIMT_SEP << Solution.RAKEB;
-              } else if (DumpOrder[i] == 'f') {
+              }
+              else if (DumpOrder[i] == 'f') {
                 sprintf(txtb, "%s%5.1f%s%4.1f%s%6.1f%s%5.1f%s%4.1f%s%6.1f",
                 FOCIMT_SEP2, Solution.FIA, FOCIMT_SEP2, Solution.DLA,
                 FOCIMT_SEP2, Solution.RAKEA, FOCIMT_SEP2, Solution.FIB,
@@ -681,7 +735,8 @@ int main(int argc, char* argv[]) {
                       << Solution.U_measured[r] << FOCIMT_SEP
                       << Solution.U_th[r] << std::endl;
                 }
-              } else if (DumpOrder[i] == 'u' && ExportU) {
+              }
+              else if (DumpOrder[i] == 'u' && ExportU) {
                 OutFile2 << FOCIMT_SEP2 << Solution.U_n << std::endl;
                 for (int r = 0; r < Solution.U_n; r++) {
                   sprintf(txtb, "%5s%s%13.5e%s%13.5e",
@@ -695,7 +750,8 @@ int main(int argc, char* argv[]) {
               // Export std error of displacement fit.
               if (DumpOrder[i] == 'E') {
                 OutFile << FOCIMT_SEP << Solution.UERR;
-              } else if (DumpOrder[i] == 'e') {
+              }
+              else if (DumpOrder[i] == 'e') {
                 sprintf(txtb, "%s%11.3e", FOCIMT_SEP2, Solution.UERR);
                 OutFile << txtb;
               }
@@ -705,7 +761,8 @@ int main(int argc, char* argv[]) {
                 for (int q = 1; q <= 6; q++) {
                   OutFile << FOCIMT_SEP << Solution.Covariance[q][q];
                 }
-              } else if (DumpOrder[i] == 'v') {
+              }
+              else if (DumpOrder[i] == 'v') {
                 sprintf(txtb,
                     "%s%11.3e%s%11.3e%s%11.3e%s%11.3e%s%11.3e%s%11.3e",
                     FOCIMT_SEP2, Solution.Covariance[1][1], FOCIMT_SEP2,
@@ -726,8 +783,7 @@ int main(int argc, char* argv[]) {
             OutFile.close();
 
             // Do not dump anything.
-            if (OutputFileType.Pos("NONE") && j == 0)
-              continue;
+            if (OutputFileType.Pos("NONE") && j == 0) continue;
 
             Taquart::String Formats[] = { "PNG", "SVG", "PS", "PDF" };
             Taquart::TriCairo_CanvasType ctype[] = { Taquart::ctSurface,
@@ -742,12 +798,14 @@ int main(int argc, char* argv[]) {
                       Taquart::TriCairo_Meca Meca(Size, Size, ctype[q]);
                       GenerateBallCairo(Meca, FSList, InputData, FSuffix);
                       Meca.Save(OutName);
-                    } else {
+                    }
+                    else {
                       Taquart::TriCairo_Meca Meca(Size, Size, ctype[q],
                           OutName);
                       GenerateBallCairo(Meca, FSList, InputData, FSuffix);
                     }
-                  } catch (...) {
+                  }
+                  catch (...) {
                     return 2;
                   }
                 }
@@ -759,7 +817,8 @@ int main(int argc, char* argv[]) {
     }
     //InputFile.close();
     return 0;
-  } catch (...) {
+  }
+  catch (...) {
     return 1; // Some undefined error occurred, error code 1.
   }
 }
