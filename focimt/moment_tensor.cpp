@@ -166,8 +166,8 @@ int main(int argc, char* argv[]) {
                         + 0.5);
             break;
           case 16:
-            std::cout << "Rev. 3.1.10, 2015.05.30\n"
-                "(c) 2011-2015 Grzegorz Kwiatek.\n";
+            std::cout << "Rev. 3.1.11, 2015.06.01\n"
+                "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon\n";
             break;
         }
       }
@@ -552,11 +552,11 @@ int main(int argc, char* argv[]) {
               break;
             case 'T':
               Solution = FSList[j].TraceNullSolution;
-              FSuffix = "clvd";
+              FSuffix = "deviatoric";
               break;
             case 'D':
               Solution = FSList[j].DoubleCoupleSolution;
-              FSuffix = "dbcp";
+              FSuffix = "dc";
               break;
           }
 
