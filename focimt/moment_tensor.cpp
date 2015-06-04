@@ -543,7 +543,7 @@ int main(int argc, char* argv[]) {
         char Type = FSList[j].Type;
         int Channel = FSList[j].Channel;
 
-        Taquart::String FSuffix = "dbcp";
+        Taquart::String FSuffix = "dc";
         for (int i = 1; i <= SolutionTypes.Length(); i++) {
           switch (SolutionTypes[i]) {
             case 'F':

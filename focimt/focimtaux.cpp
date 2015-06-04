@@ -85,10 +85,10 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   Taquart::FaultSolution s;
 
   if (FSList.size() > 0) {
-    if (Type == Taquart::String("dbcp")) {
+    if (Type == Taquart::String("dc")) {
       s = FSList[0].DoubleCoupleSolution;
     }
-    else if (Type == "clvd") {
+    else if (Type == "deviatoric") {
       s = FSList[0].TraceNullSolution;
     }
     else if (Type == "full") {
@@ -180,10 +180,10 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 
       Taquart::FaultSolution * s;
 
-      if (Type == "dbcp") {
+      if (Type == "dc") {
         s = &FSList[i].DoubleCoupleSolution;
       }
-      if (Type == "clvd") {
+      if (Type == "deviatoric") {
         s = &FSList[i].TraceNullSolution;
       }
       if (Type == "full") {
