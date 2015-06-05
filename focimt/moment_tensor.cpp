@@ -201,11 +201,11 @@ int main(int argc, char* argv[]) {
       VelocityFile >> n;
       for (int i = 0; i < n; i++) {
         VelocityFile >> v;
-        Top.push_back(v);
+        Top.push_back(v * 10.0);
       }
       for (int i = 0; i < n; i++) {
         VelocityFile >> v;
-        Velocity.push_back(v);
+        Velocity.push_back(v * 10.0);
       }
 
       // Try to read one more variable, if it contains "DATA", calculate
@@ -226,7 +226,7 @@ int main(int argc, char* argv[]) {
           VelocityFile >> depth;
           VelocityFile >> delta;
 
-          CalcTravelTime1D(sta_elev, depth, delta, Top, Velocity, traveltime,
+          CalcTravelTime1D(sta_elev*10.0, depth*10.0, delta*10.0, Top, Velocity, traveltime,
               takeoff, directphase, aoi, kk, ray_dist);
 
           OutFile << sta_elev << " ";
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
           OutFile << takeoff << " ";
           OutFile << aoi << " ";
           OutFile << kk << " ";
-          OutFile << ray_dist << std::endl;
+          OutFile << ray_dist * 0.1 << std::endl;
         }
         OutFile.close();
         VelocityFile.close();
