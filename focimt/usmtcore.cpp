@@ -34,6 +34,7 @@
 #include <trilib/fortranmath.h>
 #include <trilib/georoutines.h>
 #include "usmtcore.h"
+#include <fstream>
 //-----------------------------------------------------------------------------
 
 #define USMT_UPSCALE (1.0e+12)
@@ -89,8 +90,10 @@ Taquart::FaultSolution TransferSolution(Taquart::SolutionType AType) {
 //---------------------------------------------------------------------------
 double Taquart::UsmtCore::mw(double m0) {
   double RMAG = 2.0 * alog10(m0) / 3.0 - 6.03;
-  if (RMAG >= 100.0) RMAG = 99.9;
-  if (RMAG < -10.0) RMAG = -9.9;
+  if (RMAG >= 100.0)
+    RMAG = 99.9;
+  if (RMAG < -10.0)
+    RMAG = -9.9;
   return RMAG;
 }
 
@@ -278,12 +281,16 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
     RM[i][1] = B[i];
 
   double RMY = EQM[1];
-  if (EQM[2] < RMY) RMY = EQM[2];
-  if (EQM[3] < RMY) RMY = EQM[3];
+  if (EQM[2] < RMY)
+    RMY = EQM[2];
+  if (EQM[3] < RMY)
+    RMY = EQM[3];
   double RMX = EQM[3];
 
-  if (EQM[1] > RMX) RMX = EQM[1];
-  if (EQM[2] > RMX) RMX = EQM[2];
+  if (EQM[1] > RMX)
+    RMX = EQM[1];
+  if (EQM[2] > RMX)
+    RMX = EQM[2];
 
   for (int i = 1; i <= 6; i++)
     BB[i] = RM[i][1];
@@ -371,12 +378,16 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   EQQ2 = EQM[2];
   EQQ3 = EQM[3];
   RMY = EQM[1];
-  if (EQM[2] < RMY) RMY = EQM[2];
-  if (EQM[3] < RMY) RMY = EQM[3];
+  if (EQM[2] < RMY)
+    RMY = EQM[2];
+  if (EQM[3] < RMY)
+    RMY = EQM[3];
   RMX = EQM[3];
 
-  if (EQM[1] > RMX) RMX = EQM[1];
-  if (EQM[2] > RMX) RMX = EQM[2];
+  if (EQM[1] > RMX)
+    RMX = EQM[1];
+  if (EQM[2] > RMX)
+    RMX = EQM[2];
 
   // Find scalar seismic moment.
   for (int i = 1; i <= 6; i++)
@@ -543,20 +554,21 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
     Solution[3].Station[i - 1] = Station[i];
   }
 
+  //std::ofstream file("file.txt",std::ofstream::out | std::ofstream::app);
   for (int q = 1; q <= 3; q++) {
-    double uerr = 0.0;
-    double umax = -1.0e300;
-    double umin = +1.0e300;
-    double d = 0.0;
+    double up = 0.0;
+    double down = 0.0;
     for (int i = 1; i <= N; i++) {
-      d = UTH[i][q] - U[i];
-      uerr = uerr + d * d;
-      if (umax < d) umax = d;
-      if (umin > d) umin = d;
+      //file << UTH[i][q] << " " << U[i] << std::endl;
+      up += ((UTH[i][q] - U[i]) * (UTH[i][q] - U[i]));
+      down += (U[i] * U[i]);
     }
-    uerr = sqrt(uerr / N) / (umax - umin);
-    Solution[q].UERR = uerr;
+    if (down == 0.0)
+      Solution[q].UERR = 0.0;
+    else
+      Solution[q].UERR = sqrt(up / down);
   }
+  //file.close();
 
   for (int i = 1; i <= 3; i++) {
     int z = 0;
@@ -612,9 +624,12 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
 
   for (int KROK = 1; KROK <= 200; KROK++) {
     VAL = pow(X, 3.0) + A2 * pow(X, 2) + A1 * X + A0;
-    if (VAL == ZERO) goto p3;
-    if (VAL < ZERO) A = X;
-    if (VAL > ZERO) B = X;
+    if (VAL == ZERO)
+      goto p3;
+    if (VAL < ZERO)
+      A = X;
+    if (VAL > ZERO)
+      B = X;
     X = (A + B) / TWO;
   }
 
@@ -622,7 +637,8 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
   A1 = A2 + X;
   VAL = A1 * A1 - TWO * TWO * A0;
 
-  if (VAL < ZERO) VAL = ZERO;
+  if (VAL < ZERO)
+    VAL = ZERO;
 
   VAL = sqrt(VAL);
   A = (-A1 - VAL) / TWO;
@@ -631,7 +647,8 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
   E[2] = A;
   E[3] = B;
 
-  if (ISTER == 0) return;
+  if (ISTER == 0)
+    return;
 
   for (int i = 1; i <= 3; i++) {
     int iter = 0;
@@ -652,18 +669,21 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
     QX = (F + G) / 2.0;
     iter = iter + 1;
 
-    if (iter > 1000) continue;
+    if (iter > 1000)
+      continue;
 
     //      IF(ABS((QX-OX)/E(I)).LT.1.E-06) GO TO 8
 
     /* DONE 5 -c2.4.8 : Correction for the /div0 error. */
     double ee = (E[i] == 0.0) ? 1.0e-6 : E[i];
     //--------------------------------------
-    if (fabs((QX - OX) / ee) < 1.0e-6) goto p8;
+    if (fabs((QX - OX) / ee) < 1.0e-6)
+      goto p8;
 
     HELP = FF * FG;
 
-    if (HELP > 0.0) goto p9;
+    if (HELP > 0.0)
+      goto p9;
     FX = DETR(RM, QX);
     HELP = FF * FX;
     if (HELP < 0.0) {
@@ -873,14 +893,17 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
   RNU[2] = double(N - 6) / double(N);
   RNU[3] = double(N - 5) / double(N);
 
-  if (ICOND <= 0 || ICOND > 3) ICOND = 1;
+  if (ICOND <= 0 || ICOND > 3)
+    ICOND = 1;
   const double VALKAP[4] = { 0.0, 1.0, 0.707, 0.5 };
   double RKAPPA[4] = { 0.0, 1.0, 1.0, VALKAP[ICOND] };
 
   for (int i = 1; i <= 3; i++) {
-    if (ETA[i] < 0.0) ETA[i] = 0.01;
+    if (ETA[i] < 0.0)
+      ETA[i] = 0.01;
     ETA[i] = ETA[i] * RNU[i] * RKAPPA[i] * 100.0;
-    if (QF != 0.0) ETA[i] = ETA[i] * QSD;
+    if (QF != 0.0)
+      ETA[i] = ETA[i] * QSD;
   }
 
   for (int i = 1; i <= 3; i++) {
@@ -892,10 +915,14 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
     IMIN = 1;
     IMAX = 3;
 
-    if (EQM[1] > EQM[2]) IMIN = 2;
-    if (EQM[IMIN] > EQM[3]) IMIN = 3;
-    if (EQM[3] < EQM[2]) IMAX = 2;
-    if (EQM[IMAX] < EQM[1]) IMAX = 1;
+    if (EQM[1] > EQM[2])
+      IMIN = 2;
+    if (EQM[IMIN] > EQM[3])
+      IMIN = 3;
+    if (EQM[3] < EQM[2])
+      IMAX = 2;
+    if (EQM[IMAX] < EQM[1])
+      IMAX = 1;
 
     int INUL = 6 - IMIN - IMAX;
     HELP1 = EQM[IMIN];
@@ -940,7 +967,8 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       HELP1 = sqrt(
           V[1][j][i] * V[1][j][i] + V[2][j][i] * V[2][j][i]
               + V[3][j][i] * V[3][j][i]);
-      if (V[3][j][i] < 0.0) HELP1 = -1.0 * HELP1;
+      if (V[3][j][i] < 0.0)
+        HELP1 = -1.0 * HELP1;
 
       for (int k = 1; k <= 3; k++)
         V[k][j][i] = V[k][j][i] / HELP1;
@@ -976,7 +1004,8 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       j = 2;
       HELP1 = PLUNGE[2][i];
     }
-    if (PLUNGE[3][i] > HELP1) j = 3;
+    if (PLUNGE[3][i] > HELP1)
+      j = 3;
     INFFTD[i] = INFO[j];
 
     if (PLUNGE[3][i] > PLUNGE[1][i]) {
@@ -1008,10 +1037,13 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
 
     //if(DIP[i][1] > 0.01) STRIKE[i][1] = atan2(X[1],-X[2]);
     //if(DIP[i][2] > 0.01) STRIKE[i][2] = atan2(Y[1],-Y[2]);
-    if (DIP[i][1] > 0.01) STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0; // Correction of ATAN2 error.
-    if (DIP[i][2] > 0.01) STRIKE[i][2] = datan2(Y[1], -Y[2]) * M_PI / 180.0; // Correction of ATAN2 error.
+    if (DIP[i][1] > 0.01)
+      STRIKE[i][1] = datan2(X[1], -X[2]) * M_PI / 180.0; // Correction of ATAN2 error.
+    if (DIP[i][2] > 0.01)
+      STRIKE[i][2] = datan2(Y[1], -Y[2]) * M_PI / 180.0; // Correction of ATAN2 error.
 
-    if (DIP[i][1] >= DIP[i][2]) continue;
+    if (DIP[i][1] >= DIP[i][2])
+      continue;
 
     HELP1 = DIP[i][1];
     DIP[i][1] = DIP[i][2];
@@ -1053,7 +1085,8 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
       //      IF(STRIKE(I,K).LT.0.) STRIKE(I,K)=360.+STRIKE(I,K)
       //   29 DIP(I,K)=DIP(I,K)*180./PI
       STRIKE[i][k] = STRIKE[i][k] * 180.0 / PI;
-      if (STRIKE[i][k] < 0.0) STRIKE[i][k] = 360.0 + STRIKE[i][k];
+      if (STRIKE[i][k] < 0.0)
+        STRIKE[i][k] = 360.0 + STRIKE[i][k];
       DIP[i][k] = DIP[i][k] * 180.0 / PI;
       //RAKE[i][k] = RAKE[i][k]*180.0/PI; // Latter calculations >>>>>
       // Removed in version 2.4.13 of FOCI
@@ -1069,7 +1102,8 @@ void Taquart::UsmtCore::XTRINF(int &ICOND, int LNORM, double Moment0[],
 
     for (int k = 1; k <= 3; k++) {
       TREND[i][k] = TREND[i][k] * 180.0 / PI;
-      if (TREND[i][k] < 0.0) TREND[i][k] = 360.0 + TREND[i][k];
+      if (TREND[i][k] < 0.0)
+        TREND[i][k] = 360.0 + TREND[i][k];
       PLUNGE[i][k] = PLUNGE[i][k] * 180.0 / PI;
     }
   }
@@ -1400,7 +1434,8 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     SIG = 0.0;
     for (int i = 1; i <= 6; i++) {
       double SIGH = sqrt(COV[i][i][1]);
-      if (SIG < SIGH) SIG = SIGH;
+      if (SIG < SIGH)
+        SIG = SIGH;
     }
     RMERR[1] = SIG;
 
@@ -1533,12 +1568,14 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   std::cout << std::endl;
 #endif
   //      IF(.NOT.REALLY) RETURN
-  if (!REALLY) return;
+  if (!REALLY)
+    return;
 
   SIG = 0.0;
   for (int i = 1; i <= 6; i++) {
     double SIGH = sqrt(COV[i][i][2]);
-    if (SIG < SIGH) SIG = SIGH;
+    if (SIG < SIGH)
+      SIG = SIGH;
   }
   RMERR[2] = SIG;
 
@@ -1572,16 +1609,23 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   EIG3(B, 1, EQM);
 
   RMX = EQM[1];
-  if (fabs(EQM[2]) < fabs(RMX)) RMX = EQM[2];
-  if (fabs(EQM[3]) < fabs(RMX)) RMX = EQM[3];
+  if (fabs(EQM[2]) < fabs(RMX))
+    RMX = EQM[2];
+  if (fabs(EQM[3]) < fabs(RMX))
+    RMX = EQM[3];
 
   RMY = EQM[3];
-  if (fabs(EQM[1]) > fabs(RMY)) RMY = EQM[1];
-  if (fabs(EQM[2]) > fabs(RMY)) RMY = EQM[2];
+  if (fabs(EQM[1]) > fabs(RMY))
+    RMY = EQM[1];
+  if (fabs(EQM[2]) > fabs(RMY))
+    RMY = EQM[2];
 
-  if (EQM[1] != RMX && EQM[1] != RMY) RMZ = EQM[1];
-  if (EQM[2] != RMX && EQM[2] != RMY) RMZ = EQM[2];
-  if (EQM[3] != RMX && EQM[3] != RMY) RMZ = EQM[3];
+  if (EQM[1] != RMX && EQM[1] != RMY)
+    RMZ = EQM[1];
+  if (EQM[2] != RMX && EQM[2] != RMY)
+    RMZ = EQM[2];
+  if (EQM[3] != RMX && EQM[3] != RMY)
+    RMZ = EQM[3];
 
   BETTER(RMY, RMZ, RM0[3], RMT[3], ICOND);
 
@@ -1637,7 +1681,8 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   SIG = 0.0;
   for (int i = 1; i <= 6; i++) {
     double SIGH = sqrt(COV[i][i][3]);
-    if (SIG < SIGH) SIG = SIGH;
+    if (SIG < SIGH)
+      SIG = SIGH;
   }
   RMERR[3] = SIG;
 
@@ -1677,20 +1722,21 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     Solution[3].Station[i - 1] = Station[i];
   }
 
+  //std::ofstream file("file.txt",std::ofstream::out | std::ofstream::app);
   for (int q = 1; q <= 3; q++) {
-    double uerr = 0.0;
-    double umax = -1.0e300;
-    double umin = +1.0e300;
-    double d = 0.0;
+    double up = 0.0;
+    double down = 0.0;
     for (int i = 1; i <= N; i++) {
-      d = UTH[i][q] - U[i];
-      uerr = uerr + d * d;
-      if (umax < d) umax = d;
-      if (umin > d) umin = d;
+      //file << UTH[i][q] << " " << U[i] << std::endl;
+      up += ((UTH[i][q] - U[i]) * (UTH[i][q] - U[i]));
+      down += (U[i] * U[i]);
     }
-    uerr = sqrt(uerr / N) / (umax - umin);
-    Solution[q].UERR = uerr;
+    if (down == 0.0)
+      Solution[q].UERR = 0.0;
+    else
+      Solution[q].UERR = sqrt(up / down);
   }
+  //file.close();
 
   for (int i = 1; i <= 3; i++) {
     int z = 0;
@@ -1797,9 +1843,11 @@ void Taquart::UsmtCore::LUDCMP(double B[][10], double A[][10], int INDX[],
   for (int i = 1; i <= NP; i++) {
     AAMAX = 0.0;
     for (int j = 1; j <= NP; j++) {
-      if (fabs(A[i][j]) > AAMAX) AAMAX = fabs(A[i][j]);
+      if (fabs(A[i][j]) > AAMAX)
+        AAMAX = fabs(A[i][j]);
     }
-    if (AAMAX == 0.0) AAMAX = TINY;
+    if (AAMAX == 0.0)
+      AAMAX = TINY;
     VV[i] = 1.0 / AAMAX;
   }
 
@@ -1836,7 +1884,8 @@ void Taquart::UsmtCore::LUDCMP(double B[][10], double A[][10], int INDX[],
       VV[IMAX] = VV[j];
     }
     INDX[j] = IMAX;
-    if (A[j][j] == 0.0) A[j][j] = TINY;
+    if (A[j][j] == 0.0)
+      A[j][j] = TINY;
     if (j != NP) {
       DUM = 1.0 / A[j][j];
       for (int i = j + 1; i <= NP; i++) {
@@ -1929,7 +1978,8 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   int IRMAX = 0;
 
   for (int i = 1; i <= 6; i++) {
-    if (fabs(RM[i][3]) < fabs(RMMAX)) continue;
+    if (fabs(RM[i][3]) < fabs(RMMAX))
+      continue;
     RMMAX = RM[i][3];
     IRMAX = i;
   }
@@ -2084,23 +2134,28 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
       X[i] = X[i] + BBINV[i][j] * CTDU[j];
   }
 
-  if (ITER == 1000) goto p3418;
-  if (ITER > 500) EPS = 1.0e-03;
+  if (ITER == 1000)
+    goto p3418;
+  if (ITER > 500)
+    EPS = 1.0e-03;
 
   for (int i = 1; i <= 8; i++) {
-    if (fabs(X[i]) > 1.0e+99) goto p3417;
+    if (fabs(X[i]) > 1.0e+99)
+      goto p3417;
   }
 
   for (int i = 1; i <= 3; i++) {
     DHELP1 = fabs(X[i + 3] - DE[i]);
     DHELP2 = fabs(DE[i]) * EPS;
-    if (DHELP1 > DHELP2 && fabs(DE[i]) > 1.0e-06) goto p3014;
+    if (DHELP1 > DHELP2 && fabs(DE[i]) > 1.0e-06)
+      goto p3014;
   }
 
   for (int i = 1; i <= 3; i++) {
     DHELP1 = fabs(X[i] - DN[i]);
     DHELP2 = fabs(DN[i]) * EPS;
-    if (DHELP1 > DHELP2 && fabs(DN[i]) > 1.0e-06) goto p3014;
+    if (DHELP1 > DHELP2 && fabs(DN[i]) > 1.0e-06)
+      goto p3014;
   }
   goto p3017;
 
@@ -2114,7 +2169,8 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
     DHELP2 = DHELP2 + DN[i] * DN[i];
   }
 
-  if (DHELP1 >= 1.0 || DHELP2 >= 1.0) goto p3417;
+  if (DHELP1 >= 1.0 || DHELP2 >= 1.0)
+    goto p3417;
   ITER++;
   goto p3012;
 
@@ -2122,7 +2178,8 @@ void Taquart::UsmtCore::BETTER(double &RMY, double &RMZ, double &RM0,
   goto p3419;
 
   p3417: ICOND = 3;
-  p3419: if (ISTA == 0) goto p8887;
+  p3419: if (ISTA == 0)
+    goto p8887;
 #ifdef USMTCORE_DEBUG
   std::cout << "Iteration does not converge - initial eigenvectors used. Double "
   "couple solution may be artificial.";
@@ -2208,7 +2265,8 @@ void Taquart::UsmtCore::VEIG(double &s1, double &s2, double &s3, double &s4,
   int IMAX = 1;
 
   for (int i = 2; i <= 6; i++) {
-    if (fabs(help0[i]) <= fabs(help0[1])) continue;
+    if (fabs(help0[i]) <= fabs(help0[1]))
+      continue;
     help0[1] = help0[i];
     IMAX = i;
   }
@@ -2289,7 +2347,8 @@ void Taquart::UsmtCore::ORT(double VE[], double VN[], double DE[],
     WN[i] = WN[i] / HELP;
 
   HELP = fabs(WE[1] * WN[1] + WE[2] * WN[2] + WE[3] * WN[3]);
-  if (HELP > 0.99) return;
+  if (HELP > 0.99)
+    return;
 
   for (int i = 1; i <= 3; i++)
     C[i] = 0.5 * (WN[i] + WE[i]);
@@ -2343,7 +2402,8 @@ bool Taquart::UsmtCore::ANGGA(void) {
   if (N >= FOCIMT_MIN_ALLOWED_CHANNELS) {
     for (int i = 1; i <= N; i++) {
       double HELP = TKF[i];
-      if (HELP == 90.0) HELP = 89.75; // Not clear why this constrain is here.
+      if (HELP == 90.0)
+        HELP = 89.75; // Not clear why this constrain is here.
       GA[i][3] = cos(HELP * DETOPI);
       HELP = sqrt(1.0 - GA[i][3] * GA[i][3]);
       GA[i][1] = cos(AZM[i] * DETOPI) * HELP;
@@ -2421,14 +2481,16 @@ bool Taquart::UsmtCore::JEZ(void) {
   for (int i = 1; i <= N; i++) {
     for (int j = 1; j <= 212; j++) {
       //      IF(.NOT.USEDAE(J)) GO TO 5
-      if (USEDAE[j] == false) continue;
+      if (USEDAE[j] == false)
+        continue;
 
       //      HELP=ABS(GA(I,1)*DAE(J,1)+GA(I,2)*DAE(J,2)+GA(I,3)*DAE(J,3))
       double HELP = fabs(
           GA[i][1] * DAE[j][1] + GA[i][2] * DAE[j][2] + GA[i][3] * DAE[j][3]);
 
       //      IF(HELP.LT..9659) GO TO 5
-      if (HELP < 0.9659) continue;
+      if (HELP < 0.9659)
+        continue;
 
       //      USEDAE(J)=.FALSE.
       //      NLIVE=NLIVE-1
@@ -2472,8 +2534,10 @@ bool Taquart::UsmtCore::JEZ(void) {
     QSD = SUM1 * SUM4 * SUM6 + 2 * SUM2 * SUM3 * SUM5 - SUM3 * SUM3 * SUM4
         - SUM1 * SUM5 * SUM5 - SUM2 * SUM2 * SUM6;
     QSD = fabs(QSD) / double(N * N * N);
-    if (QF == 2) QSD = 1.0 / (1.0 - alog(QSD));
-    if (QSD < 0.01) QSD = 0.01;
+    if (QF == 2)
+      QSD = 1.0 / (1.0 - alog(QSD));
+    if (QSD < 0.01)
+      QSD = 0.01;
     //      RETURN
     return true;
   }
@@ -2523,7 +2587,8 @@ void Taquart::UsmtCore::GSOL(double x[], int &iexp) {
   //double size = 0.0;
 
   //      IF((IEXP.LT.10).OR.(IEXP.GT.30)) IEXP=20
-  if (iexp < 10 || iexp > 30) iexp = 20;
+  if (iexp < 10 || iexp > 30)
+    iexp = 20;
 
   //      iter=0
   //      jter=1
@@ -2590,7 +2655,8 @@ void Taquart::UsmtCore::GSOL(double x[], int &iexp) {
                 f1(xtry, tryy);
 
                 //      if(try.gt.val) go to 3
-                if (tryy > val) continue;
+                if (tryy > val)
+                  continue;
 
                 //      val=try
                 //      ix(1)=j1
@@ -2642,7 +2708,8 @@ void Taquart::UsmtCore::f1(double X[], double &fff) {
     }
     fff = fff + fabs(sum - U[i]);
   }
-  if (fabs(fff) > 1e+30) fff = 1e+30;
+  if (fabs(fff) > 1e+30)
+    fff = 1e+30;
 }
 
 //-----------------------------------------------------------------------------
@@ -2659,7 +2726,8 @@ void Taquart::UsmtCore::GSOL5(double x[], int &IEXP) {
   //      iter=0
   //      jter=1
   //      val=1.d+30
-  if (IEXP < 10 || IEXP > 30) IEXP = 20;
+  if (IEXP < 10 || IEXP > 30)
+    IEXP = 20;
   int iter = 0;
   //int jter = 1;
   VAL = 1.0e+30;
@@ -2714,7 +2782,8 @@ void Taquart::UsmtCore::GSOL5(double x[], int &IEXP) {
               f2(xtry, TRY);
 
               //      if(try.gt.val) go to 3
-              if (TRY > VAL) continue;
+              if (TRY > VAL)
+                continue;
 
               //      val=try
               //      ix(1)=j1
@@ -2774,7 +2843,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
   Zero(&xmem[0][0], 36);
   Zero(vmem, 6);
 
-  if (IEXP < 10 || IEXP > 30) IEXP = 20;
+  if (IEXP < 10 || IEXP > 30)
+    IEXP = 20;
   double ZERO = 0.0;
   int iter = 0;
   for (int i = 1; i <= 5; i++) {
@@ -2807,7 +2877,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
           xtry[3] = xlo[3] + double(j3 - 1) * xstep[3];
           for (int j4 = 1; j4 <= 7; j4++) {
             xtry[4] = xlo[4] + double(j4 - 1) * xstep[4];
-            if (fabs(xtry[1]) < 1.0e-6) goto p23;
+            if (fabs(xtry[1]) < 1.0e-6)
+              goto p23;
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
             DEL = pow(TWO * y[2] * y[3], 2.0)
@@ -2815,24 +2886,28 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
                     * (y[4]
                         * (-pow(y[1], 2.0) - y[1] * y[4] - pow(y[3], 2.0)
                             + pow(y[2], 2.0)) + pow(y[2], 2.0) * y[1]);
-            if (DEL < ZERO) continue;
+            if (DEL < ZERO)
+              continue;
             DEL = sqrt(DEL);
             y[5] = (TWO * y[2] * y[3] + DEL) / TWO / y[1];
             xtry[5] = y[5] * 1.0e+10;
             f2(xtry, tryy);
-            if (tryy > val) goto p22;
+            if (tryy > val)
+              goto p22;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
             for (int i = 1; i <= 5; i++)
               x[i] = double(xtry[i]);
             p22: y[5] = (TWO * y[2] * y[3] - DEL) / TWO / y[1];
             xtry[5] = y[5] * 1.0e+10;
             f2(xtry, tryy);
-            if (tryy > val) continue;
+            if (tryy > val)
+              continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
             for (int i = 1; i <= 5; i++)
               x[i] = double(xtry[i]);
             continue;
-            p23: if (fabs(xtry[2]) < 1.0e-6 || fabs(xtry[3]) < 1.0e-6) continue;
+            p23: if (fabs(xtry[2]) < 1.0e-6 || fabs(xtry[3]) < 1.0e-6)
+              continue;
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
             DEL = y[4]
@@ -2841,7 +2916,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
             y[5] = -DEL / TWO / y[3] / y[2];
             xtry[5] = y[5] * 1.0e+10;
             f2(xtry, tryy);
-            if (tryy > val) continue;
+            if (tryy > val)
+              continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
             for (int i = 1; i <= 5; i++)
               x[i] = double(xtry[i]);
@@ -2850,7 +2926,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
       }
     }
 
-    if (val == 1e+30) goto p30;
+    if (val == 1e+30)
+      goto p30;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
@@ -2884,14 +2961,16 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
           xtry[3] = xlo[3] + double(j3 - 1) * xstep[3];
           for (int j4 = 1; j4 <= 7; j4++) {
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
-            if (fabs(xtry[1]) < 1.0e-06) goto p123;
+            if (fabs(xtry[1]) < 1.0e-06)
+              goto p123;
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
             DEL = pow(-pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0), 2.0)
                 + FOUR * y[1]
                     * (TWO * y[2] * y[3] * y[5] - y[1] * pow(y[5], 2.0)
                         + y[1] * pow(y[2], 2.0));
-            if (DEL < ZERO) continue;
+            if (DEL < ZERO)
+              continue;
 
             DEL = sqrt(DEL);
             y[4] = (-pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0) + DEL)
@@ -2910,7 +2989,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
 
             xtry[4] = y[4] * 1.0e+10;
             f2(xtry, tryy);
-            if (tryy > val) continue;
+            if (tryy > val)
+              continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
             //      DO 125 i=1,5
@@ -2925,7 +3005,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
               y[i] = xtry[i] * 1.0e-10;
 
             help = -pow(y[1], 2.0) - pow(y[3], 2.0) + pow(y[2], 2.0);
-            if (fabs(help) < 1.0e-20) continue;
+            if (fabs(help) < 1.0e-20)
+              continue;
             DEL = TWO * y[2] * y[3] * y[5] - y[5] * y[5] * y[1]
                 + y[2] * y[2] * y[1];
 
@@ -2943,7 +3024,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
       }
     }
 
-    if (val == 1.0e+30) goto p130;
+    if (val == 1.0e+30)
+      goto p130;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
@@ -2979,7 +3061,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
           xtry[4] = xlo[3] + double(j3 - 1) * xstep[3];
           for (int j4 = 1; j4 <= 7; j4++) {
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
-            if (fabs(xtry[4]) < 1.0e-06) goto p223;
+            if (fabs(xtry[4]) < 1.0e-06)
+              goto p223;
 
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
@@ -2990,7 +3073,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
                         - y[5] * y[5] * y[1] + y[2] * y[2] * y[1]
                         + y[2] * y[2] * y[4]);
 
-            if (DEL < ZERO) continue;
+            if (DEL < ZERO)
+              continue;
 
             DEL = sqrt(DEL);
             y[3] = (TWO * y[2] * y[5] + DEL) / TWO / y[4];
@@ -3007,7 +3091,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
 
             xtry[3] = y[3] * 1.0e+10;
             f2(xtry, tryy);
-            if (tryy > val) continue;
+            if (tryy > val)
+              continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
             for (int i = 1; i <= 5; i++)
@@ -3037,7 +3122,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
       }
     }
 
-    if (val == 1.0e+30) goto p230;
+    if (val == 1.0e+30)
+      goto p230;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
@@ -3074,7 +3160,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
           xtry[4] = xlo[3] + double(j3 - 1) * xstep[3];
           for (int j4 = 1; j4 <= 7; j4++) {
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
-            if (fabs(xtry[4] + xtry[1]) < 1.0e-06) goto p323;
+            if (fabs(xtry[4] + xtry[1]) < 1.0e-06)
+              goto p323;
 
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
@@ -3084,7 +3171,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
                     * (-y[1] * y[1] * y[4] - y[1] * y[4] * y[4]
                         - y[5] * y[5] * y[1] - y[3] * y[3] * y[4]);
 
-            if (DEL < ZERO) continue;
+            if (DEL < ZERO)
+              continue;
 
             DEL = sqrt(DEL);
             y[2] = (-TWO * y[3] * y[5] - DEL) / TWO / (y[1] + y[4]);
@@ -3101,7 +3189,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
             xtry[2] = y[2] * 1.0e+10;
             f2(xtry, tryy);
 
-            if (tryy > val) continue;
+            if (tryy > val)
+              continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
             for (int i = 1; i <= 5; i++)
@@ -3130,7 +3219,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
         }
       }
     }
-    if (val == 1.0e+30) goto p330;
+    if (val == 1.0e+30)
+      goto p330;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
@@ -3164,7 +3254,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
           for (int j4 = 1; j4 <= 7; j4++) {
             xtry[5] = xlo[4] + double(j4 - 1) * xstep[4];
 
-            if (fabs(xtry[4]) < 1.0e-06) goto p423;
+            if (fabs(xtry[4]) < 1.0e-06)
+              goto p423;
 
             for (int i = 1; i <= 5; i++)
               y[i] = xtry[i] * 1.0e-10;
@@ -3174,7 +3265,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
                     * (TWO * y[2] * y[3] * y[5] - y[4] * y[3] * y[3]
                         + y[4] * y[2] * y[2]);
 
-            if (DEL < ZERO) continue;
+            if (DEL < ZERO)
+              continue;
 
             DEL = sqrt(DEL);
             y[1] = (-y[4] * y[4] - y[5] * y[5] + y[2] * y[2] + DEL) / TWO
@@ -3193,7 +3285,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
 
             xtry[1] = y[1] * 1.0e+10;
             f2(xtry, tryy);
-            if (tryy > val) continue;
+            if (tryy > val)
+              continue;
             RENUM(tryy, val, ix, j1, j2, j3, j4);
 
             for (int i = 1; i <= 5; i++)
@@ -3203,7 +3296,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
               y[i] = xtry[i] * 1.0e-10;
 
             help = -pow(y[4], 2.0) - pow(y[5], 2.0) + pow(y[2], 2.0);
-            if (fabs(help) < 1.0e-20) continue;
+            if (fabs(help) < 1.0e-20)
+              continue;
             DEL = TWO * y[2] * y[3] * y[5] - y[3] * y[3] * y[4]
                 + y[2] * y[2] * y[4];
 
@@ -3220,7 +3314,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
       }
     }
 
-    if (val == 1.0e+30) goto p430;
+    if (val == 1.0e+30)
+      goto p430;
     for (int i = 1; i <= 4; i++) {
       xhi[i] = xlo[i] + double(ix[i] + 1) * xstep[i];
       xlo[i] = xlo[i] + double(ix[i] - 3) * xstep[i];
@@ -3231,7 +3326,8 @@ void Taquart::UsmtCore::GSOLA(double x[], int &IEXP) {
   vmem[5] = val;
 
   p430: for (int i = 1; i <= 4; i++) {
-    if (vmem[i] > vmem[5]) break;
+    if (vmem[i] > vmem[5])
+      break;
     vmem[5] = vmem[i];
     for (int j = 1; j <= 5; j++)
       x[j] = xmem[i][j];
@@ -3249,7 +3345,8 @@ void Taquart::UsmtCore::f2(double x[], double &ffg) {
     SUM -= (A[i][6] * (x[1] + x[4]));
     ffg += fabs(SUM - U[i]);
   }
-  if (fabs(ffg) > 1.0e+30) ffg = 1.0e+30;
+  if (fabs(ffg) > 1.0e+30)
+    ffg = 1.0e+30;
 }
 
 //-----------------------------------------------------------------------------
@@ -3308,7 +3405,8 @@ double Taquart::UsmtCore::DETR(double T[], double X) {
   double S[6 + 1];
   double SKAL = fabs(T[1]) + fabs(T[2]) + fabs(T[3]) + fabs(T[4]) + fabs(T[5])
       + fabs(T[6]);
-  if (SKAL < 1.0) SKAL = 1.0;
+  if (SKAL < 1.0)
+    SKAL = 1.0;
   for (int i = 1; i <= 6; i++)
     S[i] = T[i] / SKAL;
   double Y = X / SKAL;
