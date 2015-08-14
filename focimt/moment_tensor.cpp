@@ -166,7 +166,7 @@ int main(int argc, char* argv[]) {
                         + 0.5);
             break;
           case 16:
-            std::cout << "Rev. 3.1.13, 2015.08.12\n"
+            std::cout << "Rev. 3.1.14, 2015.08.14\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon\n";
             break;
         }
@@ -201,11 +201,11 @@ int main(int argc, char* argv[]) {
       VelocityFile >> n;
       for (int i = 0; i < n; i++) {
         VelocityFile >> v;
-        Top.push_back(v * 10.0);
+        Top.push_back(v);
       }
       for (int i = 0; i < n; i++) {
         VelocityFile >> v;
-        Velocity.push_back(v * 10.0);
+        Velocity.push_back(v);
       }
 
       // Try to read one more variable, if it contains "DATA", calculate
@@ -226,7 +226,7 @@ int main(int argc, char* argv[]) {
           VelocityFile >> depth;
           VelocityFile >> delta;
 
-          CalcTravelTime1D(sta_elev*10.0, depth*10.0, delta*10.0, Top, Velocity, traveltime,
+          CalcTravelTime1D(sta_elev, depth, delta, Top, Velocity, traveltime,
               takeoff, directphase, aoi, kk, ray_dist);
 
           OutFile << sta_elev << " ";
@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
           OutFile << takeoff << " ";
           OutFile << aoi << " ";
           OutFile << kk << " ";
-          OutFile << ray_dist * 0.1 << std::endl;
+          OutFile << ray_dist << std::endl;
         }
         OutFile.close();
         VelocityFile.close();
