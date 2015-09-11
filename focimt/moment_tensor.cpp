@@ -129,8 +129,7 @@ int main(int argc, char* argv[]) {
             if (Temp.Pos("/")) {
               AmpFactor = Temp.SubString(1, Temp.Pos("/") - 1).ToDouble();
               AmplitudeN = Temp.SubString(Temp.Pos("/") + 1, 1000).ToInt();
-            }
-            else {
+            } else {
               AmpFactor = Temp.ToDouble();
             }
             break;
@@ -183,8 +182,7 @@ int main(int argc, char* argv[]) {
       //FilenameOut = Taquart::ExtractFileName(FilenameIn);
       //if (FilenameOut.Pos("."))
       //  FilenameOut = FilenameOut.SubString(1, FilenameOut.Pos(".") - 1);
-    }
-    else if (FilenameOut.Length() == 0
+    } else if (FilenameOut.Length() == 0
         && (DrawFaultOnly == true || DrawFaultsOnly == true
             || DrawStationsOnly == true)) {
       FilenameOut = "beachball";
@@ -344,8 +342,7 @@ int main(int argc, char* argv[]) {
           il.ChannelActive = true;
           InputData.Add(il);
         }
-      }
-      else {
+      } else {
         // Read formatted input file (standard foci-mt format)
         InputFile >> fileid;
         InputFile >> N;
@@ -383,7 +380,8 @@ int main(int argc, char* argv[]) {
         }
       }
 
-      if (!InputFile.good()) continue;
+      if (!InputFile.good())
+        continue;
 
       //---- Perform moment tensor inversion.
       std::vector<Taquart::FaultSolutions> FSList;
@@ -400,8 +398,7 @@ int main(int argc, char* argv[]) {
         fs.DoubleCoupleSolution = TransferSolution(
             Taquart::stDoubleCoupleSolution);
         FSList.push_back(fs);
-      }
-      catch (...) {
+      } catch (...) {
         std::cout << "Inversion error." << std::endl;
         return 1;
       }
@@ -440,14 +437,12 @@ int main(int argc, char* argv[]) {
             fs.DoubleCoupleSolution = TransferSolution(
                 Taquart::stDoubleCoupleSolution);
             FSList.push_back(fs);
-          }
-          catch (...) {
+          } catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
         }
-      }
-      else if (JacknifeTest) {
+      } else if (JacknifeTest) {
         const Taquart::SMTInputData fd = InputData;
         const unsigned int Count = InputData.Count();
 
@@ -471,14 +466,12 @@ int main(int argc, char* argv[]) {
             fs.DoubleCoupleSolution = TransferSolution(
                 Taquart::stDoubleCoupleSolution);
             FSList.push_back(fs);
-          }
-          catch (...) {
+          } catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
         }
-      }
-      else if (BootstrapTest) {
+      } else if (BootstrapTest) {
         // Perform boostrap resampling of original dataset.
         const unsigned int StationCount = InputData.Count();
         Taquart::SMTInputData BootstrapData;
@@ -507,8 +500,7 @@ int main(int argc, char* argv[]) {
             fs.DoubleCoupleSolution = TransferSolution(
                 Taquart::stDoubleCoupleSolution);
             FSList.push_back(fs);
-          }
-          catch (...) {
+          } catch (...) {
             std::cout << "Inversion error." << std::endl;
             return 1;
           }
@@ -518,10 +510,14 @@ int main(int argc, char* argv[]) {
       //---- Produce output file and graphical representation of the moment tensor using Cairo library.
 
       // Beach ball properties.
-      if (Projection.Pos("W") > 0) WulffProjection = true;
-      if (Projection.Pos("S") > 0) WulffProjection = false;
-      if (Projection.Pos("U") > 0) LowerHemisphere = false;
-      if (Projection.Pos("L") > 0) LowerHemisphere = true;
+      if (Projection.Pos("W") > 0)
+        WulffProjection = true;
+      if (Projection.Pos("S") > 0)
+        WulffProjection = false;
+      if (Projection.Pos("U") > 0)
+        LowerHemisphere = false;
+      if (Projection.Pos("L") > 0)
+        LowerHemisphere = true;
       DrawStations = BallContent.Pos("S") > 0 ? true : false;
       DrawAxes = BallContent.Pos("A") > 0 ? true : false;
       DrawCross = BallContent.Pos("C") > 0 ? true : false;
@@ -569,8 +565,7 @@ int main(int argc, char* argv[]) {
               // No common file name, use file id instead.
               OutName = Taquart::String(fileid) + "-" + FSuffix + ".asc";
               OutName2 = Taquart::String(fileid) + "-" + FSuffix + "-u.asc";
-            }
-            else {
+            } else {
               OutName = FilenameOut + "-" + FSuffix + ".asc";
               OutName2 = FilenameOut + "-" + FSuffix + "-u.asc";
             }
@@ -599,7 +594,8 @@ int main(int argc, char* argv[]) {
             else
               sprintf(txtb, "%c%s%d", Type, FOCIMT_SEP, Channel);
             OutFile << txtb;
-            if (ExportU) OutFile2 << txtb;
+            if (ExportU)
+              OutFile2 << txtb;
 
             for (int i = 1; i <= DumpOrder.Length(); i++) {
               // M - moment, D - decomposition, A - axis, F - fault planes,
@@ -613,8 +609,7 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.M[2][2];
                 OutFile << FOCIMT_SEP << Solution.M[2][3];
                 OutFile << FOCIMT_SEP << Solution.M[3][3];
-              }
-              else if (DumpOrder[i] == 'm') {
+              } else if (DumpOrder[i] == 'm') {
                 sprintf(txtb,
                     "%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e",
                     FOCIMT_SEP2, Solution.M[1][1], FOCIMT_SEP2,
@@ -634,8 +629,7 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.M[1][3];
                 OutFile << FOCIMT_SEP << -Solution.M[2][3];
                 OutFile << FOCIMT_SEP << -Solution.M[1][2];
-              }
-              else if (DumpOrder[i] == 'c') {
+              } else if (DumpOrder[i] == 'c') {
                 sprintf(txtb,
                     "%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e%s%13.5e",
                     FOCIMT_SEP2, Solution.M[3][3], FOCIMT_SEP2,
@@ -652,8 +646,7 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.EXPL;
                 OutFile << FOCIMT_SEP << Solution.CLVD;
                 OutFile << FOCIMT_SEP << Solution.DBCP;
-              }
-              else if (DumpOrder[i] == 'd') {
+              } else if (DumpOrder[i] == 'd') {
                 sprintf(txtb, "%s%+7.1f%s%+7.1f%s%+7.1f", FOCIMT_SEP2,
                     Solution.EXPL,
                     FOCIMT_SEP2, Solution.CLVD, FOCIMT_SEP2, Solution.DBCP);
@@ -668,8 +661,7 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.TXPL;
                 OutFile << FOCIMT_SEP << Solution.BXTR;
                 OutFile << FOCIMT_SEP << Solution.BXPL;
-              }
-              else if (DumpOrder[i] == 'a') {
+              } else if (DumpOrder[i] == 'a') {
                 sprintf(txtb, "%s%5.1f%s%4.1f%s%5.1f%s%4.1f%s%5.1f%s%4.1f",
                 FOCIMT_SEP2, Solution.PXTR, FOCIMT_SEP2, Solution.PXPL,
                 FOCIMT_SEP2, Solution.TXTR, FOCIMT_SEP2, Solution.TXPL,
@@ -685,8 +677,7 @@ int main(int argc, char* argv[]) {
                 OutFile << FOCIMT_SEP << Solution.FIB;
                 OutFile << FOCIMT_SEP << Solution.DLB;
                 OutFile << FOCIMT_SEP << Solution.RAKEB;
-              }
-              else if (DumpOrder[i] == 'f') {
+              } else if (DumpOrder[i] == 'f') {
                 sprintf(txtb, "%s%5.1f%s%4.1f%s%6.1f%s%5.1f%s%4.1f%s%6.1f",
                 FOCIMT_SEP2, Solution.FIA, FOCIMT_SEP2, Solution.DLA,
                 FOCIMT_SEP2, Solution.RAKEA, FOCIMT_SEP2, Solution.FIB,
@@ -735,8 +726,7 @@ int main(int argc, char* argv[]) {
                       << Solution.U_measured[r] << FOCIMT_SEP
                       << Solution.U_th[r] << std::endl;
                 }
-              }
-              else if (DumpOrder[i] == 'u' && ExportU) {
+              } else if (DumpOrder[i] == 'u' && ExportU) {
                 OutFile2 << FOCIMT_SEP2 << Solution.U_n << std::endl;
                 for (int r = 0; r < Solution.U_n; r++) {
                   sprintf(txtb, "%5s%s%13.5e%s%13.5e",
@@ -750,8 +740,7 @@ int main(int argc, char* argv[]) {
               // Export std error of displacement fit.
               if (DumpOrder[i] == 'E') {
                 OutFile << FOCIMT_SEP << Solution.UERR;
-              }
-              else if (DumpOrder[i] == 'e') {
+              } else if (DumpOrder[i] == 'e') {
                 sprintf(txtb, "%s%11.3e", FOCIMT_SEP2, Solution.UERR);
                 OutFile << txtb;
               }
@@ -761,8 +750,7 @@ int main(int argc, char* argv[]) {
                 for (int q = 1; q <= 6; q++) {
                   OutFile << FOCIMT_SEP << Solution.Covariance[q][q];
                 }
-              }
-              else if (DumpOrder[i] == 'v') {
+              } else if (DumpOrder[i] == 'v') {
                 sprintf(txtb,
                     "%s%11.3e%s%11.3e%s%11.3e%s%11.3e%s%11.3e%s%11.3e",
                     FOCIMT_SEP2, Solution.Covariance[1][1], FOCIMT_SEP2,
@@ -783,7 +771,8 @@ int main(int argc, char* argv[]) {
             OutFile.close();
 
             // Do not dump anything.
-            if (OutputFileType.Pos("NONE") && j == 0) continue;
+            if (OutputFileType.Pos("NONE") && j == 0)
+              continue;
 
             Taquart::String Formats[] = { "PNG", "SVG", "PS", "PDF" };
             Taquart::TriCairo_CanvasType ctype[] = { Taquart::ctSurface,
@@ -792,20 +781,27 @@ int main(int argc, char* argv[]) {
               for (int q = 0; q < 4; q++) {
                 if (OutputFileType.Pos(Formats[q])) {
                   try {
-                    Taquart::String OutName = Taquart::String(fileid) + "-"
-                        + FSuffix + "." + Formats[q].LowerCase();
+                    Taquart::String OutName;
+                    if (FilenameOut.Length() == 0) {
+                      OutName = Taquart::String(fileid) + "-" + FSuffix + "."
+                          + Formats[q].LowerCase();
+                    } else {
+                      Taquart::String path;
+                      Taquart::String null;
+                      SplitFilename(FilenameOut, null, path);
+                      OutName = path + Taquart::String("/") + Taquart::String(fileid) + "-" + FSuffix
+                          + "." + Formats[q].LowerCase();
+                    }
                     if (ctype[q] == Taquart::ctSurface) {
                       Taquart::TriCairo_Meca Meca(Size, Size, ctype[q]);
                       GenerateBallCairo(Meca, FSList, InputData, FSuffix);
                       Meca.Save(OutName);
-                    }
-                    else {
+                    } else {
                       Taquart::TriCairo_Meca Meca(Size, Size, ctype[q],
                           OutName);
                       GenerateBallCairo(Meca, FSList, InputData, FSuffix);
                     }
-                  }
-                  catch (...) {
+                  } catch (...) {
                     return 2;
                   }
                 }
@@ -817,8 +813,7 @@ int main(int argc, char* argv[]) {
     }
     //InputFile.close();
     return 0;
-  }
-  catch (...) {
+  } catch (...) {
     return 1; // Some undefined error occurred, error code 1.
   }
 }
