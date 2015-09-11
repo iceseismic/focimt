@@ -87,11 +87,9 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   if (FSList.size() > 0) {
     if (Type == Taquart::String("dc")) {
       s = FSList[0].DoubleCoupleSolution;
-    }
-    else if (Type == "deviatoric") {
+    } else if (Type == "deviatoric") {
       s = FSList[0].TraceNullSolution;
-    }
-    else if (Type == "full") {
+    } else if (Type == "full") {
       s = FSList[0].FullSolution;
     }
   }
@@ -143,7 +141,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       double GA[5];
 
       double Tko = il.TakeOff;
-      if (Tko == 90.0f) Tko = 89.75f;
+      if (Tko == 90.0f)
+        Tko = 89.75f;
 
       GA[3] = cos(Tko * DEG2RAD);
       double help = sqrt(1.0f - GA[3] * GA[3]);
@@ -164,7 +163,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     Meca.Axis(T, "T");
   }
 
-  if (DrawCross) Meca.CenterCross();
+  if (DrawCross)
+    Meca.CenterCross();
 
   // Draw double-couple lines.
   if (DrawDC && FSList.size() > 0) {
@@ -193,11 +193,9 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       // Set color in response to the type of the fault.
       if (s->Type == "NF") {
         Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.7);
-      }
-      else if (s->Type == "TF") {
+      } else if (s->Type == "TF") {
         Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.7);
-      }
-      else {
+      } else {
         Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.7);
       }
 
@@ -226,8 +224,7 @@ void DispatchStations(Taquart::String &StationString,
     if (StationString.Pos(":")) {
       name = StationString.SubString(1, StationString.Pos(":") - 1);
       Dispatch(StationString, temp, ":"); // Cut rake part first, as it was already interpreted.
-    }
-    else {
+    } else {
       name = StationString.Trim();
       StationString = "";
     }
@@ -269,8 +266,7 @@ void DispatchFaults(Taquart::String &FaultString,
   if (FaultString.Pos(":")) {
     rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
     Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-  }
-  else {
+  } else {
     rake = FaultString.Trim().ToDouble();
     FaultString = "";
   }
@@ -288,7 +284,8 @@ void DispatchFaults(Taquart::String &FaultString,
   fs.DoubleCoupleSolution = fu;
   FSList.push_back(fs);
 
-  if (onefault) return;
+  if (onefault)
+    return;
 
   while (FaultString.Length()) {
     Dispatch(FaultString, temp, "/");
@@ -298,8 +295,7 @@ void DispatchFaults(Taquart::String &FaultString,
     if (FaultString.Pos(":")) {
       rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
       Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-    }
-    else {
+    } else {
       rake = FaultString.Trim().ToDouble();
       FaultString = "";
     }
@@ -317,6 +313,19 @@ void DispatchFaults(Taquart::String &FaultString,
     FSList.push_back(fs);
   }
 
+}
+
+//-----------------------------------------------------------------------------
+void SplitFilename(Taquart::String& str2, Taquart::String &file,
+    Taquart::String &path) {
+  size_t found;
+  std::string str(str2.c_str());
+  //cout << "Splitting: " << str << endl;
+  found = str.find_last_of("/\\");
+  //cout << " folder: " << str.substr(0,found) << endl;
+  path = Taquart::String(str.substr(0, found));
+  //cout << " file: " << str.substr(found+1) << endl;
+  file = Taquart::String(str.substr(found + 1));
 }
 
 //-----------------------------------------------------------------------------

@@ -66,7 +66,8 @@ void PlotStations(Taquart::String FaultString, Taquart::String FilenameOut,
 void DrawFaultsStations(Taquart::String FaultString,
     Taquart::String StationString, Taquart::String FilenameOut,
     unsigned int Size);
-
+void SplitFilename(Taquart::String& str2, Taquart::String &file,
+    Taquart::String &path);
 
 //-----------------------------------------------------------------------------
 #endif /* FOCIMTAUX_H_ */
