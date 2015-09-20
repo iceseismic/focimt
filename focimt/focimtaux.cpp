@@ -455,7 +455,8 @@ void PrepareHelp(Options &listOpts) {
           "         (all values are in degrees)                                           \n"
           "    [D]: Decomposition of the moment tensor into Isotropic, Compensated linear \n"
           "         vector dipole and double couple in format: ISO/CLVD/DBCP. The numbers \n"
-          "         are provided in percents                                              \n"
+          "         are provided in percents and calculated according to Jost and Herrmann\n"
+          "         approach.                                                             \n"
           "    [A]: P/T/B Axes orientations in format:                                    \n"
           "         PTREND/PPLUNGE/TTREND/TPLUNGE/BTREND/BPLUNGE                          \n"
           "         All values are in degrees.                                            \n"
@@ -467,9 +468,9 @@ void PrepareHelp(Options &listOpts) {
           "         faulting style is strike-slip, normal or thrust, respectively.        \n"
           "    [U]: Vector of synthetic displacements calculated (the number of exported  \n"
           "         numbers correspond to the number of amplitudes in the input file.     \n"
-          "    [E]: RMS Error calculated from theoretical and measured ground             \n"
-          "         displacements.                                                        \n"
-          "    [V]: Diagonal elements of covariance matrix in the following order:        \n"
+          "    [E]: Scaled RMS Error calculated between theoretical and measured seismic  \n"
+          "         moments.                                                              \n"
+          "    [V]: Diagonal elements of the MT covariance matrix in the following order: \n"
           "         C11, C22, C33, C44, C55, C66                                          \n"
           "    [*]: Export new line character                                             \n"
           "                                                                               \n"
@@ -487,10 +488,10 @@ void PrepareHelp(Options &listOpts) {
   // 8
   listOpts.addOption("m", "model",
       "Velocity model file (with extension)                 \n\n"
-          "    Velocity model in HYPO71 format. Forces different input file format.       \n",
+          "    Velocity model in HYPO71 format. Imposes different ASCII input file format.\n",
       true);
   // 9
-  listOpts.addOption("j", "jacknife", "Switches on/off Jacknife test.\n");
+  listOpts.addOption("j", "jacknife", "Performs station Jacknife test.\n");
   // 10
   listOpts.addOption("a", "amplitude",
       "Perform amplitude test.                              \n\n"
@@ -525,9 +526,9 @@ void PrepareHelp(Options &listOpts) {
       true);
   // 15
   listOpts.addOption("r", "resampling",
-      "Bootstrap resampling of original input dataset      \n\n"
-          "    Number of bootstrap resamplings                                            \n",
+      "Perform bootstrap resampling of the input dataset    \n\n"
+          "    Number of bootstrap resamplings.                                           \n",
       true);
   // 16
-  listOpts.addOption("v", "version", "Display foci-mt version");
+  listOpts.addOption("v", "version", "Display fociMT version info");
 }
