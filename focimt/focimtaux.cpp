@@ -28,6 +28,7 @@
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 #include "focimtaux.h"
+#include <iostream>
 //-----------------------------------------------------------------------------
 
 // Default values.
@@ -169,6 +170,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   // Draw double-couple lines.
   if (DrawDC && FSList.size() > 0) {
     Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
+    //std::cout << s.FIA << " " << s.DLA << std::endl;
     Meca.DoubleCouple(s.FIA, s.DLA);
     Meca.DoubleCouple(s.FIB, s.DLB);
   }
@@ -198,6 +200,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       } else {
         Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.7);
       }
+
+      //std::cout << s -> FIA << " " << s -> DLA << std::endl;
 
       Meca.DoubleCouple(s->FIA, s->DLA);
       Meca.DoubleCouple(s->FIB, s->DLB);
@@ -276,6 +280,8 @@ void DispatchFaults(Taquart::String &FaultString,
   Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
       M11, M22, M33, M12, M13, M23);
 
+  //std::cout << "FPS: " << strike << " " << dip << " " << rake << std::endl;
+
   fs.Type = 'N';
   fs.Channel = 0;
   SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
@@ -307,6 +313,7 @@ void DispatchFaults(Taquart::String &FaultString,
     fs.Type = 'J';
     fs.Channel = 0;
     SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
+    //std::cout << "FPS: " << fu.FIA << " " << fu.DLA << " " << fu.RAKEA<< std::endl;
     fs.FullSolution = fu;
     fs.TraceNullSolution = fu;
     fs.DoubleCoupleSolution = fu;
@@ -339,7 +346,7 @@ void PlotStations(Taquart::String FaultString, Taquart::String FilenameOut,
 
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
-  GenerateBallCairo(Meca, FSList, InputData, "dbcp");
+  GenerateBallCairo(Meca, FSList, InputData, "dc");
   Meca.Save(OutName);
 }
 
@@ -355,7 +362,7 @@ void DrawFaultsStations(Taquart::String FaultString,
 
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
-  GenerateBallCairo(Meca, FSList, InputData, "dbcp");
+  GenerateBallCairo(Meca, FSList, InputData, "dc");
   Meca.Save(OutName);
 
 }
@@ -371,7 +378,7 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
 
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
-  GenerateBallCairo(Meca, FSList, InputData, "dbcp");
+  GenerateBallCairo(Meca, FSList, InputData, "dc");
   Meca.Save(OutName);
 
 }
@@ -388,7 +395,7 @@ void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
 
   Taquart::String OutName = FilenameOut + ".png";
   Taquart::TriCairo_Meca Meca(Size, Size, Taquart::ctSurface);
-  GenerateBallCairo(Meca, FSList, InputData, "dbcp");
+  GenerateBallCairo(Meca, FSList, InputData, "dc");
   Meca.Save(OutName);
 }
 
