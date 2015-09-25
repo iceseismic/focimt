@@ -566,6 +566,54 @@ int main(int argc, char* argv[]) {
               break;
           }
 
+          // Export graphical representation
+          if (OutputFileType.Pos("NONE") == 0 && j == 0) {
+            Taquart::String Formats[] = { "PNG", "SVG", "PS", "PDF" };
+            Taquart::TriCairo_CanvasType ctype[] = { Taquart::ctSurface,
+                Taquart::ctSVG, Taquart::ctPS, Taquart::ctPDF };
+
+            for (int q = 0; q < 4; q++) {
+              if (OutputFileType.Pos(Formats[q])) {
+                try {
+                  Taquart::String OutName;
+                  if (FilenameOut.Length() == 0) {
+                    OutName = Taquart::String(fileid) + "-" + FSuffix + "."
+                        + Formats[q].LowerCase();
+                  }
+                  else {
+                    Taquart::String path;
+                    Taquart::String file;
+                    SplitFilename(FilenameOut, file, path);
+                    //std::cout << path.Length();
+                    //std::cout << file.Length();
+                    if (path == file) {
+                      OutName = path + "-" + FSuffix + "."
+                          + Formats[q].LowerCase();
+                    }
+                    else {
+                      OutName = path + Taquart::String("/")
+                          + Taquart::String(fileid) + "-" + FSuffix + "."
+                          + Formats[q].LowerCase();
+                    }
+                  }
+                  if (ctype[q] == Taquart::ctSurface) {
+                    Taquart::TriCairo_Meca Meca(Size, Size, ctype[q]);
+                    GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+                    Meca.Save(OutName);
+                  }
+                  else {
+                    Taquart::TriCairo_Meca Meca(Size, Size, ctype[q], OutName);
+                    GenerateBallCairo(Meca, FSList, InputData, FSuffix);
+                  }
+                }
+                catch (...) {
+                  return 2;
+                }
+              }
+
+            }
+          }
+
           // Output text data if necessary.
           if (DumpOrder.Length()) {
 
@@ -789,55 +837,6 @@ int main(int argc, char* argv[]) {
             OutFile << FOCIMT_NEWLINE;
             OutFile.close();
 
-            // Do not dump anything.
-            if (OutputFileType.Pos("NONE") && j == 0)
-              continue;
-
-            Taquart::String Formats[] = { "PNG", "SVG", "PS", "PDF" };
-            Taquart::TriCairo_CanvasType ctype[] = { Taquart::ctSurface,
-                Taquart::ctSVG, Taquart::ctPS, Taquart::ctPDF };
-            if (j == 0) {
-              for (int q = 0; q < 4; q++) {
-                if (OutputFileType.Pos(Formats[q])) {
-                  try {
-                    Taquart::String OutName;
-                    if (FilenameOut.Length() == 0) {
-                      OutName = Taquart::String(fileid) + "-" + FSuffix + "."
-                          + Formats[q].LowerCase();
-                    }
-                    else {
-                      Taquart::String path;
-                      Taquart::String file;
-                      SplitFilename(FilenameOut, file, path);
-                      //std::cout << path.Length();
-                      //std::cout << file.Length();
-                      if (path == file) {
-                        OutName = path + "-" + FSuffix + "."
-                            + Formats[q].LowerCase();
-                      }
-                      else {
-                        OutName = path + Taquart::String("/")
-                            + Taquart::String(fileid) + "-" + FSuffix + "."
-                            + Formats[q].LowerCase();
-                      }
-                    }
-                    if (ctype[q] == Taquart::ctSurface) {
-                      Taquart::TriCairo_Meca Meca(Size, Size, ctype[q]);
-                      GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-                      Meca.Save(OutName);
-                    }
-                    else {
-                      Taquart::TriCairo_Meca Meca(Size, Size, ctype[q],
-                          OutName);
-                      GenerateBallCairo(Meca, FSList, InputData, FSuffix);
-                    }
-                  }
-                  catch (...) {
-                    return 2;
-                  }
-                }
-              }
-            }
           } // Loop for all solution types.
         } // Loof for all events
       }
