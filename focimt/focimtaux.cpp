@@ -132,6 +132,58 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     Meca.Tensor(T, N, P);
   }
 
+
+
+  if (DrawCross)
+    Meca.CenterCross();
+
+  // If MORE than one solution on the list, plot additional DC lines.
+  if (FSList.size() > 1) {
+    for (unsigned int i = 1; i < FSList.size(); i++) {
+      Meca.BDCColor = Taquart::TCColor(0.5, 0.5, 0.5, 0.5);
+
+      Taquart::FaultSolution * s;
+
+      if (Type == "dc") {
+        s = &FSList[i].DoubleCoupleSolution;
+      }
+      if (Type == "deviatoric") {
+        s = &FSList[i].TraceNullSolution;
+      }
+      if (Type == "full") {
+        s = &FSList[i].FullSolution;
+      }
+
+      // Set color in response to the type of the fault.
+      if (s->Type == "NF") {
+        Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.5);
+      } else if (s->Type == "TF") {
+        Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.5);
+      } else {
+        Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.5);
+      }
+
+      //std::cout << s -> FIA << " " << s -> DLA << std::endl;
+
+      Meca.DoubleCouple(s->FIA, s->DLA);
+      Meca.DoubleCouple(s->FIB, s->DLB);
+    }
+  }
+
+  // Draw double-couple lines.
+  if (DrawDC && FSList.size() > 0) {
+    Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
+    //std::cout << s.FIA << " " << s.DLA << std::endl;
+    Meca.DoubleCouple(s.FIA, s.DLA);
+    Meca.DoubleCouple(s.FIB, s.DLB);
+  }
+
+  // Draw P and T axes' directions.
+  if (DrawAxes && FSList.size() > 0) {
+    Meca.Axis(P, "P");
+    Meca.Axis(T, "T");
+  }
+
   // Draw stations.
   if (DrawStations) {
     for (unsigned int i = 0; i < id.Count(); i++) {
@@ -155,58 +207,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       double mx, my;
       Meca.Station(GA, U, Name, mx, my);
     }
-
   }
 
-  // Draw P and T axes' directions.
-  if (DrawAxes && FSList.size() > 0) {
-    Meca.Axis(P, "P");
-    Meca.Axis(T, "T");
-  }
-
-  if (DrawCross)
-    Meca.CenterCross();
-
-  // Draw double-couple lines.
-  if (DrawDC && FSList.size() > 0) {
-    Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
-    //std::cout << s.FIA << " " << s.DLA << std::endl;
-    Meca.DoubleCouple(s.FIA, s.DLA);
-    Meca.DoubleCouple(s.FIB, s.DLB);
-  }
-
-  // If MORE than one solution on the list, plot additional DC lines.
-  if (FSList.size() > 1) {
-    for (unsigned int i = 1; i < FSList.size(); i++) {
-      Meca.BDCColor = Taquart::TCColor(0.5, 0.5, 0.5, 0.7);
-
-      Taquart::FaultSolution * s;
-
-      if (Type == "dc") {
-        s = &FSList[i].DoubleCoupleSolution;
-      }
-      if (Type == "deviatoric") {
-        s = &FSList[i].TraceNullSolution;
-      }
-      if (Type == "full") {
-        s = &FSList[i].FullSolution;
-      }
-
-      // Set color in response to the type of the fault.
-      if (s->Type == "NF") {
-        Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.7);
-      } else if (s->Type == "TF") {
-        Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.7);
-      } else {
-        Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.7);
-      }
-
-      //std::cout << s -> FIA << " " << s -> DLA << std::endl;
-
-      Meca.DoubleCouple(s->FIA, s->DLA);
-      Meca.DoubleCouple(s->FIB, s->DLB);
-    }
-  }
 
 }
 
