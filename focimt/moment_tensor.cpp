@@ -587,7 +587,7 @@ int main(int argc, char* argv[]) {
                     //std::cout << path.Length();
                     //std::cout << file.Length();
                     if (path == file) {
-                      OutName = path + "-" + FSuffix + "."
+                      OutName = path + "-" + Taquart::String(fileid) + "-" + FSuffix + "."
                           + Formats[q].LowerCase();
                     }
                     else {
