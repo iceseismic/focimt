@@ -166,7 +166,7 @@ int main(int argc, char* argv[]) {
                         + 0.5);
             break;
           case 16:
-            std::cout << "fociMT\nrev. 3.1.17, 2015.09.29\n"
+            std::cout << "fociMT\nrev. 3.1.18, 2015.09.29\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
