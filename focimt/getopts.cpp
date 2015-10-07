@@ -119,7 +119,9 @@ bool Options::parse(int argc, char **argv) {
         tester.isUsed = true;
         if (tester.takesArg) {
           argCount++;
-          if ((argCount >= argc) || (*argv[argCount] == '-')) showHelp(argv[0]);
+          //if ((argCount >= argc) || (*argv[argCount] == '-')) showHelp(argv[0]);
+          if (argCount >= argc)
+            showHelp(argv[0]);
           tester.optionArgs = argv[argCount];
         }
         optionList[listCount] = tester;
@@ -128,7 +130,8 @@ bool Options::parse(int argc, char **argv) {
     }
 
     /* We just parsed an option we don't know what it is, so we will just showHelp() instead and exit. */
-    if (!realOption) showHelp(argv[0]);
+    if (!realOption)
+      showHelp(argv[0]);
   }
   return parsedData;                   // Have we did we have any data to parse?
 }
