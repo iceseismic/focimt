@@ -65,6 +65,18 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
 }
 
 //-----------------------------------------------------------------------------
+unsigned int CountSlash(Taquart::String Input) {
+  Taquart::String null;
+  Dispatch(Input, null, ":"); // Remove following blocks separated with ":" if they exists
+  unsigned int n = 0;
+  for (unsigned int i = 1; i <= Input.Length(); i++) {
+    if (Input[i] == '/')
+      n++;
+  }
+  return n;
+}
+
+//-----------------------------------------------------------------------------
 bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
     Taquart::String delimiter) {
   if (Input.Pos(delimiter) == 0)
@@ -259,6 +271,32 @@ void DispatchStations(Taquart::String &StationString,
 }
 
 //-----------------------------------------------------------------------------
+void String2MT(Taquart::String &FaultString, double &M11, double &M12,
+    double &M13, double &M22, double &M23, double &M33) {
+
+  // Extract moment tensor components from a string.
+  Taquart::String temp;
+  Dispatch(FaultString, temp, "/");
+  M11 = temp.ToDouble();
+  Dispatch(FaultString, temp, "/");
+  M12 = temp.ToDouble();
+  Dispatch(FaultString, temp, "/");
+  M13 = temp.ToDouble();
+  Dispatch(FaultString, temp, "/");
+  M22 = temp.ToDouble();
+  Dispatch(FaultString, temp, "/");
+  M23 = temp.ToDouble();
+  if (FaultString.Pos(":")) {
+    M33 = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
+    Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
+  }
+  else {
+    M33 = FaultString.Trim().ToDouble();
+    FaultString = "";
+  }
+}
+
+//-----------------------------------------------------------------------------
 void String2SDR(Taquart::String &FaultString, double &strike, double &dip,
     double &rake) {
   // Extract strike/dip/rake triplet from a string.
@@ -287,11 +325,20 @@ void DispatchFaults(Taquart::String &FaultString,
   Taquart::String temp;
   double strike = 0.0, dip = 0.0, rake = 0.0;
   double M11 = 0.0, M22 = 0.0, M33 = 0.0, M12 = 0.0, M13 = 0.0, M23 = 0.0;
-  String2SDR(FaultString, strike, dip, rake);
+
+  unsigned int n = CountSlash(FaultString);
+  if (n == 2) {
+    // String is strike/dip/rake
+    String2SDR(FaultString, strike, dip, rake);
+    Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
+        M11, M22, M33, M12, M13, M23);
+  }
+  else {
+    // String is M11/M12/M13/M22/M23/M33
+    String2MT(FaultString, M11, M12, M13, M22, M23, M33);
+  }
 
   // Transfer strike/dip/rake to moment tensor.
-  Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
-      M11, M22, M33, M12, M13, M23);
 
   fs.Type = 'N';
   fs.Channel = 0;
@@ -306,11 +353,14 @@ void DispatchFaults(Taquart::String &FaultString,
     return;
 
   while (FaultString.Length()) {
+    if (n == 2) {
     String2SDR(FaultString, strike, dip, rake);
-
     Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
         M11, M22, M33, M12, M13, M23);
-
+    }
+    else {
+      String2MT(FaultString, M11, M12, M13, M22, M23, M33);
+    }
     fs.Type = 'J';
     fs.Channel = 0;
     SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
