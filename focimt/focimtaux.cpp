@@ -69,7 +69,7 @@ unsigned int CountSlash(Taquart::String Input) {
   Taquart::String null;
   Dispatch(Input, null, ":"); // Remove following blocks separated with ":" if they exists
   unsigned int n = 0;
-  for (unsigned int i = 1; i <= Input.Length(); i++) {
+  for (int i = 1; i <= Input.Length(); i++) {
     if (Input[i] == '/')
       n++;
   }

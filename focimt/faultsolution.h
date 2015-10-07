@@ -31,6 +31,7 @@
 #define faultsolutionH
 //---------------------------------------------------------------------------
 #include <trilib/string.h>
+
 #include "moment_tensor.h"
 
 namespace Taquart {
