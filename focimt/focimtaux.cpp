@@ -88,9 +88,11 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   if (FSList.size() > 0) {
     if (Type == Taquart::String("dc")) {
       s = FSList[0].DoubleCoupleSolution;
-    } else if (Type == "deviatoric") {
+    }
+    else if (Type == "deviatoric") {
       s = FSList[0].TraceNullSolution;
-    } else if (Type == "full") {
+    }
+    else if (Type == "full") {
       s = FSList[0].FullSolution;
     }
   }
@@ -132,8 +134,6 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     Meca.Tensor(T, N, P);
   }
 
-
-
   if (DrawCross)
     Meca.CenterCross();
 
@@ -157,9 +157,11 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       // Set color in response to the type of the fault.
       if (s->Type == "NF") {
         Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.5);
-      } else if (s->Type == "TF") {
+      }
+      else if (s->Type == "TF") {
         Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.5);
-      } else {
+      }
+      else {
         Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.5);
       }
 
@@ -209,7 +211,6 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     }
   }
 
-
 }
 
 //-----------------------------------------------------------------------------
@@ -230,7 +231,8 @@ void DispatchStations(Taquart::String &StationString,
     if (StationString.Pos(":")) {
       name = StationString.SubString(1, StationString.Pos(":") - 1);
       Dispatch(StationString, temp, ":"); // Cut rake part first, as it was already interpreted.
-    } else {
+    }
+    else {
       name = StationString.Trim();
       StationString = "";
     }
@@ -257,14 +259,10 @@ void DispatchStations(Taquart::String &StationString,
 }
 
 //-----------------------------------------------------------------------------
-void DispatchFaults(Taquart::String &FaultString,
-    std::vector<Taquart::FaultSolutions> &FSList, bool onefault) {
-  Taquart::FaultSolutions fs;
-  Taquart::FaultSolution fu;
-
-  // Read strike, dip and rake for the first fault plane
+void String2SDR(Taquart::String &FaultString, double &strike, double &dip,
+    double &rake) {
+  // Extract strike/dip/rake triplet from a string.
   Taquart::String temp;
-  double strike = 0, dip = 0, rake = 0;
   Dispatch(FaultString, temp, "/");
   strike = temp.ToDouble();
   Dispatch(FaultString, temp, "/");
@@ -272,17 +270,28 @@ void DispatchFaults(Taquart::String &FaultString,
   if (FaultString.Pos(":")) {
     rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
     Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-  } else {
+  }
+  else {
     rake = FaultString.Trim().ToDouble();
     FaultString = "";
   }
+}
 
-  // Transfer strike/dip/rake to tensor.
-  double M11, M22, M33, M12, M13, M23;
+//-----------------------------------------------------------------------------
+void DispatchFaults(Taquart::String &FaultString,
+    std::vector<Taquart::FaultSolutions> &FSList, bool onefault) {
+  Taquart::FaultSolutions fs;
+  Taquart::FaultSolution fu;
+
+  // Read strike, dip and rake for the first fault plane
+  Taquart::String temp;
+  double strike = 0.0, dip = 0.0, rake = 0.0;
+  double M11 = 0.0, M22 = 0.0, M33 = 0.0, M12 = 0.0, M13 = 0.0, M23 = 0.0;
+  String2SDR(FaultString, strike, dip, rake);
+
+  // Transfer strike/dip/rake to moment tensor.
   Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
       M11, M22, M33, M12, M13, M23);
-
-  //std::cout << "FPS: " << strike << " " << dip << " " << rake << std::endl;
 
   fs.Type = 'N';
   fs.Channel = 0;
@@ -291,35 +300,25 @@ void DispatchFaults(Taquart::String &FaultString,
   fs.TraceNullSolution = fu;
   fs.DoubleCoupleSolution = fu;
   FSList.push_back(fs);
+  //std::cout << "FPS: " << strike << " " << dip << " " << rake << std::endl;
 
   if (onefault)
     return;
 
   while (FaultString.Length()) {
-    Dispatch(FaultString, temp, "/");
-    strike = temp.ToDouble();
-    Dispatch(FaultString, temp, "/");
-    dip = temp.ToDouble();
-    if (FaultString.Pos(":")) {
-      rake = FaultString.SubString(1, FaultString.Pos(":") - 1).ToDouble();
-      Dispatch(FaultString, temp, ":"); // Cut rake part first, as it was already interpreted.
-    } else {
-      rake = FaultString.Trim().ToDouble();
-      FaultString = "";
-    }
+    String2SDR(FaultString, strike, dip, rake);
 
-    double M11, M22, M33, M12, M13, M23;
     Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
         M11, M22, M33, M12, M13, M23);
 
     fs.Type = 'J';
     fs.Channel = 0;
     SetFaultSolution(fu, M11, M12, M13, M22, M23, M33, strike, dip, rake);
-    //std::cout << "FPS: " << fu.FIA << " " << fu.DLA << " " << fu.RAKEA<< std::endl;
     fs.FullSolution = fu;
     fs.TraceNullSolution = fu;
     fs.DoubleCoupleSolution = fu;
     FSList.push_back(fs);
+    //std::cout << "FPS: " << fu.FIA << " " << fu.DLA << " " << fu.RAKEA<< std::endl;
   }
 
 }

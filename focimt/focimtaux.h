@@ -50,6 +50,8 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
 void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
     std::vector<Taquart::FaultSolutions> &FSList,
     Taquart::SMTInputData &InputData, Taquart::String Type);
+void String2SDR(Taquart::String &Input, double &strike, double &dip,
+    double &rake);
 bool Dispatch(Taquart::String &Input, Taquart::String &Chunk,
     Taquart::String delimiter);
 void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
