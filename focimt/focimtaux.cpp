@@ -95,17 +95,17 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 
   //if (FSList.size() == 0) return;
 
-  Taquart::FaultSolution s;
+  Taquart::FaultSolution * s;
 
   if (FSList.size() > 0) {
     if (Type == Taquart::String("dc")) {
-      s = FSList[0].DoubleCoupleSolution;
+      s = &FSList[0].DoubleCoupleSolution;
     }
     else if (Type == "deviatoric") {
-      s = FSList[0].TraceNullSolution;
+      s = &FSList[0].TraceNullSolution;
     }
     else if (Type == "full") {
-      s = FSList[0].FullSolution;
+      s = &FSList[0].FullSolution;
     }
   }
 
@@ -122,12 +122,12 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   double cmt[6];
   Taquart::TriCairo_Axis P, T, N;
   if (FSList.size() > 0) {
-    cmt[0] = s.M[3][3];
-    cmt[1] = s.M[1][1];
-    cmt[2] = s.M[2][2];
-    cmt[3] = s.M[1][3];
-    cmt[4] = s.M[2][3] * -1.0;
-    cmt[5] = s.M[1][2] * -1.0;
+    cmt[0] = s->M[3][3];
+    cmt[1] = s->M[1][1];
+    cmt[2] = s->M[2][2];
+    cmt[3] = s->M[1][3];
+    cmt[4] = s->M[2][3] * -1.0;
+    cmt[5] = s->M[1][2] * -1.0;
 
     Taquart::TriCairo_MomentTensor mt;
     for (int i = 0; i < 6; i++)
@@ -143,6 +143,17 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       mt.f[i] = mt.f[i] / scal;
 
     Meca.GMT_momten2axe(mt, &T, &N, &P);
+
+    // Overwrite DC with those calculated from MT
+    Taquart::nodal_plane A, B;
+    Taquart::axe2dc(T, P, &A, &B);
+    s->FIA = A.str;
+    s->DLA = A.dip;
+    s->FIB = B.str;
+    s->DLB = B.dip;
+    //std::cout << A.str << " " << A.dip << " " << A.rake;
+    //std::cout << B.str << " " << B.dip << " " << B.rake;
+
     Meca.Tensor(T, N, P);
   }
 
@@ -188,8 +199,8 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
   if (DrawDC && FSList.size() > 0) {
     Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
     //std::cout << s.FIA << " " << s.DLA << std::endl;
-    Meca.DoubleCouple(s.FIA, s.DLA);
-    Meca.DoubleCouple(s.FIB, s.DLB);
+    Meca.DoubleCouple(s->FIA, s->DLA);
+    Meca.DoubleCouple(s->FIB, s->DLB);
   }
 
   // Draw P and T axes' directions.
@@ -354,9 +365,9 @@ void DispatchFaults(Taquart::String &FaultString,
 
   while (FaultString.Length()) {
     if (n == 2) {
-    String2SDR(FaultString, strike, dip, rake);
-    Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
-        M11, M22, M33, M12, M13, M23);
+      String2SDR(FaultString, strike, dip, rake);
+      Taquart::StrikeDipRake2MT(strike * DEG2RAD, dip * DEG2RAD, rake * DEG2RAD,
+          M11, M22, M33, M12, M13, M23);
     }
     else {
       String2MT(FaultString, M11, M12, M13, M22, M23, M33);
