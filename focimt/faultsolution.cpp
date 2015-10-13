@@ -71,6 +71,9 @@ FaultSolution::FaultSolution(void) {
   BXAM = 0.0; /*!< B-axis plunge in degrees.*/
   QI = 0.0;
   MAGN = 0.0;
+  EXPL_VAC = 0.0;
+  CLVD_VAC = 0.0;
+  DBCP_VAC = 0.0;
 }
 
 //---------------------------------------------------------------------------
@@ -289,6 +292,9 @@ void FaultSolution::Assign(const FaultSolution &Source) {
   EXPL = Source.EXPL;
   CLVD = Source.CLVD;
   DBCP = Source.DBCP;
+  EXPL_VAC = Source.EXPL_VAC;
+  CLVD_VAC = Source.CLVD_VAC;
+  DBCP_VAC = Source.DBCP_VAC;
   FIA = Source.FIA;
   DLA = Source.DLA;
   RAKEA = Source.RAKEA;

@@ -110,9 +110,9 @@ namespace Taquart {
     void f1(double X[], double &fff);
     void EIG3(double RM[], int ISTER, double E[]);
     void EIGGEN(double &E1, double &E2, double &E3, double &ALFA, double &BETA,
-        double &GAMA);
+        double &GAMA, double &iso_vav, double &clvd_vav, double &dbcp_vav);
     void EIGGEN_NEW(double e1, double e2, double e3, double &iso, double &clvd,
-        double &dbcp);
+        double &dbcp, double &iso_vav, double &clvd_vav, double &dbcp_vav);
     void GSOL5(double x[], int &IEXP);
     void GSOLA(double x[], int &IEXP);
     void XTRINF(int &ICOND, int LNORM, double Moment0[], double MomentErr[]);

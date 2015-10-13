@@ -67,6 +67,9 @@ namespace Taquart {
        in percents. */
       double DBCP; /*!< The size of the shear, double-couple component
        in the seismic moment tensor, in percents. */
+      double EXPL_VAC;
+      double CLVD_VAC;
+      double DBCP_VAC;
       double FIA; /*!< Strike of the first fault plane in degrees. */
       double DLA; /*!< Dip of the first fault plane in degrees. */
       double RAKEA; /*!< Rake of the first fault plane in degrees. */

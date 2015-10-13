@@ -715,6 +715,19 @@ int main(int argc, char* argv[]) {
                 OutFile << txtb;
               }
 
+              // Export percentage of decomposed moment tensor components using Vavrycuk Decomposition.
+              if (DumpOrder[i] == 'Y') {
+                OutFile << FOCIMT_SEP << Solution.EXPL_VAC;
+                OutFile << FOCIMT_SEP << Solution.CLVD_VAC;
+                OutFile << FOCIMT_SEP << Solution.DBCP_VAC;
+              }
+              else if (DumpOrder[i] == 'y') {
+                sprintf(txtb, "%s%+7.1f%s%+7.1f%s%+7.1f", FOCIMT_SEP2,
+                    Solution.EXPL_VAC,
+                    FOCIMT_SEP2, Solution.CLVD_VAC, FOCIMT_SEP2, Solution.DBCP_VAC);
+                OutFile << txtb;
+              }
+
               // Export axis trends and plunges.
               if (DumpOrder[i] == 'A') {
                 OutFile << FOCIMT_SEP << Solution.PXTR;

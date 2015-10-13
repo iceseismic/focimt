@@ -154,6 +154,12 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   Zero(PCLVD, 4);
   double PDBCP[3 + 1];
   Zero(PDBCP, 4);
+  double PEXPL_VAC[3 + 1];
+  Zero(PEXPL_VAC, 4);
+  double PCLVD_VAC[3 + 1];
+  Zero(PCLVD_VAC, 4);
+  double PDBCP_VAC[3 + 1];
+  Zero(PDBCP_VAC, 4);
   double B[7];
   Zero(B, 7);
   double H[5 + 1];
@@ -352,7 +358,8 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   std::cout << "T0 = " << TROZ << " M0 = " << RM0[1] << " MT = " << RMT[1] << " ERR = " << SIG;
 #endif
 
-  EIGGEN(EQQ1, EQQ2, EQQ3, PEXPLO, PCLVD[1], PDBCP[1]);
+  EIGGEN(EQQ1, EQQ2, EQQ3, PEXPLO, PCLVD[1], PDBCP[1], PEXPL_VAC[1],
+      PCLVD_VAC[1], PDBCP_VAC[1]);
   RMAG = mw(RM0[1]);
   MAGN[1] = RMAG;
 
@@ -449,7 +456,8 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
 #endif
 
   double DUM = 0.0;
-  EIGGEN(EQQ1, EQQ2, EQQ3, DUM, PCLVD[2], PDBCP[2]);
+  EIGGEN(EQQ1, EQQ2, EQQ3, DUM, PCLVD[2], PDBCP[2], DUM, PCLVD_VAC[2],
+      PDBCP_VAC[2]);
   RMAG = mw(RM0[2]);
   MAGN[2] = RMAG;
 
@@ -538,6 +546,10 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
   PCLVD[3] = 0.0;
   PDBCP[3] = 100.0;
 
+  PEXPL_VAC[3] = 0.0;
+  PCLVD_VAC[3] = 0.0;
+  PDBCP_VAC[3] = 100.0;
+
   // Transfer data to output structure
   for (int i = 1; i <= N; i++) {
     Solution[1].U_n = N;
@@ -586,6 +598,9 @@ void Taquart::UsmtCore::MOM1(int &IEXP, int QualityType) {
     Solution[i].EXPL = PEXPL[i];
     Solution[i].CLVD = PCLVD[i];
     Solution[i].DBCP = PDBCP[i];
+    Solution[i].EXPL_VAC = PEXPL_VAC[i];
+    Solution[i].CLVD_VAC = PCLVD_VAC[i];
+    Solution[i].DBCP_VAC = PDBCP_VAC[i];
     Solution[i].MAGN = MAGN[i];
     for (int m = 1; m <= 6; m++)
       for (int n = 1; n <= 6; n++)
@@ -705,7 +720,8 @@ void Taquart::UsmtCore::EIG3(double RM[], int ISTER, double E[]) {
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::EIGGEN_NEW(double e1, double e2, double e3, double &iso,
-    double &clvd, double &dbcp) {
+    double &clvd, double &dbcp, double &iso_vav, double &clvd_vav,
+    double &dbcp_vav) {
   const double trace = (e1 + e2 + e3) / 3.0;
   const double e1a = fabs(e1 - trace);
   const double e2a = fabs(e2 - trace);
@@ -734,7 +750,23 @@ void Taquart::UsmtCore::EIGGEN_NEW(double e1, double e2, double e3, double &iso,
     v3 = e3 - trace;
   }
 
-  // The percentage of moment tensor components is calculated with the method of Jost and Herrmann:
+  // v1 - largest absolute deviatoric eigenvalue  of MT
+  // v3 - smallest absolute deviatoric eigenvalue of MT
+
+  // Percentage of ISO/CLVD/DC moment tensor components according to the
+  // procedure of Vavrycuk (2001):
+
+  const double eigv_abs_max =
+      ((fabs(e1) > fabs(e2)) ? fabs(e1) : fabs(e2)) > (fabs(e3)) ?
+          ((fabs(e1) > fabs(e2)) ? fabs(e1) : fabs(e2)) : fabs(e3);
+  const double epsilon = -v3 / v1;
+  iso_vav = 100 * trace / eigv_abs_max;
+  clvd_vav = 2 * (v1 > 0.0 ? 1.0 : (v1 < 0 ? -1.0 : 0.0)) * epsilon
+      * (100.0 - fabs(iso_vav));
+  dbcp_vav = 100 - fabs(iso_vav) - fabs(clvd_vav);
+
+  // The percentage of moment tensor components is calculated with the method
+  // of Jost and Herrmann (1989):
   const double ff = -v3 / v1;
   iso = trace;
   clvd = v1 * ff;
@@ -747,8 +779,9 @@ void Taquart::UsmtCore::EIGGEN_NEW(double e1, double e2, double e3, double &iso,
 
 //-----------------------------------------------------------------------------
 void Taquart::UsmtCore::EIGGEN(double &E1, double &E2, double &E3, double &ALFA,
-    double &BETA, double &GAMA) {
-  EIGGEN_NEW(E1, E2, E3, ALFA, BETA, GAMA);
+    double &BETA, double &GAMA, double &iso_vav, double &clvd_vav,
+    double &dbcp_vav) {
+  EIGGEN_NEW(E1, E2, E3, ALFA, BETA, GAMA, iso_vav, clvd_vav, dbcp_vav);
   /*
    int IA = 1;
    double EA = E1;
@@ -1218,6 +1251,7 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   double RMX = 0.0, RMY = 0.0, RMZ = 0.0;
   double RMAG = 0.0;
   double PEXPL[4], PCLVD[3 + 1], PDBCP[3 + 1];
+  double PEXPL_VAC[4], PCLVD_VAC[3 + 1], PDBCP_VAC[3 + 1];
   double ALF = 0.0;
   double MAGN[4];
   double HELP = 0.0;
@@ -1449,7 +1483,8 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     std::cout << std::endl;
 #endif
 
-    EIGGEN(EQQ1, EQQ2, EQQ3, PEXPL[1], PCLVD[1], PDBCP[1]);
+    EIGGEN(EQQ1, EQQ2, EQQ3, PEXPL[1], PCLVD[1], PDBCP[1], PEXPL_VAC[1],
+        PCLVD_VAC[1], PDBCP_VAC[1]);
     RMAG = mw(RM0[1]);
     MAGN[1] = RMAG;
 
@@ -1588,7 +1623,8 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   std::cout << std::endl;
 #endif
 
-  EIGGEN(EQQ1, EQQ2, EQQ3, DUM, PCLVD[2], PDBCP[2]);
+  EIGGEN(EQQ1, EQQ2, EQQ3, DUM, PCLVD[2], PDBCP[2], DUM, PCLVD_VAC[2],
+      PDBCP_VAC[2]);
   RMAG = mw(RM0[2]);
   MAGN[2] = RMAG;
 
@@ -1701,6 +1737,10 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
   PCLVD[3] = 0.0;
   PEXPL[3] = 0.0;
 
+  PDBCP_VAC[3] = 100.0;
+  PCLVD_VAC[3] = 0.0;
+  PEXPL_VAC[3] = 0.0;
+
 #ifdef USMTCORE_DEBUG
   std::cout << " PDBCP = 100% Mw = " << RMAG << std::endl;
   std::cout << std::endl;
@@ -1753,6 +1793,9 @@ void Taquart::UsmtCore::MOM2(bool REALLY, int QualityType) {
     Solution[i].EXPL = PEXPL[i];
     Solution[i].CLVD = PCLVD[i];
     Solution[i].DBCP = PDBCP[i];
+    Solution[i].EXPL_VAC = PEXPL_VAC[i];
+    Solution[i].CLVD_VAC = PCLVD_VAC[i];
+    Solution[i].DBCP_VAC = PDBCP_VAC[i];
     Solution[i].MAGN = MAGN[i];
 
     for (int m = 1; m <= 6; m++)
