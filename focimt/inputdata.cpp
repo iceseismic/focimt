@@ -28,7 +28,7 @@
 // DEALINGS IN THE SOFTWARE.
 //---------------------------------------------------------------------------
 #include <algorithm>
-#include <trilib/tristat.h>
+#include "tristat.h"
 #include "moment_tensor.h"
 #include "inputdata.h"
 #include "timedist.h"

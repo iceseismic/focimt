@@ -31,8 +31,8 @@
 #define FOCIMTAUX_H_
 //-----------------------------------------------------------------------------
 #include <vector>
-#include <tricairo/tricairo_meca.h>
-#include <trilib/georoutines.h>
+#include "tricairo_meca.h"
+#include "georoutines.h"
 #include "faultsolution.h"
 #include "inputdata.h"
 #include "getopts.h"

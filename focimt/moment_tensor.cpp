@@ -32,9 +32,9 @@
 #include <math.h>
 #include <iostream>
 #include <fstream>
-#include <tricairo/tricairo_meca.h>
-#include <trilib/georoutines.h>
-#include <trilib/string.h>
+#include "tricairo_meca.h"
+#include "georoutines.h"
+#include "tstring.h"
 #include "moment_tensor.h"
 #include "faultsolution.h"
 #include "inputdata.h"

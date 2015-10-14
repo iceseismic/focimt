@@ -31,8 +31,8 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
-#include <trilib/fortranmath.h>
-#include <trilib/georoutines.h>
+#include "fortranmath.h"
+#include "georoutines.h"
 #include "usmtcore.h"
 #include <fstream>
 //-----------------------------------------------------------------------------

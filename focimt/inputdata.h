@@ -31,8 +31,8 @@
 #define inputdataH
 //---------------------------------------------------------------------------
 #include <vector>
-#include <triexceptions/exceptions.h>
-#include <trilib/string.h>
+#include "exceptions.h"
+#include "tstring.h"
 
 namespace Taquart {
   //! Input data vector for the seismic moment tensor calculation.

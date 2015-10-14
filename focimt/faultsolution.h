@@ -30,7 +30,7 @@
 #ifndef faultsolutionH
 #define faultsolutionH
 //---------------------------------------------------------------------------
-#include <trilib/string.h>
+#include "tstring.h"
 
 #include "moment_tensor.h"
 
