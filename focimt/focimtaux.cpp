@@ -68,6 +68,7 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
 unsigned int CountSlash(Taquart::String Input) {
   Taquart::String null;
   Dispatch(Input, null, ":"); // Remove following blocks separated with ":" if they exists
+  Input = null;
   unsigned int n = 0;
   for (int i = 1; i <= Input.Length(); i++) {
     if (Input[i] == '/')
