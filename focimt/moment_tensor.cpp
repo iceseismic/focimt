@@ -66,9 +66,10 @@ int main(int argc, char* argv[]) {
     Taquart::String DumpOrder = "";
     Taquart::String OutputFileType = "PNG";
     unsigned int Size = 500;
-    unsigned int BootstrapSamples = 20;
     bool JacknifeTest = false;
     bool BootstrapTest = false;
+    unsigned int BootstrapSamples = 20;
+    double BootstrapPercentReverse = 0.02;
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
     bool DrawFaultsOnly = false;
@@ -76,6 +77,7 @@ int main(int argc, char* argv[]) {
     bool VelocityModel = false;
     double AmpFactor = 1.0f;
     unsigned int AmplitudeN = 100;
+    double v1, v2;
     Taquart::String Temp;
     Taquart::String FaultString;
     Taquart::String StationString;
@@ -160,13 +162,13 @@ int main(int argc, char* argv[]) {
             break;
           case 15:
             BootstrapTest = true;
-            BootstrapSamples =
-                int(
-                    Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
-                        + 0.5);
+            Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
+            Dispatch2(Temp, v1, v2);
+            BootstrapSamples = (unsigned int) (v1 + 0.5);
+            BootstrapPercentReverse = v2;
             break;
           case 16:
-            std::cout << "fociMT\nrev. 3.1.20, 2015.10.14\n"
+            std::cout << "fociMT\nrev. 3.1.21, 2015.10.21\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
@@ -482,17 +484,20 @@ int main(int argc, char* argv[]) {
       }
       else if (BootstrapTest) {
         // Perform boostrap resampling of original dataset.
-        const unsigned int StationCount = InputData.Count();
+        //const unsigned int StationCount = InputData.Count();
         Taquart::SMTInputData BootstrapData;
         Taquart::SMTInputLine InputLine;
 
         for (unsigned int i = 0; i < BootstrapSamples; i++) {
 
-          // Add randomly stations with replacement.
-          BootstrapData.Clear();
-          for (unsigned int j = 0; j < StationCount; j++) {
-            InputData.Get(rand() % StationCount, InputLine);
-            BootstrapData.Add(InputLine);
+          // Reverse station polarity if necessary.
+          BootstrapData = InputData;
+          for (unsigned int j = 0; j < BootstrapData.Count(); j++) {
+            if (rand() % 10000 < BootstrapPercentReverse * 10000.0) {
+              BootstrapData.Get(j, InputLine);
+              InputLine.Displacement = InputLine.Displacement * -1.0;
+              BootstrapData.Set(j, InputLine);
+            }
           }
 
           int channel = i + 1;
@@ -501,7 +506,7 @@ int main(int argc, char* argv[]) {
           try {
             USMTCore(InversionNormType, QualityType, BootstrapData);
             Taquart::FaultSolutions fs;
-            fs.Type = 'J';
+            fs.Type = 'B';
             fs.Channel = channel;
             fs.FullSolution = TransferSolution(Taquart::stFullSolution);
             fs.TraceNullSolution = TransferSolution(
@@ -587,8 +592,8 @@ int main(int argc, char* argv[]) {
                     //std::cout << path.Length();
                     //std::cout << file.Length();
                     if (path == file) {
-                      OutName = path + "-" + Taquart::String(fileid) + "-" + FSuffix + "."
-                          + Formats[q].LowerCase();
+                      OutName = path + "-" + Taquart::String(fileid) + "-"
+                          + FSuffix + "." + Formats[q].LowerCase();
                     }
                     else {
                       OutName = path + Taquart::String("/")
@@ -724,7 +729,8 @@ int main(int argc, char* argv[]) {
               else if (DumpOrder[i] == 'y') {
                 sprintf(txtb, "%s%+7.1f%s%+7.1f%s%+7.1f", FOCIMT_SEP2,
                     Solution.EXPL_VAC,
-                    FOCIMT_SEP2, Solution.CLVD_VAC, FOCIMT_SEP2, Solution.DBCP_VAC);
+                    FOCIMT_SEP2, Solution.CLVD_VAC, FOCIMT_SEP2,
+                    Solution.DBCP_VAC);
                 OutFile << txtb;
               }
 

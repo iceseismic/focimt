@@ -45,6 +45,7 @@ extern bool WulffProjection;
 extern bool LowerHemisphere;
 
 //-----------------------------------------------------------------------------
+void Dispatch2(Taquart::String &Input, double &v1, double &v2);
 void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
     double M13, double M22, double M23, double M33, double strike, double dip,
     double rake);

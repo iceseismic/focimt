@@ -282,10 +282,18 @@ void DispatchStations(Taquart::String &StationString,
 }
 
 //-----------------------------------------------------------------------------
+void Dispatch2(Taquart::String &Input, double &v1, double &v2) {
+  Taquart::String temp;
+  Dispatch(Input, temp, "/");
+  v1 = temp.Trim().ToDouble();
+  v2 = Input.Trim().ToDouble();
+}
+
+//-----------------------------------------------------------------------------
 void String2MT(Taquart::String &FaultString, double &M11, double &M12,
     double &M13, double &M22, double &M23, double &M33) {
 
-  // Extract moment tensor components from a string.
+// Extract moment tensor components from a string.
   Taquart::String temp;
   Dispatch(FaultString, temp, "/");
   M11 = temp.ToDouble();
@@ -310,7 +318,7 @@ void String2MT(Taquart::String &FaultString, double &M11, double &M12,
 //-----------------------------------------------------------------------------
 void String2SDR(Taquart::String &FaultString, double &strike, double &dip,
     double &rake) {
-  // Extract strike/dip/rake triplet from a string.
+// Extract strike/dip/rake triplet from a string.
   Taquart::String temp;
   Dispatch(FaultString, temp, "/");
   strike = temp.ToDouble();
@@ -332,7 +340,7 @@ void DispatchFaults(Taquart::String &FaultString,
   Taquart::FaultSolutions fs;
   Taquart::FaultSolution fu;
 
-  // Read strike, dip and rake for the first fault plane
+// Read strike, dip and rake for the first fault plane
   Taquart::String temp;
   double strike = 0.0, dip = 0.0, rake = 0.0;
   double M11 = 0.0, M22 = 0.0, M33 = 0.0, M12 = 0.0, M13 = 0.0, M23 = 0.0;
@@ -349,7 +357,7 @@ void DispatchFaults(Taquart::String &FaultString,
     String2MT(FaultString, M11, M12, M13, M22, M23, M33);
   }
 
-  // Transfer strike/dip/rake to moment tensor.
+// Transfer strike/dip/rake to moment tensor.
 
   fs.Type = 'N';
   fs.Channel = 0;
@@ -358,7 +366,7 @@ void DispatchFaults(Taquart::String &FaultString,
   fs.TraceNullSolution = fu;
   fs.DoubleCoupleSolution = fu;
   FSList.push_back(fs);
-  //std::cout << "FPS: " << strike << " " << dip << " " << rake << std::endl;
+//std::cout << "FPS: " << strike << " " << dip << " " << rake << std::endl;
 
   if (onefault)
     return;
@@ -389,11 +397,11 @@ void SplitFilename(Taquart::String& str2, Taquart::String &file,
     Taquart::String &path) {
   size_t found;
   std::string str(str2.c_str());
-  //cout << "Splitting: " << str << endl;
+//cout << "Splitting: " << str << endl;
   found = str.find_last_of("/\\");
-  //cout << " folder: " << str.substr(0,found) << endl;
+//cout << " folder: " << str.substr(0,found) << endl;
   path = Taquart::String(str.substr(0, found));
-  //cout << " file: " << str.substr(found+1) << endl;
+//cout << " file: " << str.substr(found+1) << endl;
   file = Taquart::String(str.substr(found + 1));
 }
 
@@ -403,7 +411,7 @@ void PlotStations(Taquart::String FaultString, Taquart::String FilenameOut,
   std::vector<Taquart::FaultSolutions> FSList;
   Taquart::SMTInputData InputData;
 
-  // Dispatch "faults" string.
+// Dispatch "faults" string.
   DispatchStations(FaultString, InputData);
 
   Taquart::String OutName = FilenameOut + ".png";
@@ -435,7 +443,7 @@ void DrawFaults(Taquart::String FaultString, Taquart::String FilenameOut,
   std::vector<Taquart::FaultSolutions> FSList;
   Taquart::SMTInputData InputData;
 
-  // Dispatch "faults" string.
+// Dispatch "faults" string.
   DispatchFaults(FaultString, FSList, false);
 
   Taquart::String OutName = FilenameOut + ".png";
@@ -452,7 +460,7 @@ void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
   std::vector<Taquart::FaultSolutions> FSList;
   Taquart::SMTInputData InputData;
 
-  // Dispatch "faults" string.
+// Dispatch "faults" string.
   DispatchFaults(FaultString, FSList, true);
 
   Taquart::String OutName = FilenameOut + ".png";
@@ -463,16 +471,16 @@ void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
 
 //-----------------------------------------------------------------------------
 void PrepareHelp(Options &listOpts) {
-  // 0
+// 0
   listOpts.addOption("i", "input", "Full path to the input file", true);
-  // 1
+// 1
   listOpts.addOption("o", "output",
       "Output file name (without extension).                \n\n"
           "    If specified, the output solution data in ASCII format will be exported to \n"
           "    a single file. Otherwise, 'fileid' field from input file will be used      \n"
           "    instead and moment tensor solution data will be exported to multiple files.\n",
       true);
-  // 2
+// 2
   listOpts.addOption("s", "solution",
       "Output solution type.                                \n\n"
           "    Arguments: [F][T][D] for the (F)ull, (T)race-null and (D)ouble-couple      \n"
@@ -480,7 +488,7 @@ void PrepareHelp(Options &listOpts) {
           "    default option is '-s D'. Combine three options to export desired moment   \n"
           "    tensor solutions, e.g. '-s DFT' will produce all three solutions at once.  \n",
       true);
-  // 3
+// 3
   listOpts.addOption("t", "type",
       "Output file type.                                    \n\n"
           "    Arguments: [NONE][PNG][SVG][PS][PDF] for different output file types.      \n"
@@ -488,7 +496,7 @@ void PrepareHelp(Options &listOpts) {
           "    the beach ball. More than one output file format can be specified. The     \n"
           "    default value is '-t PNG'.                                                 \n",
       true);
-  // 4
+// 4
   listOpts.addOption("n", "norm",
       "Norm type.                                           \n\n"
           "    Arguments: [L1|L2] for L1 and L2 norm, respectively. Defines norm used in  \n"
@@ -496,7 +504,7 @@ void PrepareHelp(Options &listOpts) {
           "    When Jacknife method is used the option is ignored and L2 norm is always   \n"
           "    used.                                                                      \n",
       true);
-  // 5
+// 5
   listOpts.addOption("p", "projection",
       "Projection type.                                     \n\n"
           "    Arguments: [W|S][U|L]: Defines projection for the graphical representation \n"
@@ -504,7 +512,7 @@ void PrepareHelp(Options &listOpts) {
           "    projection. Then select (U)pper hemisphere or (L)ower hemispere projection \n"
           "    The default option is '-p SL' (Schmidt projection, Lower hemisphere).      \n",
       true);
-  // 6
+// 6
   listOpts.addOption("b", "ball",
       "The details of the beach ball picture                \n\n"
           "    Arguments: [S][A][C][D]: Defines features of the graphical representation  \n"
@@ -512,7 +520,7 @@ void PrepareHelp(Options &listOpts) {
           "    (D)ouble-couple lines. The default option is '-b SACD' (all features are   \n"
           "    displayed on the beach ball.                                               \n",
       true);
-  // 7
+// 7
   listOpts.addOption("d", "dump",
       "Output data format and order.                        \n\n"
           "    Arguments: [M][C][F][D][A][W][Q][T][U][*].                                 \n"
@@ -558,14 +566,14 @@ void PrepareHelp(Options &listOpts) {
           "    NOTE #2:                                                                   \n"
           "    Use lowercase arguments in order to export data in eye-friendly format.    \n",
       true);
-  // 8
+// 8
   listOpts.addOption("m", "model",
       "Velocity model file (with extension)                 \n\n"
           "    Velocity model in HYPO71 format. Imposes different ASCII input file format.\n",
       true);
-  // 9
+// 9
   listOpts.addOption("j", "jacknife", "Performs station Jacknife test.\n");
-  // 10
+// 10
   listOpts.addOption("a", "amplitude",
       "Perform amplitude test.                              \n\n"
           "    Arguments: x[/y] where x is a floating-point positive number that describes\n"
@@ -574,34 +582,35 @@ void PrepareHelp(Options &listOpts) {
           "    (i.e.amplitude vary by a max. factor of ~2). Optional parameter /y is      \n"
           "    a number of samples (default value is 100).                                \n",
       true);
-  // 11
+// 11
   listOpts.addOption("f", "drawfault",
       "Generate picture with fault plane solution           \n\n"
           "    Arguments: strike/dip/rake                                                 \n"
           "                                                                               \n",
       true);
-  // 12
+// 12
   listOpts.addOption("fj", "drawfaults",
       "Generate picture with jacknife solutions             \n\n"
           "    Arguments: strike/dip/rake[:s1/d1/r1][:s2/d2/r2]...      \n"
           "                                                                               \n",
       true);
-  // 13
+// 13
   listOpts.addOption("fs", "drawstations",
       "Generate picture with station and polarity data      \n\n"
           "    Arguments: azimuth/takeoff/polarity/name[:a2/t2/p2/n2][:a3/t3/p3/n3]...    \n"
           "                                                                               \n",
       true);
-  // 14
+// 14
   listOpts.addOption("z", "size",
       "Beach ball file size                                 \n\n"
           "    Size of the beach ball figure in pixels.                                   \n",
       true);
-  // 15
-  listOpts.addOption("r", "resampling",
+// 15
+  listOpts.addOption("rp", "resampling",
       "Perform bootstrap resampling of the input dataset    \n\n"
-          "    Number of bootstrap resamplings.                                           \n",
+          "    Arguments: x/y where x is the number of bootstrap resamplings of the       \n"
+          "    original dataset and y is the fraction of reversed amplitudes.             \n",
       true);
-  // 16
+// 16
   listOpts.addOption("v", "version", "Display fociMT version info");
 }
