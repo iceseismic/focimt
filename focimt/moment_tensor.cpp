@@ -75,6 +75,8 @@ int main(int argc, char* argv[]) {
     bool DrawFaultsOnly = false;
     bool DrawStationsOnly = false;
     bool VelocityModel = false;
+    bool TakeoffRanges = false;
+    Taquart::String TakeoffString;
     double AmpFactor = 1.0f;
     unsigned int AmplitudeN = 100;
     double v1, v2;
@@ -168,7 +170,14 @@ int main(int argc, char* argv[]) {
             BootstrapPercentReverse = v2;
             break;
           case 16:
-            std::cout << "fociMT\nrev. 3.1.21, 2015.10.21\n"
+            // Use 1D velocity model from a file (forces different formatting of input file)
+            // Option -m must be also specified.
+            TakeoffRanges = true;
+            TakeoffString =
+                Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
+            break;
+          case 17:
+            std::cout << "fociMT\nrev. 3.1.22, 2015.11.06\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
@@ -209,6 +218,41 @@ int main(int argc, char* argv[]) {
       for (int i = 0; i < n; i++) {
         VelocityFile >> v;
         Velocity.push_back(v);
+      }
+
+      // If option -mt is on, get ranges for azimuths and takeoff and
+      // output data to
+      if (TakeoffRanges) {
+        if (FilenameOut.Length() == 0)
+          FilenameOut = "raytracing.txt";
+        double dstart, dstep, dend;
+        double estart, estep, eend;
+        String2MT(TakeoffString, dstart, dstep, dend, estart, estep, eend);
+        ofstream OutFile(FilenameOut.c_str(), std::ofstream::out);
+        for (double depth = dstart; depth <= dend; depth += dstep) {
+          for (double delta = estart; delta <= eend; delta += estep) {
+            double traveltime = 0.0f;
+            double ray_dist = 0.0f;
+            bool directphase = false;
+            double takeoff = 0.0f, aoi = 0.0f, sta_elev = 0.0f;
+            int kk = 0;
+
+            CalcTravelTime1D(sta_elev, depth, delta, Top, Velocity, traveltime,
+                takeoff, directphase, aoi, kk, ray_dist);
+
+            OutFile << sta_elev << " ";
+            OutFile << depth << " ";
+            OutFile << delta << " ";
+            OutFile << traveltime << " ";
+            OutFile << ((directphase == true) ? '1' : '0') << " ";
+            OutFile << takeoff << " ";
+            OutFile << aoi << " ";
+            OutFile << kk << " ";
+            OutFile << ray_dist << std::endl;
+          }
+        }
+        OutFile.close();
+        return 0;
       }
 
       // Try to read one more variable, if it contains "DATA", calculate

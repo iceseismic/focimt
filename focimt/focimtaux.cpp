@@ -612,6 +612,14 @@ void PrepareHelp(Options &listOpts) {
           "    Arguments: x/y where x is the number of bootstrap resamplings of the       \n"
           "    original dataset and y is the fraction of reversed amplitudes.             \n",
       true);
-// 16
+  //16
+  listOpts.addOption("mt", "modeltakeoff",
+      "Export raytracing data                               \n\n"
+          "    Procedure export raytracing data for specific set of epicentral distances  \n"
+          "    and epicentral depths for velocity model file specified with option -m.    \n"
+          "    Specify dstart/dstep/dend/estart/estep/eend in km                          \n",
+      true);
+
+// 17
   listOpts.addOption("v", "version", "Display fociMT version info");
 }
