@@ -454,7 +454,9 @@ int main(int argc, char* argv[]) {
         return 1;
       }
 
-      //---- Perform additional moment tensor solutions.
+      //=======================================================================
+      //==== Perform additional moment tensor inversions ======================
+      //=======================================================================
       if (NoiseTest) {
 
         const Taquart::SMTInputData fd = InputData;
@@ -476,7 +478,7 @@ int main(int argc, char* argv[]) {
             td.Set(j, InputLine);
           }
 
-          // Calculate SMT with one station removed.
+          // Run MT inversion for biased dataset.
           try {
             USMTCore(InversionNormType, QualityType, td);
             Taquart::FaultSolutions fs;
@@ -499,7 +501,7 @@ int main(int argc, char* argv[]) {
         const Taquart::SMTInputData fd = InputData;
         const unsigned int Count = InputData.Count();
 
-        // Remove one channel, calculate the solution,
+        // Remove one channel, calculate the jacknife solution (option -j)
         for (unsigned int i = 0; i < Count; i++) {
           Taquart::SMTInputData td = fd;
           Taquart::SMTInputLine InputLine;
@@ -507,7 +509,7 @@ int main(int argc, char* argv[]) {
           int channel = InputLine.Id;
           td.Remove(i);
 
-          // Calculate SMT with one station removed.
+          // Run MT inversion for jacknife dataset
           try {
             USMTCore(InversionNormType, QualityType, td);
             Taquart::FaultSolutions fs;
@@ -527,15 +529,16 @@ int main(int argc, char* argv[]) {
         }
       }
       else if (BootstrapTest) {
-        // Perform boostrap resampling of original dataset.
-        //const unsigned int StationCount = InputData.Count();
+        // Perform additional inversions on resampled dataset (bootstrapping)
         Taquart::SMTInputData BootstrapData;
         Taquart::SMTInputLine InputLine;
 
         for (unsigned int i = 0; i < BootstrapSamples; i++) {
 
-          // Reverse station polarity if necessary.
+          // Get original input data.
           BootstrapData = InputData;
+
+          // Randomly reverse station polarity (option -rp)
           for (unsigned int j = 0; j < BootstrapData.Count(); j++) {
             if (rand() % 10000 < BootstrapPercentReverse * 10000.0) {
               BootstrapData.Get(j, InputLine);
@@ -546,7 +549,7 @@ int main(int argc, char* argv[]) {
 
           int channel = i + 1;
 
-          // Calculate SMT with one station removed.
+          // Run MT inversion for resampled dataset.
           try {
             USMTCore(InversionNormType, QualityType, BootstrapData);
             Taquart::FaultSolutions fs;
@@ -564,9 +567,11 @@ int main(int argc, char* argv[]) {
             return 1;
           }
         }
-      }
+      } // End MT inversion loop for different events
 
-      //---- Produce output file and graphical representation of the moment tensor using Cairo library.
+      //=======================================================================
+      //==== Produce output file and graphical representation of the MT =======
+      //=======================================================================
 
       // Beach ball properties.
       if (Projection.Pos("W") > 0)

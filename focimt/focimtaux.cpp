@@ -576,7 +576,7 @@ void PrepareHelp(Options &listOpts) {
   listOpts.addOption("j", "jacknife", "Performs station Jacknife test.\n");
 // 10
   listOpts.addOption("a", "amplitude",
-      "Perform amplitude test.                              \n\n"
+      "Perform amplitude resampling.                        \n\n"
           "    Arguments: x[/y] where x is a floating-point positive number that describes\n"
           "    the level of noise applied to each amplitude: A+x*A*N(0,1)/3 where N is a  \n"
           "    normal distribution with mean 0 and std 1. The default value of x is 1     \n"
@@ -607,17 +607,19 @@ void PrepareHelp(Options &listOpts) {
           "    Size of the beach ball figure in pixels.                                   \n",
       true);
 // 15
-  listOpts.addOption("rp", "resampling",
-      "Perform bootstrap resampling of the input dataset    \n\n"
-          "    Arguments: x/y where x is the number of bootstrap resamplings of the       \n"
-          "    original dataset and y is the fraction of reversed amplitudes.             \n",
+  listOpts.addOption("rp", "resampling_polarity",
+      "Perform phase polarities resampling                  \n\n"
+          "    Performs additional MT inversions on resampled input data with randomly    \n"
+          "    toggled polarities.                                                        \n"
+          "    Arguments: x/y where x is the number of resamplings of the original dataset\n"
+          "    and y is the fraction of reversed amplitudes.                              \n",
       true);
   //16
   listOpts.addOption("mt", "modeltakeoff",
       "Export raytracing data                               \n\n"
           "    Procedure export raytracing data for specific set of epicentral distances  \n"
-          "    and epicentral depths for velocity model file specified with option -m.    \n"
-          "    Specify dstart/dstep/dend/estart/estep/eend in km                          \n",
+          "    and epicentral depths for 1D velocity model file specified with option -m. \n"
+          "    Arguments: dstart/dstep/dend/estart/estep/eend in [km]                     \n",
       true);
 
 // 17
