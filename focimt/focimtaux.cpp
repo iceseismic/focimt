@@ -28,6 +28,7 @@
 // DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 #include "focimtaux.h"
+#include "usmtcore.h"
 #include <iostream>
 //-----------------------------------------------------------------------------
 
@@ -38,6 +39,27 @@ bool DrawCross = true;
 bool DrawDC = true;
 bool WulffProjection = false;
 bool LowerHemisphere = true;
+
+//-----------------------------------------------------------------------------
+bool MTInversion(Taquart::NormType NormType, int QualityType,
+    Taquart::SMTInputData &InputData, int channel, char type,
+    std::vector<Taquart::FaultSolutions> &FSList) {
+  try {
+    USMTCore(NormType, QualityType, InputData);
+    Taquart::FaultSolutions fs;
+    fs.Type = type;
+    fs.Channel = channel;
+    fs.FullSolution = TransferSolution(Taquart::stFullSolution);
+    fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
+    fs.DoubleCoupleSolution = TransferSolution(Taquart::stDoubleCoupleSolution);
+    FSList.push_back(fs);
+    return true;
+  }
+  catch (...) {
+    std::cout << "Inversion error." << std::endl;
+    return false;
+  }
+}
 
 //-----------------------------------------------------------------------------
 void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,

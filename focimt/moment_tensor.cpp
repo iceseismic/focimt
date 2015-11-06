@@ -159,13 +159,13 @@ int main(int argc, char* argv[]) {
             StationString =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          case 14: // Option -z
+          case 14: // Option -z (beach ball size)
             Size =
                 int(
                     Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
                         + 0.5);
             break;
-          case 15: // Option -rp
+          case 15: // Option -rp (resampling / polarity)
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapPercentReverse = v2;
             break;
-          case 16: // Option -rr
+          case 16: // Option -rr (resampling / station rejection)
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -183,7 +183,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapPercentReject = v2;
             break;
-          case 17: // Option -ra
+          case 17: // Option -ra (resampling / amplitude modification)
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapAmplitudeModifier = v2;
             break;
-          case 18:
+          case 18: // Option -mt (1D tomography map)
             // Use 1D velocity model from a file (forces different formatting of input file)
             // Option -m must be also specified.
             TakeoffRanges = true;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 19:
-            std::cout << "focimt\nrev. 3.1.23, 2015.11.06\n"
+            std::cout << "focimt\nrev. 3.1.24 (2015.11.06)\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
@@ -456,26 +456,13 @@ int main(int argc, char* argv[]) {
       if (!InputFile.good())
         continue;
 
-      //---- Perform moment tensor inversion.
       std::vector<Taquart::FaultSolutions> FSList;
       Taquart::FaultSolution fu, tr, dc;
 
-      // Regular moment tensor inversion using all stations.
-      try {
-        USMTCore(InversionNormType, QualityType, InputData);
-        Taquart::FaultSolutions fs;
-        fs.Type = 'N';
-        fs.Channel = 0;
-        fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-        fs.TraceNullSolution = TransferSolution(Taquart::stTraceNullSolution);
-        fs.DoubleCoupleSolution = TransferSolution(
-            Taquart::stDoubleCoupleSolution);
-        FSList.push_back(fs);
-      }
-      catch (...) {
-        std::cout << "Inversion error." << std::endl;
-        return 1;
-      }
+      //=======================================================================
+      //==== Perform regular moment tensor inversions using all stations ======
+      //=======================================================================
+      MTInversion(InversionNormType, QualityType, InputData, 0, 'N', FSList);
 
       //=======================================================================
       //==== Perform additional moment tensor inversions ======================
@@ -502,22 +489,7 @@ int main(int argc, char* argv[]) {
           }
 
           // Run MT inversion for biased dataset.
-          try {
-            USMTCore(InversionNormType, QualityType, td);
-            Taquart::FaultSolutions fs;
-            fs.Type = 'A';
-            fs.Channel = 0;
-            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-            fs.TraceNullSolution = TransferSolution(
-                Taquart::stTraceNullSolution);
-            fs.DoubleCoupleSolution = TransferSolution(
-                Taquart::stDoubleCoupleSolution);
-            FSList.push_back(fs);
-          }
-          catch (...) {
-            std::cout << "Inversion error." << std::endl;
-            return 1;
-          }
+          MTInversion(InversionNormType, QualityType, td, 0, 'A', FSList);
         }
       }
       else if (JacknifeTest) {
@@ -533,26 +505,11 @@ int main(int argc, char* argv[]) {
           td.Remove(i);
 
           // Run MT inversion for jacknife dataset
-          try {
-            USMTCore(InversionNormType, QualityType, td);
-            Taquart::FaultSolutions fs;
-            fs.Type = 'J';
-            fs.Channel = channel;
-            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-            fs.TraceNullSolution = TransferSolution(
-                Taquart::stTraceNullSolution);
-            fs.DoubleCoupleSolution = TransferSolution(
-                Taquart::stDoubleCoupleSolution);
-            FSList.push_back(fs);
-          }
-          catch (...) {
-            std::cout << "Inversion error." << std::endl;
-            return 1;
-          }
+          MTInversion(InversionNormType, QualityType, td, channel, 'J', FSList);
         }
       }
       // Perform additional inversions on resampled dataset (bootstrapping)
-      // Options -rr or -rp are in use.
+      // Options -rr or -rp or -ra are in use.
       else if (BootstrapTest) {
         Taquart::SMTInputData BootstrapData;
         Taquart::SMTInputLine InputLine;
@@ -597,30 +554,16 @@ int main(int argc, char* argv[]) {
           }
 
           /*
-          std::cout << i << " Rej: " << st_rejected << " Rev: " << st_reversed
-              << " Mod: " << st_ampmod << " (" << v << ")  ("
-              << BootstrapData.Count() << "/" << InputData.Count() << ")"
-              << std::endl;
-          */
+           std::cout << i << " Rej: " << st_rejected << " Rev: " << st_reversed
+           << " Mod: " << st_ampmod << " (" << v << ")  ("
+           << BootstrapData.Count() << "/" << InputData.Count() << ")"
+           << std::endl;
+           */
           int channel = i + 1;
 
           // Run MT inversion for resampled dataset.
-          try {
-            USMTCore(InversionNormType, QualityType, BootstrapData);
-            Taquart::FaultSolutions fs;
-            fs.Type = 'B';
-            fs.Channel = channel;
-            fs.FullSolution = TransferSolution(Taquart::stFullSolution);
-            fs.TraceNullSolution = TransferSolution(
-                Taquart::stTraceNullSolution);
-            fs.DoubleCoupleSolution = TransferSolution(
-                Taquart::stDoubleCoupleSolution);
-            FSList.push_back(fs);
-          }
-          catch (...) {
-            std::cout << "Inversion error." << std::endl;
-            return 1;
-          }
+          MTInversion(InversionNormType, QualityType, BootstrapData, channel,
+              'B', FSList);
         }
       } // End MT inversion loop for different events
 
