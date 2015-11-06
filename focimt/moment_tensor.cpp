@@ -68,8 +68,9 @@ int main(int argc, char* argv[]) {
     unsigned int Size = 500;
     bool JacknifeTest = false;
     bool BootstrapTest = false;
-    unsigned int BootstrapSamples = 20;
-    double BootstrapPercentReverse = 0.02;
+    unsigned int BootstrapSamples = 0;
+    double BootstrapPercentReverse = 0.00;
+    double BootstrapPercentReject = 0.00;
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
     bool DrawFaultsOnly = false;
@@ -79,6 +80,7 @@ int main(int argc, char* argv[]) {
     Taquart::String TakeoffString;
     double AmpFactor = 1.0f;
     unsigned int AmplitudeN = 100;
+    unsigned int i1;
     double v1, v2;
     Taquart::String Temp;
     Taquart::String FaultString;
@@ -166,17 +168,28 @@ int main(int argc, char* argv[]) {
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
-            BootstrapSamples = (unsigned int) (v1 + 0.5);
+            i1 = (unsigned int) (v1 + 0.5);
+            if (i1 > BootstrapSamples)
+              BootstrapSamples = i1;
             BootstrapPercentReverse = v2;
             break;
           case 16:
+            BootstrapTest = true;
+            Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
+            Dispatch2(Temp, v1, v2);
+            i1 = (unsigned int) (v1 + 0.5);
+            if (i1 > BootstrapSamples)
+              BootstrapSamples = i1;
+            BootstrapPercentReject = v2;
+            break;
+          case 17:
             // Use 1D velocity model from a file (forces different formatting of input file)
             // Option -m must be also specified.
             TakeoffRanges = true;
             TakeoffString =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          case 17:
+          case 18:
             std::cout << "fociMT\nrev. 3.1.22, 2015.11.06\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
@@ -529,6 +542,7 @@ int main(int argc, char* argv[]) {
         }
       }
       // Perform additional inversions on resampled dataset (bootstrapping)
+      // Options -rr or -rp are in use.
       else if (BootstrapTest) {
         Taquart::SMTInputData BootstrapData;
         Taquart::SMTInputLine InputLine;
@@ -539,15 +553,30 @@ int main(int argc, char* argv[]) {
           BootstrapData = InputData;
 
           // Proceed through phase data for single event.
+          unsigned int st_rejected = 0;
+          unsigned int st_reversed = 0;
           for (unsigned int j = 0; j < BootstrapData.Count(); j++) {
+
             // Randomly reverse station polarity (option -rp)
-            if (rand() % 10000 < BootstrapPercentReverse * 10000.0) {
+            if (BootstrapPercentReverse > 0.0
+                && rand() % 10000 < BootstrapPercentReverse * 10000.0) {
               BootstrapData.Get(j, InputLine);
               InputLine.Displacement = InputLine.Displacement * -1.0;
               BootstrapData.Set(j, InputLine);
+              st_reversed++;
+            }
+
+            // Randomly reject stations (option -rr)
+            if (BootstrapPercentReject > 0.0
+                && rand() % 10000 < BootstrapPercentReject * 10000.0) {
+              BootstrapData.Remove(j);
+              st_rejected++;
             }
           }
 
+          //std::cout << i << " " << st_rejected << " " << st_reversed << " ("
+          //    << BootstrapData.Count() << "/" << InputData.Count() << ")"
+          //    << std::endl;
           int channel = i + 1;
 
           // Run MT inversion for resampled dataset.
