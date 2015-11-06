@@ -471,6 +471,33 @@ void DrawFault(Taquart::String FaultString, Taquart::String FilenameOut,
 }
 
 //-----------------------------------------------------------------------------
+double rand_normal(double mean, double stddev) { //Box muller method
+  static double n2 = 0.0;
+  static int n2_cached = 0;
+  if (!n2_cached) {
+    double x, y, r;
+    do {
+      x = 2.0 * rand() / RAND_MAX - 1;
+      y = 2.0 * rand() / RAND_MAX - 1;
+
+      r = x * x + y * y;
+    } while (r == 0.0 || r > 1.0);
+    {
+      double d = sqrt(-2.0 * log(r) / r);
+      double n1 = x * d;
+      n2 = y * d;
+      double result = n1 * stddev + mean;
+      n2_cached = 1;
+      return result;
+    }
+  }
+  else {
+    n2_cached = 0;
+    return n2 * stddev + mean;
+  }
+}
+
+//-----------------------------------------------------------------------------
 void PrepareHelp(Options &listOpts) {
 // 0
   listOpts.addOption("i", "input", "Full path to the input file", true);
@@ -615,21 +642,29 @@ void PrepareHelp(Options &listOpts) {
           "    and y is the fraction of reversed amplitudes.                              \n",
       true);
   // 16
-    listOpts.addOption("rr", "resampling_rejection",
-        "Perform station rejection resampling               \n\n"
-            "    Performs additional MT inversions on resampled input data with randomly  \n"
-            "    rejected stations.                                                       \n"
-            "    Arguments: x/y where x is the number of resamplings of the original      \n"
-            "    dataset and y is the fraction of rejected stations.                      \n",
-        true);
-  //17
+  listOpts.addOption("rr", "resampling_rejection",
+      "Perform station rejection resampling               \n\n"
+          "    Performs additional MT inversions on resampled input data with randomly    \n"
+          "    rejected stations.                                                         \n"
+          "    Arguments: x/y where x is the number of resamplings of the original        \n"
+          "    dataset and y is the fraction of rejected stations                         \n",
+      true);
+  // 17
+  listOpts.addOption("ra", "resampling_amplitude",
+      "Perform amplitude resampling                       \n\n"
+          "    Performs additional MT inversions on resampled input data with randomly    \n"
+          "    modified input amplitude data.                                             \n"
+          "    Arguments: x/y where x is the number of resamplings of the original        \n"
+          "    dataset and y is the amplitude variation factor (see option -a for details)\n",
+      true);
+  // 18
   listOpts.addOption("mt", "modeltakeoff",
       "Export raytracing data                               \n\n"
           "    Procedure export raytracing data for specific set of epicentral distances  \n"
-          "    and epicentral depths for 1D velocity model file specified with option -m. \n"
+          "    and epicentral depths for 1D velocity model file specified with option -m  \n"
           "    Arguments: dstart/dstep/dend/estart/estep/eend in [km]                     \n",
       true);
 
-// 18
+// 19
   listOpts.addOption("v", "version", "Display focimt version info");
 }

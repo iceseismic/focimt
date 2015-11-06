@@ -71,6 +71,7 @@ int main(int argc, char* argv[]) {
     unsigned int BootstrapSamples = 0;
     double BootstrapPercentReverse = 0.00;
     double BootstrapPercentReject = 0.00;
+    double BootstrapAmplitudeModifier = 0.00;
     bool NoiseTest = false;
     bool DrawFaultOnly = false;
     bool DrawFaultsOnly = false;
@@ -158,13 +159,13 @@ int main(int argc, char* argv[]) {
             StationString =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          case 14:
+          case 14: // Option -z
             Size =
                 int(
                     Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
                         + 0.5);
             break;
-          case 15:
+          case 15: // Option -rp
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -173,7 +174,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapPercentReverse = v2;
             break;
-          case 16:
+          case 16: // Option -rr
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -182,15 +183,24 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapPercentReject = v2;
             break;
-          case 17:
+          case 17: // Option -ra
+            BootstrapTest = true;
+            Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
+            Dispatch2(Temp, v1, v2);
+            i1 = (unsigned int) (v1 + 0.5);
+            if (i1 > BootstrapSamples)
+              BootstrapSamples = i1;
+            BootstrapAmplitudeModifier = v2;
+            break;
+          case 18:
             // Use 1D velocity model from a file (forces different formatting of input file)
             // Option -m must be also specified.
             TakeoffRanges = true;
             TakeoffString =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          case 18:
-            std::cout << "fociMT\nrev. 3.1.22, 2015.11.06\n"
+          case 19:
+            std::cout << "focimt\nrev. 3.1.23, 2015.11.06\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
@@ -555,6 +565,8 @@ int main(int argc, char* argv[]) {
           // Proceed through phase data for single event.
           unsigned int st_rejected = 0;
           unsigned int st_reversed = 0;
+          unsigned int st_ampmod = 0;
+          double v;
           for (unsigned int j = 0; j < BootstrapData.Count(); j++) {
 
             // Randomly reverse station polarity (option -rp)
@@ -566,6 +578,16 @@ int main(int argc, char* argv[]) {
               st_reversed++;
             }
 
+            // Randomly modify station amplitude (option -ra)
+            if (BootstrapAmplitudeModifier > 0.0) {
+              v = rand_normal(0.0, BootstrapAmplitudeModifier);
+              BootstrapData.Get(j, InputLine);
+              InputLine.Displacement = InputLine.Displacement
+                  + v * InputLine.Displacement / 3.0;
+              BootstrapData.Set(j, InputLine);
+              st_ampmod++;
+            }
+
             // Randomly reject stations (option -rr)
             if (BootstrapPercentReject > 0.0
                 && rand() % 10000 < BootstrapPercentReject * 10000.0) {
@@ -574,9 +596,12 @@ int main(int argc, char* argv[]) {
             }
           }
 
-          //std::cout << i << " " << st_rejected << " " << st_reversed << " ("
-          //    << BootstrapData.Count() << "/" << InputData.Count() << ")"
-          //    << std::endl;
+          /*
+          std::cout << i << " Rej: " << st_rejected << " Rev: " << st_reversed
+              << " Mod: " << st_ampmod << " (" << v << ")  ("
+              << BootstrapData.Count() << "/" << InputData.Count() << ")"
+              << std::endl;
+          */
           int channel = i + 1;
 
           // Run MT inversion for resampled dataset.
