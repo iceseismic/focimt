@@ -528,8 +528,8 @@ int main(int argc, char* argv[]) {
           }
         }
       }
+      // Perform additional inversions on resampled dataset (bootstrapping)
       else if (BootstrapTest) {
-        // Perform additional inversions on resampled dataset (bootstrapping)
         Taquart::SMTInputData BootstrapData;
         Taquart::SMTInputLine InputLine;
 
@@ -538,8 +538,9 @@ int main(int argc, char* argv[]) {
           // Get original input data.
           BootstrapData = InputData;
 
-          // Randomly reverse station polarity (option -rp)
+          // Proceed through phase data for single event.
           for (unsigned int j = 0; j < BootstrapData.Count(); j++) {
+            // Randomly reverse station polarity (option -rp)
             if (rand() % 10000 < BootstrapPercentReverse * 10000.0) {
               BootstrapData.Get(j, InputLine);
               InputLine.Displacement = InputLine.Displacement * -1.0;
