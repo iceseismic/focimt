@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 19:
-            std::cout << "focimt\nrev. 3.1.24 (2015.11.06)\n"
+            std::cout << "focimt\nrev. 3.1.25 (2015.11.06)\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
