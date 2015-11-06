@@ -45,6 +45,9 @@ extern bool WulffProjection;
 extern bool LowerHemisphere;
 
 //-----------------------------------------------------------------------------
+bool MTInversion(Taquart::NormType ANormType, int QualityType,
+    Taquart::SMTInputData &InputData, int channel, char type,
+    std::vector<Taquart::FaultSolutions> &FSList);
 double rand_normal(double mean, double stddev);
 void Dispatch2(Taquart::String &Input, double &v1, double &v2);
 void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
