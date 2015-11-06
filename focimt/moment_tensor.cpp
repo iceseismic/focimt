@@ -159,13 +159,13 @@ int main(int argc, char* argv[]) {
             StationString =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          case 14: // Option -z
+          case 14: // Option -z (beach ball size)
             Size =
                 int(
                     Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim().ToDouble()
                         + 0.5);
             break;
-          case 15: // Option -rp
+          case 15: // Option -rp (resampling / polarity)
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapPercentReverse = v2;
             break;
-          case 16: // Option -rr
+          case 16: // Option -rr (resampling / station rejection)
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -183,7 +183,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapPercentReject = v2;
             break;
-          case 17: // Option -ra
+          case 17: // Option -ra (resampling / amplitude modification)
             BootstrapTest = true;
             Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             Dispatch2(Temp, v1, v2);
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
               BootstrapSamples = i1;
             BootstrapAmplitudeModifier = v2;
             break;
-          case 18:
+          case 18: // Option -mt (1D tomography map)
             // Use 1D velocity model from a file (forces different formatting of input file)
             // Option -m must be also specified.
             TakeoffRanges = true;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
           case 19:
-            std::cout << "focimt\nrev. 3.1.23, 2015.11.06\n"
+            std::cout << "focimt\nrev. 3.1.23 (2015.11.06)\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;
             break;
