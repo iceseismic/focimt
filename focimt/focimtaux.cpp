@@ -39,6 +39,67 @@ bool DrawCross = true;
 bool DrawDC = true;
 bool WulffProjection = false;
 bool LowerHemisphere = true;
+Taquart::TCColor NFColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.5);
+Taquart::TCColor SSColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.5);
+Taquart::TCColor TFColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.5);
+Taquart::TCColor DCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
+Taquart::TCColor TShadingColor = Taquart::TCColor(0.85, 0.85, 0.85);
+Taquart::TCColor PShadingColor = Taquart::TCColor(0.99, 0.99, 0.99);
+Taquart::TCColor StationPlusColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
+Taquart::TCColor StationMinusColor = Taquart::TCColor(0.0, 0.0, 0.0, 0.0);
+Taquart::TCColor StationTextColor = Taquart::TCColor(0.0, 0.0, 0.0);
+
+//-----------------------------------------------------------------------------
+bool ColorSelection(Taquart::String Input) {
+  Taquart::String temp;
+  Taquart::String element;
+
+  // Get object name for which we want to change color
+  Dispatch(Input, element, "/");
+
+  // Count number of following elements (either 3 or 4)
+  unsigned int n = CountSlash(Input);
+
+  std::cout << element.c_str() << " " << Input.c_str() << " " << n << std::endl;
+
+  if (n == 2 || n == 3) {
+    double r, g, b, a;
+    Dispatch(Input, temp, "/");
+    r = temp.ToDouble();
+    Dispatch(Input, temp, "/");
+    g = temp.ToDouble();
+    if (n == 2) {
+      b = Input.ToDouble();
+      a = 1.0;
+    }
+    else {
+      Dispatch(Input, temp, "/");
+      b = temp.ToDouble();
+      a = Input.ToDouble();
+    }
+
+    Taquart::TCColor *CAddress[] = { &NFColor, &SSColor, &TFColor, &DCColor,
+        &TShadingColor, &PShadingColor, &StationPlusColor, &StationMinusColor,
+        &StationTextColor, &NFColor, &SSColor, &TFColor, &DCColor,
+        &TShadingColor, &PShadingColor, &StationPlusColor, &StationMinusColor,
+        &StationTextColor };
+    Taquart::String CName[] = { "normalfault", "strikeslipfault", "thrustfault",
+        "dclines", "taxis", "paxis", "stationpositive", "stationnegative",
+        "stationlabel", "nf", "sf", "tf", "dc", "t", "p", "sp", "sn", "sl" };
+
+    for (unsigned int i = 0; i < 18; i++) {
+      if (element == CName[i]) {
+        std::cout << r << g << b << a << std::endl;
+        *CAddress[i] = Taquart::TCColor(r, g, b, a);
+        return true;
+      }
+    }
+    return false; // element not found
+  }
+  else
+    return false; // wrong number of input parameters
+
+}
 
 //-----------------------------------------------------------------------------
 bool MTInversion(Taquart::NormType NormType, int QualityType,
@@ -89,8 +150,8 @@ void SetFaultSolution(Taquart::FaultSolution &fu, double M11, double M12,
 //-----------------------------------------------------------------------------
 unsigned int CountSlash(Taquart::String Input) {
   Taquart::String null;
-  Dispatch(Input, null, ":"); // Remove following blocks separated with ":" if they exists
-  Input = null;
+  if (Dispatch(Input, null, ":"))
+    Input = null;
   unsigned int n = 0;
   for (int i = 1; i <= Input.Length(); i++) {
     if (Input[i] == '/')
@@ -131,6 +192,13 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       s = &FSList[0].FullSolution;
     }
   }
+
+  // Setup basic colors
+  Meca.BPlusColor = TShadingColor; // T color shading
+  Meca.BMinusColor = PShadingColor; // P color shading
+  Meca.StationPlusColor = StationPlusColor; // U+ color (markers)
+  Meca.StationMinusColor = StationMinusColor; // U- color (markers)
+  Meca.StationTextColor = StationTextColor;
 
   // Setup solution properties.
   Meca.DrawAxis = DrawAxes;
@@ -202,13 +270,13 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 
       // Set color in response to the type of the fault.
       if (s->Type == "NF") {
-        Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.5);
+        Meca.BDCColor = NFColor;
       }
       else if (s->Type == "TF") {
-        Meca.BDCColor = Taquart::TCColor(1.0, 0.0, 0.0, 0.5);
+        Meca.BDCColor = TFColor;
       }
       else {
-        Meca.BDCColor = Taquart::TCColor(0.0, 1.0, 0.0, 0.5);
+        Meca.BDCColor = SSColor;
       }
 
       //std::cout << s -> FIA << " " << s -> DLA << std::endl;
@@ -220,7 +288,7 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 
   // Draw double-couple lines.
   if (DrawDC && FSList.size() > 0) {
-    Meca.BDCColor = Taquart::TCColor(0.0, 0.0, 0.0, 1.0);
+    Meca.BDCColor = DCColor;
     //std::cout << s.FIA << " " << s.DLA << std::endl;
     Meca.DoubleCouple(s->FIA, s->DLA);
     Meca.DoubleCouple(s->FIB, s->DLB);
@@ -686,7 +754,26 @@ void PrepareHelp(Options &listOpts) {
           "    and epicentral depths for 1D velocity model file specified with option -m  \n"
           "    Arguments: dstart/dstep/dend/estart/estep/eend in [km]                     \n",
       true);
+  // 19
+  listOpts.addOption("c", "color",
+      "Set color of specified beach ball element(s)        \n\n"
+          "    Allows to modify the color of beach ball element or elements.              \n"
+          "    Arguments element/r/g/b/a, where 'element' is element name (see list below)\n"
+          "    r,g,b are red,green and blue intensities (0.0 - minimum intensity, 1.0 -   \n"
+          "    maximum intensity of the color) and a is the alpha channel (0.0 - opaque,  \n"
+          "    1.0 - transparent).                                                        \n"
+          "    The allowed element parameter is one of the following:                     \n"
+          "      'normalfault','nf' - normal fault best-double-couple line                \n"
+          "      'strikeslipfault','sf' - strike-slip fault best double-couple line       \n"
+          "      'thrustfault','tf' - thrust fault best double-couple line                \n"
+          "      'dclines','dc' - best double couple line                                 \n"
+          "      'taxis','t' - tension axis color                                         \n"
+          "      'paxis','p' - pressure axis color                                        \n"
+          "      'stationpositive','sp' - color of 'positive' onset marker                \n"
+          "      'stationnegative','sn' - color of 'negative' onset marker                \n"
+          "      'stationlabel','sl' - onsel marker label color                           \n",
+      true);
 
-// 19
+  // 20
   listOpts.addOption("v", "version", "Display focimt version info");
 }

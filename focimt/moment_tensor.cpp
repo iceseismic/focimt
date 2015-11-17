@@ -199,7 +199,11 @@ int main(int argc, char* argv[]) {
             TakeoffString =
                 Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
             break;
-          case 19:
+          case 19: // Option -c (set color) format is element/r/g/b/a or element/r/g/b
+            Temp = Taquart::String(listOpts.getArgs(switchInt).c_str()).Trim();
+            ColorSelection(Temp); // Intepret color string
+            break;
+          case 20:
             std::cout << "focimt\nrev. 3.1.25 (2015.11.06)\n"
                 "(c) 2011-2015 Grzegorz Kwiatek and Patricia Martinez-Garzon"
                 << std::endl;

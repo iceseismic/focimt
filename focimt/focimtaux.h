@@ -43,8 +43,18 @@ extern bool DrawCross;
 extern bool DrawDC;
 extern bool WulffProjection;
 extern bool LowerHemisphere;
+extern Taquart::TCColor NFColor;
+extern Taquart::TCColor SSColor;
+extern Taquart::TCColor TFColor;
+extern Taquart::TCColor DCColor;
+extern Taquart::TCColor TShadingColor;
+extern Taquart::TCColor PShadingColor;
+extern Taquart::TCColor StationPlusColor;
+extern Taquart::TCColor StationMinusColor;
+extern Taquart::TCColor StationTextColor;
 
 //-----------------------------------------------------------------------------
+bool ColorSelection(Taquart::String Input);
 bool MTInversion(Taquart::NormType ANormType, int QualityType,
     Taquart::SMTInputData &InputData, int channel, char type,
     std::vector<Taquart::FaultSolutions> &FSList);
