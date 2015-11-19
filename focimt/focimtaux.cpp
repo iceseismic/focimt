@@ -37,6 +37,7 @@ bool DrawStations = true;
 bool DrawAxes = true;
 bool DrawCross = true;
 bool DrawDC = true;
+bool DrawErrorCircles = false;
 bool WulffProjection = false;
 bool LowerHemisphere = true;
 Taquart::TCColor NFColor = Taquart::TCColor(0.0, 0.0, 1.0, 0.5);
@@ -302,6 +303,13 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
 
   // Draw stations.
   if (DrawStations) {
+
+    // Calculate total sum of squared observations
+    double u_sum2 = 0.0;
+    for (int i = 0; i < s->U_n; i++) {
+      u_sum2 += s->U_measured[i] * s->U_measured[i];
+    }
+
     for (unsigned int i = 0; i < id.Count(); i++) {
       Taquart::SMTInputLine il;
       id.Get(i, il);
@@ -321,7 +329,18 @@ void GenerateBallCairo(Taquart::TriCairo_Meca &Meca,
       Taquart::String Name = il.Name;
 
       double mx, my;
-      Meca.Station(GA, U, Name, mx, my);
+      double error = 0.0;
+      if (DrawErrorCircles) {
+        error = sqrt(
+            (s->U_th[i] - s->U_measured[i]) * (s->U_th[i] - s->U_measured[i])
+                / u_sum2);
+        //error = sqrt(
+        //    (s->U_th[i] - s->U_measured[i]) * (s->U_th[i] - s->U_measured[i])
+        //        / (s->U_measured[i] * s->U_measured[i]));
+      }
+      Meca.Station(GA, U, Name, mx, my, error);
+      //Meca.Station(GA, U, Name, mx, my, error * 0.1);
+
     }
   }
 
@@ -633,9 +652,10 @@ void PrepareHelp(Options &listOpts) {
 // 6
   listOpts.addOption("b", "ball",
       "The details of the beach ball picture                \n\n"
-          "    Arguments: [S][A][C][D]: Defines features of the graphical representation  \n"
-          "    of seismic moment tensor. Plot (S)tations, (A)xes, (C)enter cross, best    \n"
-          "    (D)ouble-couple lines. The default option is '-b SACD' (all features are   \n"
+          "    Arguments: [S][A][C][D][E]: Defines features of the graphical              \n"
+          "    representation of the seismic moment tensor. Plot (S)tations, (A)xes,      \n"
+          "    (C)enter cross, best (D)ouble-couple lines, and RMS (E)rror circles. The   \n"
+          "    default option is '-b SACD' (all features but RMS error circles are        \n"
           "    displayed on the beach ball.                                               \n",
       true);
 // 7

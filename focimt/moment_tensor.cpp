@@ -588,6 +588,7 @@ int main(int argc, char* argv[]) {
       DrawAxes = BallContent.Pos("A") > 0 ? true : false;
       DrawCross = BallContent.Pos("C") > 0 ? true : false;
       DrawDC = BallContent.Pos("D") > 0 ? true : false;
+      DrawErrorCircles = BallContent.Pos("E") > 0 ? true : false;
 
       // Text output formatted or not?
       bool Formatted = false;

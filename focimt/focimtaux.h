@@ -41,6 +41,7 @@ extern bool DrawStations;
 extern bool DrawAxes;
 extern bool DrawCross;
 extern bool DrawDC;
+extern bool DrawErrorCircles;
 extern bool WulffProjection;
 extern bool LowerHemisphere;
 extern Taquart::TCColor NFColor;
